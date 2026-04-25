@@ -105,11 +105,8 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
 
       <h1 className="text-5xl font-serif text-secondary mb-12 font-bold tracking-tight">Complete Your Order</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-        {/* Left Column */}
-        <div className="lg:col-span-7 space-y-8">
-          {/* Order Summary Card */}
-          <section className="bg-primary-container p-8 rounded-3xl border border-secondary/5 diffusion-shadow relative overflow-hidden">
+      <div className="max-w-4xl mx-auto space-y-8">
+        <section className="bg-primary-container p-8 rounded-3xl border border-secondary/5 diffusion-shadow relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-secondary/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
             <h2 className="text-xl font-serif text-secondary mb-8 flex items-center gap-4 font-bold">
               <UtensilsCrossed className="w-6 h-6" />
@@ -275,10 +272,8 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
               </button>
             </div>
           </section>
-        </div>
 
-        {/* Right Column: Totals */}
-        <div className="lg:col-span-5 lg:sticky lg:top-32 space-y-8">
+          {/* Order Totals */}
           <div className="bg-white p-10 rounded-3xl border border-secondary/5 diffusion-shadow border-4 border-primary-container">
             <h2 className="text-2xl font-serif text-secondary mb-10 font-bold">Order Totals</h2>
             <div className="space-y-6 mb-10">
@@ -330,7 +325,6 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
             </div>
           </div>
         </div>
-      </div>
-    </motion.main>
+      </motion.main>
   );
 }

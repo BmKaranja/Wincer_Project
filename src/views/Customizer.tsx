@@ -48,7 +48,10 @@ export default function Customizer({ setView, selectedProduct, onAddToCart, edit
 
   const totals = useMemo(() => {
     const basePrice = sizes.find(s => s.label === size)?.price || 45;
-    const toppingPrice = toppings.length * 5;
+    const toppingPrice = toppings.reduce((acc, t) => {
+      const match = t.match(/\(\+\s*\$(\d+)\)/);
+      return acc + (match ? parseInt(match[1], 10) : 0);
+    }, 0);
     return basePrice + toppingPrice + 10; // +10 for artisan base
   }, [size, toppings]);
 
@@ -306,7 +309,7 @@ export default function Customizer({ setView, selectedProduct, onAddToCart, edit
             </p>
           </section>
 
-          <div className="p-10 bg-secondary text-on-secondary rounded-[2.5rem] macaron-raised sticky bottom-8 shadow-2xl z-50">
+          <div className="p-10 bg-secondary text-on-secondary rounded-[2.5rem] macaron-raised shadow-2xl">
             <div className="flex justify-between items-center mb-8">
               <div>
                 <span className="block text-[10px] font-bold uppercase tracking-[0.4em] opacity-70 mb-2">Artisan Evaluation</span>

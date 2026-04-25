@@ -17,6 +17,14 @@ export default function App() {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [cart, setCart] = useState<any[]>([]);
 
+  const handleNav = (newView: string) => {
+    if (newView === 'customizer' && view !== 'customizer') {
+      setSelectedProduct(null);
+      setEditingItem(null);
+    }
+    setView(newView);
+  };
+
   const handleSelectProduct = (product: any) => {
     setSelectedProduct(product);
     setEditingItem(null);
@@ -47,7 +55,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col selection:bg-secondary/20 selection:text-secondary">
-      <Header currentView={view} setView={setView} cartCount={cart.length} />
+      <Header currentView={view} setView={handleNav} cartCount={cart.length} />
       
       <div className="flex-grow">
         <AnimatePresence mode="wait">
@@ -58,7 +66,7 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <Home setView={setView} />
+              <Home setView={handleNav} />
             </motion.div>
           )}
           {view === 'catalog' && (
@@ -68,7 +76,7 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <Catalog setView={setView} onSelect={handleSelectProduct} />
+              <Catalog setView={handleNav} onSelect={handleSelectProduct} />
             </motion.div>
           )}
           {view === 'customizer' && (
@@ -79,7 +87,7 @@ export default function App() {
               exit={{ opacity: 0 }}
             >
               <Customizer 
-                setView={setView} 
+                setView={handleNav} 
                 selectedProduct={selectedProduct} 
                 onAddToCart={addToCart} 
                 editingItem={editingItem}
@@ -93,7 +101,7 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <Occasions setView={setView} />
+              <Occasions setView={handleNav} />
             </motion.div>
           )}
           {view === 'story' && (
@@ -103,7 +111,7 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <Story setView={setView} />
+              <Story setView={handleNav} />
             </motion.div>
           )}
           {view === 'checkout' && (
@@ -114,7 +122,7 @@ export default function App() {
               exit={{ opacity: 0 }}
             >
               <Checkout 
-                setView={setView} 
+                setView={handleNav} 
                 cart={cart} 
                 onOrderPlaced={clearCart} 
                 onEdit={handleEditItem}
@@ -129,7 +137,7 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <Search setView={setView} onSelect={handleSelectProduct} />
+              <Search setView={handleNav} onSelect={handleSelectProduct} />
             </motion.div>
           )}
           {view === 'account' && (
