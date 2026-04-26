@@ -18,6 +18,12 @@ export default function Header({ currentView, setView, cartCount }: HeaderProps)
   return (
     <header className="fixed top-0 w-full z-50 bg-primary-container/80 backdrop-blur-md border-b border-secondary/10 shadow-sm">
       <div className="flex justify-between items-center h-20 px-8 max-w-7xl mx-auto w-full">
+        {/* 
+          ==========================================
+          BRANDING SETTINGS
+          Change the text below to update your store name
+          ========================================== 
+        */}
         <button 
           onClick={() => setView('home')}
           className="text-2xl font-bold tracking-tight text-secondary font-serif italic hover:opacity-80 transition-opacity"

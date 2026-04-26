@@ -1,14 +1,16 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, Calendar, Check, Wand2 } from 'lucide-react';
+import { PRODUCTS } from '../constants';
 
 export default function Customizer({ setView, selectedProduct, onAddToCart, editingItem }: { setView: (v: string) => void, selectedProduct?: any, onAddToCart?: (item: any) => void, editingItem?: any }) {
+  const [internalBaseProduct, setInternalBaseProduct] = useState<any>(selectedProduct);
   const [size, setSize] = useState('6"');
   const [sponge, setSponge] = useState('Vanilla Bean');
   const [filling, setFilling] = useState('Chantilly Cream');
   const [frosting, setFrosting] = useState('Smooth Silk');
-  const [toppings, setToppings] = useState<string[]>(['Fresh Berries']);
-  const [message, setMessage] = useState('Happy Birthday Isabella');
+  const [toppings, setToppings] = useState<string[]>([]);
+  const [message, setMessage] = useState('');
 
   // Load defaults if a product was selected from catalog or we are editing
   useEffect(() => {
@@ -20,15 +22,22 @@ export default function Customizer({ setView, selectedProduct, onAddToCart, edit
       if (config.frosting) setFrosting(config.frosting);
       if (config.toppings) setToppings(config.toppings);
       if (config.message) setMessage(config.message);
-    } else if (selectedProduct?.customDefaults) {
-      const defaults = selectedProduct.customDefaults;
+    } else if (internalBaseProduct?.customDefaults) {
+      const defaults = internalBaseProduct.customDefaults;
       if (defaults.sponge) setSponge(defaults.sponge);
       if (defaults.filling) setFilling(defaults.filling);
       if (defaults.frosting) setFrosting(defaults.frosting);
       if (defaults.toppings) setToppings(defaults.toppings);
       if (defaults.message) setMessage(defaults.message);
+    } else if (internalBaseProduct) {
+      // Basic defaults if no custom defaults provided for this base cake
+      setSponge('Vanilla Bean');
+      setFilling('Chantilly Cream');
+      setFrosting('Smooth Silk');
+      setToppings([]);
+      setMessage('');
     }
-  }, [selectedProduct, editingItem]);
+  }, [internalBaseProduct, editingItem]);
 
   const sizes = [
     { label: '6"', sub: 'Serves 4-6', price: 45 },
@@ -58,8 +67,8 @@ export default function Customizer({ setView, selectedProduct, onAddToCart, edit
   const handleReserve = () => {
     const cartItem = {
       id: Date.now(),
-      name: selectedProduct?.name || 'Custom Artisan Cake',
-      img: selectedProduct?.img || "https://lh3.googleusercontent.com/aida-public/AB6AXuBB2T0GrzGb7HJOw35EWx672_lFRLrC7Q6ntjSuD-p2bCRYLAwOBQRj6OCFsnuyNY11yZw2AK0UqY91-Vy0tWh81GSYedNIZT5QGzL3n-WR5e1gZVK-baBPx0CmXHeB1GaAQUug0aSrbi6bsQmLxLEOLPdly_9nZJHf6E6j-NmrJ4AHBGAqGn9DquM_CtQ4Y5w4bbRmL7g3dxBlG4nXx8HBqOE1QoxrCq8bLORq3GNkcjKLz5I2LxXThlLkuhlMzebT0YcFo9SGyl4",
+      name: internalBaseProduct?.name || internalBaseProduct?.title || 'Custom Artisan Cake',
+      img: internalBaseProduct?.img || "https://lh3.googleusercontent.com/aida-public/AB6AXuBB2T0GrzGb7HJOw35EWx672_lFRLrC7Q6ntjSuD-p2bCRYLAwOBQRj6OCFsnuyNY11yZw2AK0UqY91-Vy0tWh81GSYedNIZT5QGzL3n-WR5e1gZVK-baBPx0CmXHeB1GaAQUug0aSrbi6bsQmLxLEOLPdly_9nZJHf6E6j-NmrJ4AHBGAqGn9DquM_CtQ4Y5w4bbRmL7g3dxBlG4nXx8HBqOE1QoxrCq8bLORq3GNkcjKLz5I2LxXThlLkuhlMzebT0YcFo9SGyl4",
       config: {
         size,
         sponge,
@@ -90,6 +99,52 @@ export default function Customizer({ setView, selectedProduct, onAddToCart, edit
     };
   }, [sponge, filling, toppings]);
 
+  if (!internalBaseProduct && !editingItem) {
+    return (
+      <motion.main 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="pt-32 pb-xl max-w-7xl mx-auto px-8"
+      >
+        <section className="mb-12 text-center">
+          <h1 className="text-5xl font-serif text-secondary mb-4">Choose Your Canvas</h1>
+          <p className="text-xl text-on-surface-variant max-w-2xl mx-auto opacity-80 leading-relaxed font-sans">
+            Start your masterpiece by selecting a base cake from our signature collection. You'll be able to customize it to your exquisite taste in the next step.
+          </p>
+        </section>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {PRODUCTS.map((p, idx) => (
+            <motion.div 
+              key={p.id}
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: idx * 0.05 }}
+              onClick={() => setInternalBaseProduct(p)}
+              className="bg-primary-container/20 rounded-[2rem] border border-secondary/5 overflow-hidden hover:shadow-2xl transition-all duration-500 cursor-pointer group"
+            >
+              <div className="h-64 overflow-hidden relative">
+                <img 
+                  src={p.img} 
+                  alt={p.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                />
+              </div>
+              <div className="p-8">
+                <h3 className="font-serif text-2xl text-secondary mb-2 font-bold">{p.title}</h3>
+                <p className="text-on-surface-variant font-medium opacity-80">{p.desc}</p>
+                <div className="mt-6 flex justify-end">
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-secondary group-hover:underline">Select as Base</span>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </motion.main>
+    );
+  }
+
   return (
     <motion.main 
       initial={{ opacity: 0 }}
@@ -118,7 +173,7 @@ export default function Customizer({ setView, selectedProduct, onAddToCart, edit
                   sponge === 'Rich Chocolate' ? 'brightness-75 sepia-[0.3]' : 
                   sponge === 'Lemon Zest' ? 'hue-rotate-15' : ''
                 }`} 
-                src={editingItem?.img || selectedProduct?.img || "https://lh3.googleusercontent.com/aida-public/AB6AXuBB2T0GrzGb7HJOw35EWx672_lFRLrC7Q6ntjSuD-p2bCRYLAwOBQRj6OCFsnuyNY11yZw2AK0UqY91-Vy0tWh81GSYedNIZT5QGzL3n-WR5e1gZVK-baBPx0CmXHeB1GaAQUug0aSrbi6bsQmLxLEOLPdly_9nZJHf6E6j-NmrJ4AHBGAqGn9DquM_CtQ4Y5w4bbRmL7g3dxBlG4nXx8HBqOE1QoxrCq8bLORq3GNkcjKLz5I2LxXThlLkuhlMzebT0YcFo9SGyl4"} 
+                src={editingItem?.img || internalBaseProduct?.img || selectedProduct?.img || "https://lh3.googleusercontent.com/aida-public/AB6AXuBB2T0GrzGb7HJOw35EWx672_lFRLrC7Q6ntjSuD-p2bCRYLAwOBQRj6OCFsnuyNY11yZw2AK0UqY91-Vy0tWh81GSYedNIZT5QGzL3n-WR5e1gZVK-baBPx0CmXHeB1GaAQUug0aSrbi6bsQmLxLEOLPdly_9nZJHf6E6j-NmrJ4AHBGAqGn9DquM_CtQ4Y5w4bbRmL7g3dxBlG4nXx8HBqOE1QoxrCq8bLORq3GNkcjKLz5I2LxXThlLkuhlMzebT0YcFo9SGyl4"} 
               />
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <AnimatePresence>
@@ -332,3 +387,4 @@ export default function Customizer({ setView, selectedProduct, onAddToCart, edit
     </motion.main>
   );
 }
+

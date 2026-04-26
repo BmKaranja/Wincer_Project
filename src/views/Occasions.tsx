@@ -1,7 +1,19 @@
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Utensils, Brush, Truck } from 'lucide-react';
+import { Utensils, Brush, Truck, CheckCircle } from 'lucide-react';
 
 export default function Occasions({ setView }: { setView: (v: string) => void }) {
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  
+  const handleInquirySubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitted(true);
+    // In a real app we would send the form data here
+    setTimeout(() => {
+      setView('home');
+    }, 4000);
+  };
+
   const collections = [
     {
       title: "Birthdays",
@@ -113,7 +125,10 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
               ))}
             </div>
             
-            <button className="bg-secondary text-white px-10 py-5 rounded-xl font-bold tracking-widest text-sm hover:translate-x-2 transition-all shadow-xl mt-8 uppercase">
+            <button 
+              onClick={() => document.getElementById('inquiry-form')?.scrollIntoView({ behavior: 'smooth' })}
+              className="bg-secondary text-white px-10 py-5 rounded-xl font-bold tracking-widest text-sm hover:translate-x-2 transition-all shadow-xl mt-8 uppercase"
+            >
               Book a Consultation
             </button>
           </div>
@@ -167,54 +182,80 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
       </section>
 
       {/* Inquiry Form */}
-      <section className="py-24 bg-surface-container-low">
+      <section id="inquiry-form" className="py-24 bg-surface-container-low scroll-mt-20">
         <div className="max-w-3xl mx-auto px-8">
-          <div className="bg-white p-12 rounded-3xl shadow-xl paper-texture border border-secondary/5">
-            <div className="text-center mb-10">
-              <h2 className="text-3xl font-serif text-secondary font-bold mb-3">Event Inquiry</h2>
-              <p className="text-on-surface-variant font-medium opacity-70">Let us help you design the perfect confection for your event.</p>
-            </div>
-            
-            <form className="space-y-8" onSubmit={e => e.preventDefault()}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-widest text-secondary/60">Name</label>
-                  <input className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all placeholder:text-stone-300 font-medium" placeholder="Your Full Name" type="text"/>
+          <div className="bg-white p-12 rounded-3xl shadow-xl paper-texture border border-secondary/5 min-h-[500px] flex flex-col justify-center">
+            {isSubmitted ? (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-center space-y-6 py-12"
+              >
+                <div className="inline-flex items-center justify-center w-24 h-24 bg-primary-container text-secondary rounded-full mb-4">
+                  <CheckCircle className="w-12 h-12" />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-widest text-secondary/60">Email</label>
-                  <input className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all placeholder:text-stone-300 font-medium" placeholder="email@address.com" type="email"/>
+                <h3 className="text-4xl font-serif text-secondary font-bold">Inquiry Sent</h3>
+                <p className="text-lg text-on-surface-variant font-medium opacity-80 max-w-lg mx-auto">
+                  Thank you for reaching out. Our artisans will review your vision and be in touch within 24 hours.
+                </p>
+                <div className="mt-8">
+                  <button 
+                    onClick={() => setView('home')}
+                    className="text-sm font-bold uppercase tracking-widest text-secondary hover:opacity-70 transition-opacity"
+                  >
+                    Return to home
+                  </button>
                 </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-widest text-secondary/60">Event Date</label>
-                  <input className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all font-medium" type="date"/>
+              </motion.div>
+            ) : (
+              <>
+                <div className="text-center mb-10">
+                  <h2 className="text-3xl font-serif text-secondary font-bold mb-3">Event Inquiry</h2>
+                  <p className="text-on-surface-variant font-medium opacity-70">Let us help you design the perfect confection for your event.</p>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-widest text-secondary/60">Occasion Type</label>
-                  <select className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all font-medium appearance-none">
-                    <option>Wedding</option>
-                    <option>Birthday</option>
-                    <option>Corporate Event</option>
-                    <option>Anniversary</option>
-                    <option>Other Milestone</option>
-                  </select>
-                </div>
-              </div>
+                
+                <form className="space-y-8" onSubmit={handleInquirySubmit}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase tracking-widest text-secondary/60">Name</label>
+                      <input required className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all placeholder:text-stone-300 font-medium" placeholder="Your Full Name" type="text"/>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase tracking-widest text-secondary/60">Email</label>
+                      <input required className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all placeholder:text-stone-300 font-medium" placeholder="email@address.com" type="email"/>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase tracking-widest text-secondary/60">Event Date</label>
+                      <input required className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all font-medium" type="date"/>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase tracking-widest text-secondary/60">Occasion Type</label>
+                      <select className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all font-medium appearance-none">
+                        <option>Wedding</option>
+                        <option>Birthday</option>
+                        <option>Corporate Event</option>
+                        <option>Anniversary</option>
+                        <option>Other Milestone</option>
+                      </select>
+                    </div>
+                  </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-widest text-secondary/60">Tell us about your vision</label>
-                <textarea className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all placeholder:text-stone-300 font-medium h-40 resize-none" placeholder="Guest count, flavor preferences, theme details..."></textarea>
-              </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-secondary/60">Tell us about your vision</label>
+                    <textarea required className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all placeholder:text-stone-300 font-medium h-40 resize-none" placeholder="Guest count, flavor preferences, theme details..."></textarea>
+                  </div>
 
-              <div className="flex justify-center pt-6">
-                <button className="bg-secondary text-white px-16 py-5 rounded-xl font-bold tracking-[0.2em] hover:bg-stone-800 transition-all shadow-xl uppercase text-xs" type="submit">
-                  Send Inquiry
-                </button>
-              </div>
-            </form>
+                  <div className="flex justify-center pt-6">
+                    <button className="bg-secondary text-white px-16 py-5 rounded-xl font-bold tracking-[0.2em] hover:bg-stone-800 transition-all shadow-xl uppercase text-xs" type="submit">
+                      Send Inquiry
+                    </button>
+                  </div>
+                </form>
+              </>
+            )}
           </div>
         </div>
       </section>

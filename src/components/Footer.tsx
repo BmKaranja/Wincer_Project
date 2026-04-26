@@ -4,6 +4,12 @@ export default function Footer() {
   return (
     <footer className="bg-primary-container dark:bg-stone-950 border-t border-stone-200 dark:border-stone-800 transition-opacity mt-auto">
       <div className="flex flex-col md:flex-row justify-between items-center w-full px-12 py-16 gap-8 max-w-7xl mx-auto">
+        {/* 
+          ==========================================
+          FOOTER DETAIL SETTINGS
+          Change the copyright and brand name here
+          ========================================== 
+        */}
         <div className="space-y-2 text-center md:text-left">
           <div className="text-lg font-serif italic text-secondary">Luxe Confections</div>
           <p className="font-serif text-sm tracking-wide text-on-surface-variant opacity-90">

@@ -9,6 +9,7 @@ import Search from './views/Search';
 import Account from './views/Account';
 import Story from './views/Story';
 import Checkout from './views/Checkout';
+import Admin from './views/Admin';
 import { AnimatePresence, motion } from 'motion/react';
 
 export default function App() {
@@ -16,6 +17,7 @@ export default function App() {
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [cart, setCart] = useState<any[]>([]);
+  const [user, setUser] = useState<{email: string; role: 'user' | 'admin'} | null>(null);
 
   const handleNav = (newView: string) => {
     if (newView === 'customizer' && view !== 'customizer') {
@@ -24,6 +26,7 @@ export default function App() {
     }
     setView(newView);
   };
+
 
   const handleSelectProduct = (product: any) => {
     setSelectedProduct(product);
@@ -147,7 +150,17 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <Account />
+              <Account user={user} setUser={setUser} setView={handleNav} />
+            </motion.div>
+          )}
+          {view === 'admin' && (
+            <motion.div 
+              key="admin"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <Admin user={user} setView={handleNav} />
             </motion.div>
           )}
         </AnimatePresence>

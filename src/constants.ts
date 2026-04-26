@@ -1,5 +1,15 @@
+// ==========================================
+// CAKEHOUSE SETTINGS & DATA
+// Modify these variables to update the details 
+// and offerings of your cakehouse
+// ==========================================
+
+// To change or add new categories to the catalog, update this array
 export const CATEGORIES = ["Chocolate", "Vanilla", "Red Velvet", "Fruit"];
 
+// To change the cakes enlisted in the store, modify this array.
+// Each object represents a different cake offering.
+// You can change prices, titles, descriptions, images, tags, and default customizer settings here.
 export const PRODUCTS = [
   {
     id: 1,
