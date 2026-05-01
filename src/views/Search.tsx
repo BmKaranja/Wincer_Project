@@ -1,19 +1,18 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search as SearchIcon, Wand2 } from 'lucide-react';
-import { PRODUCTS } from '../constants';
 
-export default function Search({ setView, onSelect }: { setView: (v: string) => void, onSelect: (p: any) => void }) {
+export default function Search({ setView, onSelect, cakes = [] }: { setView: (v: string) => void, onSelect: (p: any) => void, cakes?: any[] }) {
   const [query, setQuery] = useState('');
 
   const results = useMemo(() => {
     if (!query.trim()) return [];
     const lowerQuery = query.toLowerCase();
-    return PRODUCTS.filter(p => 
+    return cakes.filter(p => 
       p.title.toLowerCase().includes(lowerQuery) || 
       p.desc.toLowerCase().includes(lowerQuery)
     );
-  }, [query]);
+  }, [query, cakes]);
 
   return (
     <motion.main 
@@ -113,7 +112,7 @@ export default function Search({ setView, onSelect }: { setView: (v: string) => 
             className="text-center py-20"
           >
             <div className="flex flex-wrap justify-center gap-4 max-w-2xl mx-auto">
-              {['Signature', 'Vegan', 'Chocolate', 'Berry', 'Wedding', 'Artisan'].map(term => (
+              {['Signature', 'Vegan', 'Chocolate', 'Berry', 'Wedding', 'Custom'].map(term => (
                 <button 
                   key={term}
                   onClick={() => setQuery(term)}

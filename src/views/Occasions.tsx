@@ -1,17 +1,43 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Utensils, Brush, Truck, CheckCircle } from 'lucide-react';
+import { db } from '../firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function Occasions({ setView }: { setView: (v: string) => void }) {
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
   
-  const handleInquirySubmit = (e: React.FormEvent) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    eventDate: '',
+    occasionType: 'Wedding',
+    cakeDetails: '',
+    vision: ''
+  });
+
+  const handleInquirySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitted(true);
-    // In a real app we would send the form data here
-    setTimeout(() => {
-      setView('home');
-    }, 4000);
+    setIsSubmitting(true);
+    
+    try {
+      await addDoc(collection(db, 'inquiries'), {
+        ...formData,
+        status: 'Pending',
+        createdAt: serverTimestamp()
+      });
+      setIsSubmitted(true);
+      setTimeout(() => {
+        setView('home');
+      }, 4000);
+    } catch (err) {
+      console.error(err);
+      setErrorMsg('Failed to send inquiry. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const collections = [
@@ -76,7 +102,7 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
       {/* Curated Collections */}
       <section className="py-24 max-w-7xl mx-auto px-8">
         <div className="text-center mb-16">
-          <span className="text-xs font-bold uppercase tracking-[0.3em] text-secondary mb-4 block">Artisanal Selection</span>
+          <span className="text-xs font-bold uppercase tracking-[0.3em] text-secondary mb-4 block">Event Catering</span>
           <h2 className="text-4xl font-serif text-secondary">Collections for Every Milestone</h2>
         </div>
         
@@ -154,7 +180,7 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
         <div className="text-center mb-16">
           <h2 className="text-4xl font-serif text-secondary font-bold">Celebration Gallery</h2>
           <p className="text-lg text-on-surface-variant max-w-xl mx-auto mt-4 opacity-80">
-            Capturing the moments of joy and elegance where Luxe Confections took center stage.
+            Capturing the moments of joy and elegance where Wincer Cake House took center stage.
           </p>
         </div>
         
@@ -196,7 +222,7 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
                 </div>
                 <h3 className="text-4xl font-serif text-secondary font-bold">Inquiry Sent</h3>
                 <p className="text-lg text-on-surface-variant font-medium opacity-80 max-w-lg mx-auto">
-                  Thank you for reaching out. Our artisans will review your vision and be in touch within 24 hours.
+                  Thank you for reaching out. Our team will review your order details and respond via WhatsApp shortly.
                 </p>
                 <div className="mt-8">
                   <button 
@@ -215,25 +241,30 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
                 </div>
                 
                 <form className="space-y-8" onSubmit={handleInquirySubmit}>
+                  {errorMsg && (
+                    <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-medium border border-red-100">
+                      {errorMsg}
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-2">
                       <label className="text-xs font-bold uppercase tracking-widest text-secondary/60">Name</label>
-                      <input required className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all placeholder:text-stone-300 font-medium" placeholder="Your Full Name" type="text"/>
+                      <input required className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all placeholder:text-stone-300 font-medium" placeholder="Your Full Name" type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase tracking-widest text-secondary/60">Email</label>
-                      <input required className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all placeholder:text-stone-300 font-medium" placeholder="email@address.com" type="email"/>
+                      <label className="text-xs font-bold uppercase tracking-widest text-secondary/60">Phone Number</label>
+                      <input required className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all placeholder:text-stone-300 font-medium" placeholder="07XX XXX XXX" type="text" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
                     </div>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-2">
                       <label className="text-xs font-bold uppercase tracking-widest text-secondary/60">Event Date</label>
-                      <input required className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all font-medium" type="date"/>
+                      <input required className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all font-medium" type="date" value={formData.eventDate} onChange={e => setFormData({...formData, eventDate: e.target.value})} />
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-bold uppercase tracking-widest text-secondary/60">Occasion Type</label>
-                      <select className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all font-medium appearance-none">
+                      <select className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all font-medium appearance-none" value={formData.occasionType} onChange={e => setFormData({...formData, occasionType: e.target.value})}>
                         <option>Wedding</option>
                         <option>Birthday</option>
                         <option>Corporate Event</option>
@@ -244,13 +275,18 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
                   </div>
 
                   <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-secondary/60">Cake Details</label>
+                    <textarea required className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all placeholder:text-stone-300 font-medium h-24 resize-none" placeholder="E.g., 2 tiers, chocolate fudge, semi-naked finish..." value={formData.cakeDetails} onChange={e => setFormData({...formData, cakeDetails: e.target.value})}></textarea>
+                  </div>
+
+                  <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-widest text-secondary/60">Tell us about your vision</label>
-                    <textarea required className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all placeholder:text-stone-300 font-medium h-40 resize-none" placeholder="Guest count, flavor preferences, theme details..."></textarea>
+                    <textarea required className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all placeholder:text-stone-300 font-medium h-40 resize-none" placeholder="Guest count, theme details, inspiration..." value={formData.vision} onChange={e => setFormData({...formData, vision: e.target.value})}></textarea>
                   </div>
 
                   <div className="flex justify-center pt-6">
-                    <button className="bg-secondary text-white px-16 py-5 rounded-xl font-bold tracking-[0.2em] hover:bg-stone-800 transition-all shadow-xl uppercase text-xs" type="submit">
-                      Send Inquiry
+                    <button disabled={isSubmitting} className="bg-secondary text-white px-16 py-5 rounded-xl font-bold tracking-[0.2em] hover:bg-stone-800 transition-all shadow-xl uppercase text-xs disabled:opacity-50" type="submit">
+                      {isSubmitting ? 'Sending...' : 'Send Inquiry'}
                     </button>
                   </div>
                 </form>

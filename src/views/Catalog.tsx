@@ -2,14 +2,14 @@ import { motion } from 'motion/react';
 import { useState, useMemo } from 'react';
 import { Search, ChevronLeft, ChevronRight, Wand2 } from 'lucide-react';
 
-import { CATEGORIES, PRODUCTS } from '../constants';
+import { CATEGORIES } from '../constants';
 
-export default function Catalog({ setView, onSelect }: { setView: (v: string) => void, onSelect?: (p: any) => void }) {
+export default function Catalog({ setView, onSelect, cakes = [] }: { setView: (v: string) => void, onSelect?: (p: any) => void, cakes?: any[] }) {
   const categories = CATEGORIES;
   
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedDietary, setSelectedDietary] = useState<string[]>([]);
-  const [priceLimit, setPriceLimit] = useState<number>(300);
+  const [priceLimit, setPriceLimit] = useState<number>(10000);
 
   const toggleCategory = (cat: string) => {
     setSelectedCategories(prev => 
@@ -24,8 +24,8 @@ export default function Catalog({ setView, onSelect }: { setView: (v: string) =>
   };
 
   const filteredProducts = useMemo(() => {
-    return PRODUCTS.filter(p => {
-      // Parse price (e.g. "$85.00" to 85)
+    return cakes.filter(p => {
+      // Parse price (e.g. "Kshs. 4500" to 4500)
       const numPrice = parseFloat(p.price.replace(/[^0-9.]/g, ''));
       if (numPrice > priceLimit) return false;
 
@@ -66,7 +66,7 @@ export default function Catalog({ setView, onSelect }: { setView: (v: string) =>
       <div className="mb-16 text-center">
         <h1 className="text-5xl font-serif text-secondary mb-4">The Collection</h1>
         <p className="text-xl text-on-surface-variant max-w-2xl mx-auto opacity-80 font-sans">
-          Discover our handcrafted masterpieces, where artisanal precision meets the finest seasonal ingredients.
+          Discover our handcrafted masterpieces and custom cakes for all occasions, made fresh with the finest ingredients.
         </p>
       </div>
 
@@ -117,18 +117,18 @@ export default function Catalog({ setView, onSelect }: { setView: (v: string) =>
               <div>
                 <div className="flex justify-between mb-4">
                   <span className="text-sm font-bold">Price Range</span>
-                  <span className="text-sm font-medium text-secondary">Up to ${priceLimit}</span>
+                  <span className="text-sm font-medium text-secondary">Up to Kshs. {priceLimit}</span>
                 </div>
                 <input 
                   type="range" 
-                  min="40" max="300" step="10" 
+                  min="2000" max="15000" step="500" 
                   value={priceLimit}
                   onChange={(e) => setPriceLimit(Number(e.target.value))}
                   className="w-full h-1.5 bg-secondary/10 rounded-lg appearance-none cursor-pointer accent-secondary" 
                 />
                 <div className="flex justify-between text-[10px] uppercase font-bold text-on-surface-variant mt-2 tracking-widest">
-                  <span>$40</span>
-                  <span>$300+</span>
+                  <span>Kshs. 2000</span>
+                  <span>Kshs. 15000+</span>
                 </div>
               </div>
             </div>
@@ -166,15 +166,17 @@ export default function Catalog({ setView, onSelect }: { setView: (v: string) =>
                   </div>
                   <p className="text-sm text-on-surface-variant mb-6 line-clamp-2 leading-relaxed opacity-80">{p.desc}</p>
                   
-                  <div className="mb-8 space-y-2">
-                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">
-                      <span>Richness</span>
-                      <span className="text-secondary">{p.gauge}</span>
+                  {(p.gauge || p.gaugeVal) && (
+                    <div className="mb-8 space-y-2">
+                      <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">
+                        <span>Richness</span>
+                        <span className="text-secondary">{p.gauge}</span>
+                      </div>
+                      <div className="h-1 bg-secondary/10 rounded-full overflow-hidden">
+                        <div className={`h-full bg-secondary ${p.gaugeVal}`}></div>
+                      </div>
                     </div>
-                    <div className="h-1 bg-secondary/10 rounded-full overflow-hidden">
-                      <div className={`h-full bg-secondary ${p.gaugeVal}`}></div>
-                    </div>
-                  </div>
+                  )}
                   
                   <button 
                     onClick={() => onSelect ? onSelect(p) : setView('customizer')}
@@ -195,7 +197,7 @@ export default function Catalog({ setView, onSelect }: { setView: (v: string) =>
                 onClick={() => {
                   setSelectedCategories([]);
                   setSelectedDietary([]);
-                  setPriceLimit(300);
+                  setPriceLimit(10000);
                 }}
                 className="mt-6 px-6 py-2 border-2 border-secondary/20 rounded-full font-bold uppercase tracking-widest text-xs hover:bg-secondary hover:text-white transition-all text-secondary"
               >

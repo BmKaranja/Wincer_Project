@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './views/Home';
@@ -11,13 +11,84 @@ import Story from './views/Story';
 import Checkout from './views/Checkout';
 import Admin from './views/Admin';
 import { AnimatePresence, motion } from 'motion/react';
+import { auth, db } from './firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function App() {
   const [view, setView] = useState('home');
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [cart, setCart] = useState<any[]>([]);
-  const [user, setUser] = useState<{email: string; role: 'user' | 'admin'} | null>(null);
+  const [user, setUser] = useState<any>(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
+  const [cakes, setCakes] = useState<any[]>([]);
+
+  useEffect(() => {
+    import('firebase/firestore').then(({ collection, onSnapshot, getDocs, updateDoc, doc }) => {
+      const unsub = onSnapshot(collection(db, 'cakes'), (snap) => {
+        setCakes(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      }, (err) => console.error("Error fetching cakes:", err));
+      
+      // Auto-migrate any existing $ prices to Kshs.
+      if (user && user.role === 'admin') {
+        getDocs(collection(db, 'cakes')).then(snap => {
+          snap.docs.forEach(d => {
+            const data = d.data();
+            if (data.price && typeof data.price === 'string' && data.price.includes('$')) {
+              // Extract number and convert
+              const numMatch = data.price.match(/\d+/);
+              if (numMatch) {
+                const convertedValue = parseInt(numMatch[0]) * 130;
+                const newPrice = `Kshs. ${convertedValue}`;
+                updateDoc(doc(db, 'cakes', d.id), { price: newPrice }).catch(console.error);
+              }
+            }
+          });
+        });
+      }
+      return () => unsub();
+    });
+  }, [user]);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        // user is signed in, get their role from firestore
+        try {
+          const userDocRef = doc(db, 'users', currentUser.uid);
+          const userDoc = await getDoc(userDocRef);
+          if (userDoc.exists()) {
+            let userData = userDoc.data();
+            if ((currentUser.email?.toLowerCase() === 'bmkaranja001@gmail.com' || currentUser.email?.toLowerCase() === 'medillin254@gmail.com') && userData.role !== 'admin') {
+              userData.role = 'admin';
+              await setDoc(userDocRef, { role: 'admin' }, { merge: true });
+            }
+            setUser({ ...userData, uid: currentUser.uid });
+          } else {
+            // New user, create them (with 'user' role by default unless bmkaranja001@gmail.com)
+            const role = (currentUser.email?.toLowerCase() === 'bmkaranja001@gmail.com' || currentUser.email?.toLowerCase() === 'medillin254@gmail.com') ? 'admin' : 'user';
+            const newUser = {
+              email: currentUser.email || '',
+              name: currentUser.displayName || 'New User',
+              role,
+              joinedAt: serverTimestamp(),
+              ordersCount: 0
+            };
+            await setDoc(userDocRef, newUser);
+            setUser({ ...newUser, uid: currentUser.uid });
+          }
+        } catch (err) {
+          console.error("Error fetching user data:", err);
+          setUser({ email: currentUser.email, role: 'user', uid: currentUser.uid }); // Fallback
+        }
+      } else {
+        setUser(null);
+      }
+      setLoadingAuth(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleNav = (newView: string) => {
     if (newView === 'customizer' && view !== 'customizer') {
@@ -56,6 +127,14 @@ export default function App() {
 
   const clearCart = () => setCart([]);
 
+  if (loadingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-surface">
+        <p className="text-secondary font-serif text-xl animate-pulse">Summoning...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col selection:bg-secondary/20 selection:text-secondary">
       <Header currentView={view} setView={handleNav} cartCount={cart.length} />
@@ -79,7 +158,7 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <Catalog setView={handleNav} onSelect={handleSelectProduct} />
+              <Catalog setView={handleNav} onSelect={handleSelectProduct} cakes={cakes} />
             </motion.div>
           )}
           {view === 'customizer' && (
@@ -94,6 +173,7 @@ export default function App() {
                 selectedProduct={selectedProduct} 
                 onAddToCart={addToCart} 
                 editingItem={editingItem}
+                cakes={cakes}
               />
             </motion.div>
           )}
@@ -130,6 +210,7 @@ export default function App() {
                 onOrderPlaced={clearCart} 
                 onEdit={handleEditItem}
                 onRemove={removeFromCart}
+                user={user}
               />
             </motion.div>
           )}
@@ -140,7 +221,7 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <Search setView={handleNav} onSelect={handleSelectProduct} />
+              <Search setView={handleNav} onSelect={handleSelectProduct} cakes={cakes} />
             </motion.div>
           )}
           {view === 'account' && (

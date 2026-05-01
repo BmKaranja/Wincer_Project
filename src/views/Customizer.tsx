@@ -1,12 +1,11 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, Calendar, Check, Wand2 } from 'lucide-react';
-import { PRODUCTS } from '../constants';
 
-export default function Customizer({ setView, selectedProduct, onAddToCart, editingItem }: { setView: (v: string) => void, selectedProduct?: any, onAddToCart?: (item: any) => void, editingItem?: any }) {
+export default function Customizer({ setView, selectedProduct, onAddToCart, editingItem, cakes = [] }: { setView: (v: string) => void, selectedProduct?: any, onAddToCart?: (item: any) => void, editingItem?: any, cakes?: any[] }) {
   const [internalBaseProduct, setInternalBaseProduct] = useState<any>(selectedProduct);
-  const [size, setSize] = useState('6"');
-  const [sponge, setSponge] = useState('Vanilla Bean');
+  const [size, setSize] = useState('1 kg');
+  const [sponge, setSponge] = useState('Vanilla');
   const [filling, setFilling] = useState('Chantilly Cream');
   const [frosting, setFrosting] = useState('Smooth Silk');
   const [toppings, setToppings] = useState<string[]>([]);
@@ -31,7 +30,7 @@ export default function Customizer({ setView, selectedProduct, onAddToCart, edit
       if (defaults.message) setMessage(defaults.message);
     } else if (internalBaseProduct) {
       // Basic defaults if no custom defaults provided for this base cake
-      setSponge('Vanilla Bean');
+      setSponge('Vanilla');
       setFilling('Chantilly Cream');
       setFrosting('Smooth Silk');
       setToppings([]);
@@ -39,16 +38,31 @@ export default function Customizer({ setView, selectedProduct, onAddToCart, edit
     }
   }, [internalBaseProduct, editingItem]);
 
+  const parsedBasePrice = useMemo(() => {
+    if (editingItem && editingItem.basePrice) {
+      return editingItem.basePrice;
+    }
+    if (internalBaseProduct && internalBaseProduct.price) {
+      const match = String(internalBaseProduct.price).match(/\d+/);
+      if (match) return parseInt(match[0], 10);
+    }
+    return 3000;
+  }, [internalBaseProduct, editingItem]);
+
   const sizes = [
-    { label: '6"', sub: 'Serves 4-6', price: 45 },
-    { label: '8"', sub: 'Serves 8-10', price: 65 },
-    { label: '10"', sub: 'Serves 12-16', price: 85 }
+    { label: '1 kg', sub: 'Serves ~10', price: parsedBasePrice },
+    { label: '2 kg', sub: 'Serves ~20', price: Math.floor(parsedBasePrice * 1.6) },
+    { label: '3 kg', sub: 'Serves ~30', price: Math.floor(parsedBasePrice * 2.2) },
+    { label: '5 kg', sub: 'Serves ~50', price: Math.floor(parsedBasePrice * 3.2) }
   ];
 
   const spongeOptions = [
-    { name: 'Vanilla Bean', sweetness: 70, richness: 40, texture: 80 },
-    { name: 'Rich Chocolate', sweetness: 60, richness: 90, texture: 70 },
-    { name: 'Lemon Zest', sweetness: 50, richness: 30, texture: 60 },
+    { name: 'Vanilla', sweetness: 70, richness: 40, texture: 80 },
+    { name: 'Chocolate', sweetness: 60, richness: 90, texture: 70 },
+    { name: 'Marble', sweetness: 65, richness: 65, texture: 75 },
+    { name: 'Red Velvet', sweetness: 60, richness: 75, texture: 80 },
+    { name: 'Amarula', sweetness: 50, richness: 85, texture: 65 },
+    { name: 'Pina Colada', sweetness: 75, richness: 50, texture: 70 },
   ];
 
   const toggleTopping = (t: string) => {
@@ -56,19 +70,20 @@ export default function Customizer({ setView, selectedProduct, onAddToCart, edit
   };
 
   const totals = useMemo(() => {
-    const basePrice = sizes.find(s => s.label === size)?.price || 45;
+    const basePrice = sizes.find(s => s.label === size)?.price || parsedBasePrice;
     const toppingPrice = toppings.reduce((acc, t) => {
-      const match = t.match(/\(\+\s*\$(\d+)\)/);
+      const match = t.match(/\(\+\s*Kshs\.\s*(\d+)\)/);
       return acc + (match ? parseInt(match[1], 10) : 0);
     }, 0);
-    return basePrice + toppingPrice + 10; // +10 for artisan base
-  }, [size, toppings]);
+    return basePrice + toppingPrice; // Base combined calculation
+  }, [size, toppings, sizes, parsedBasePrice]);
 
   const handleReserve = () => {
     const cartItem = {
       id: Date.now(),
-      name: internalBaseProduct?.name || internalBaseProduct?.title || 'Custom Artisan Cake',
+      name: internalBaseProduct?.name || internalBaseProduct?.title || 'Custom Wincer Cake',
       img: internalBaseProduct?.img || "https://lh3.googleusercontent.com/aida-public/AB6AXuBB2T0GrzGb7HJOw35EWx672_lFRLrC7Q6ntjSuD-p2bCRYLAwOBQRj6OCFsnuyNY11yZw2AK0UqY91-Vy0tWh81GSYedNIZT5QGzL3n-WR5e1gZVK-baBPx0CmXHeB1GaAQUug0aSrbi6bsQmLxLEOLPdly_9nZJHf6E6j-NmrJ4AHBGAqGn9DquM_CtQ4Y5w4bbRmL7g3dxBlG4nXx8HBqOE1QoxrCq8bLORq3GNkcjKLz5I2LxXThlLkuhlMzebT0YcFo9SGyl4",
+      basePrice: parsedBasePrice,
       config: {
         size,
         sponge,
@@ -90,7 +105,7 @@ export default function Customizer({ setView, selectedProduct, onAddToCart, edit
     const selectedSponge = spongeOptions.find(s => s.name === sponge) || spongeOptions[0];
     let richnessBonus = 0;
     if (filling.includes('Ganache') || filling.includes('Caramel')) richnessBonus += 20;
-    if (toppings.includes('Macarons (+ $10)')) richnessBonus += 10;
+    if (toppings.includes('Macarons (+ Kshs. 1000)')) richnessBonus += 10;
     
     return {
       sweetness: Math.min(100, selectedSponge.sweetness + (toppings.length * 2)),
@@ -115,7 +130,7 @@ export default function Customizer({ setView, selectedProduct, onAddToCart, edit
         </section>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {PRODUCTS.map((p, idx) => (
+          {cakes.map((p, idx) => (
             <motion.div 
               key={p.id}
               initial={{ y: 20, opacity: 0 }}
@@ -155,7 +170,7 @@ export default function Customizer({ setView, selectedProduct, onAddToCart, edit
       <section className="mb-12 text-center">
         <h1 className="text-5xl font-serif text-secondary mb-4">Design Your Masterpiece</h1>
         <p className="text-xl text-on-surface-variant max-w-2xl mx-auto opacity-80 leading-relaxed font-sans">
-          Every celebration deserves a unique touch. Follow our artisan guide to create a bespoke confection tailored to your exquisite taste.
+          Every celebration deserves a unique touch. Follow our guide to create a bespoke custom cake tailored to your preferences.
         </p>
       </section>
 
@@ -240,7 +255,7 @@ export default function Customizer({ setView, selectedProduct, onAddToCart, edit
         <div className="lg:col-span-5 space-y-8">
           <section className="bg-white rounded-2xl p-8 border border-secondary/5 shadow-sm">
             <h3 className="text-xl font-serif text-secondary mb-6 font-bold">1. Select Size</h3>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
               {sizes.map(s => (
                 <button 
                   key={s.label}
@@ -253,7 +268,7 @@ export default function Customizer({ setView, selectedProduct, onAddToCart, edit
                 >
                   <span className={`block text-2xl font-serif font-bold ${size === s.label ? 'text-secondary' : 'text-on-surface'}`}>{s.label}</span>
                   <span className="block text-[10px] uppercase tracking-widest font-bold text-on-surface-variant/60 mt-1">{s.sub}</span>
-                  <span className={`block font-bold mt-4 ${size === s.label ? 'text-secondary' : 'text-on-surface'}`}>${s.price}</span>
+                  <span className={`block font-bold mt-4 ${size === s.label ? 'text-secondary' : 'text-on-surface'}`}>Kshs. {s.price}</span>
                 </button>
               ))}
             </div>
@@ -322,9 +337,9 @@ export default function Customizer({ setView, selectedProduct, onAddToCart, edit
           </section>
 
           <section className="bg-white rounded-2xl p-8 border border-secondary/5 shadow-sm">
-            <h3 className="text-xl font-serif text-secondary mb-6 font-bold">4. Artisan Toppings</h3>
+            <h3 className="text-xl font-serif text-secondary mb-6 font-bold">4. Custom Toppings</h3>
             <div className="flex flex-wrap gap-2">
-              {['Gold Leaf (+ $5)', 'Fresh Berries (+ $8)', 'Edible Florals (+ $12)', 'Macarons (+ $10)'].map(topping => (
+              {['Gold Leaf (+ Kshs. 500)', 'Fresh Berries (+ Kshs. 800)', 'Edible Florals (+ Kshs. 1200)', 'Macarons (+ Kshs. 1000)'].map(topping => (
                 <button 
                   key={topping} 
                   onClick={() => toggleTopping(topping)}
@@ -364,15 +379,15 @@ export default function Customizer({ setView, selectedProduct, onAddToCart, edit
             </p>
           </section>
 
-          <div className="p-10 bg-secondary text-on-secondary rounded-[2.5rem] macaron-raised shadow-2xl">
-            <div className="flex justify-between items-center mb-8">
+          <div className="p-8 md:p-10 bg-secondary text-on-secondary rounded-[2.5rem] macaron-raised shadow-2xl">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
               <div>
-                <span className="block text-[10px] font-bold uppercase tracking-[0.4em] opacity-70 mb-2">Artisan Evaluation</span>
-                <span className="text-5xl font-serif font-bold text-white">${totals}.00</span>
+                <span className="block text-[10px] font-bold uppercase tracking-[0.4em] opacity-70 mb-2">Estimate</span>
+                <span className="text-4xl md:text-5xl font-serif font-bold text-white">Kshs. {totals}</span>
               </div>
               <button 
                 onClick={handleReserve}
-                className="bg-white text-secondary px-10 py-5 rounded-2xl font-bold uppercase tracking-widest text-xs hover:scale-105 active:scale-95 transition-all shadow-xl group"
+                className="w-full md:w-auto bg-white text-secondary px-10 py-5 rounded-2xl font-bold uppercase tracking-widest text-xs hover:scale-105 active:scale-95 transition-all shadow-xl group text-center"
               >
                 {editingItem ? 'Update Selection' : 'Place Your Order'}
               </button>

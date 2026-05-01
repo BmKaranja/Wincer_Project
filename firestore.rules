@@ -1,0 +1,134 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isAdmin() {
+      return request.auth != null && (
+        (request.auth.token.get('email', '') == 'bmkaranja001@gmail.com' || request.auth.token.get('email', '') == 'medillin254@gmail.com') ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
+
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidTimestamp(val) {
+      return val is number || val is timestamp;
+    }
+
+    // --- Users ---
+    function isValidUser(data) {
+      return data.keys().hasAll(['email', 'name', 'role', 'joinedAt', 'ordersCount']) &&
+             data.email is string && data.email.size() >= 3 && data.email.size() <= 100 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.role in ['user', 'admin'] &&
+             isValidTimestamp(data.joinedAt) &&
+             data.ordersCount is number;
+    }
+
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isValidId(userId) && isSignedIn() && request.auth.uid == userId && 
+                       isValidUser(incoming()) && incoming().keys().size() == 5 &&
+                       (incoming().role == 'user' || (incoming().role == 'admin' && request.auth.token.email == 'bmkaranja001@gmail.com')) && 
+                       (incoming().joinedAt == request.time || incoming().joinedAt == request.time.toMillis()) &&
+                       incoming().ordersCount == 0 &&
+                       incoming().email == request.auth.token.email;
+      allow update: if isValidId(userId) && isSignedIn() && isValidUser(incoming()) &&
+                       (
+                         (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'role', 'ordersCount'])) ||
+                         (request.auth.uid == userId && 
+                          incoming().diff(existing()).affectedKeys().hasOnly(['name']) &&
+                          incoming().role == existing().role &&
+                          incoming().joinedAt == existing().joinedAt &&
+                          incoming().ordersCount == existing().ordersCount &&
+                          incoming().email == existing().email)
+                       );
+      allow delete: if isValidId(userId) && isAdmin() && request.auth.uid != userId;
+    }
+
+    // --- Cakes ---
+    function isValidCake(data) {
+      return data.keys().hasAll(['title', 'price', 'desc', 'img', 'createdAt']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.price is string && data.price.size() > 0 && data.price.size() <= 50 &&
+             data.desc is string && data.desc.size() <= 1000 &&
+             data.img is string && data.img.size() <= 500 &&
+             isValidTimestamp(data.createdAt) &&
+             data.get('tag', '') is string && data.get('tag', '').size() <= 50 &&
+             data.get('gauge', '') is string && data.get('gauge', '').size() <= 50 &&
+             data.get('gaugeVal', '') is string && data.get('gaugeVal', '').size() <= 50;
+    }
+
+    match /cakes/{cakeId} {
+      allow get: if isValidId(cakeId);
+      allow list: if true;
+      allow create: if isValidId(cakeId) && isAdmin() && isValidCake(incoming()) && 
+                       (incoming().createdAt == request.time || incoming().createdAt == request.time.toMillis());
+      allow update: if isValidId(cakeId) && isAdmin() && isValidCake(incoming()) &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['title', 'price', 'desc', 'img', 'tag', 'gauge', 'gaugeVal']) &&
+                       incoming().createdAt == existing().createdAt;
+      allow delete: if isValidId(cakeId) && isAdmin();
+    }
+
+    // --- Orders ---
+    function isValidOrder(data) {
+      return data.keys().hasAll(['userId', 'customer', 'amount', 'status']) &&
+             data.userId is string && data.userId.size() > 0 && data.userId.size() <= 128 &&
+             data.customer is string && data.customer.size() > 0 && data.customer.size() <= 100 &&
+             data.amount is string && data.amount.size() > 0 && data.amount.size() <= 50 &&
+             data.status in ['Pending', 'Confirmed (Pending Balance)', 'Fully Paid', 'Preparing', 'Ready', 'Delivered', 'Cancelled'] &&
+             (data.get('paidAmount', '') is string) &&
+             (data.get('paymentMethod', '') is string) &&
+             (data.get('createdAt', 0) is number || data.get('createdAt', 0) is timestamp) &&
+             (data.get('deliveryDate', '') is string) &&
+             (data.get('cakeDetails', '') is string) &&
+             (data.get('cakeTitle', '') is string) &&
+             (data.get('gauge', '') is string) &&
+             (data.get('notes', '') is string);
+    }
+
+    match /orders/{orderId} {
+      allow get: if isValidId(orderId) && isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isValidId(orderId) && isValidOrder(incoming()) && 
+                       ((isSignedIn() && incoming().userId == request.auth.uid) || (!isSignedIn() && incoming().userId == 'guest')) &&
+                       incoming().status in ['Confirmed (Pending Balance)', 'Fully Paid', 'Pending'];
+      allow update: if isValidId(orderId) && isAdmin() && isValidOrder(incoming()) &&
+                       incoming().userId == existing().userId;
+      allow delete: if isValidId(orderId) && (isAdmin() || (isSignedIn() && resource.data.get('userId', '') == request.auth.uid));
+    }
+
+    // --- Inquiries ---
+    function isValidInquiry(data) {
+      return data.keys().hasAll(['name', 'phone', 'eventDate', 'occasionType', 'cakeDetails', 'status']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.phone is string && data.phone.size() >= 3 && data.phone.size() <= 100 &&
+             data.eventDate is string && data.eventDate.size() <= 50 &&
+             data.occasionType is string && data.occasionType.size() <= 100 &&
+             data.cakeDetails is string && data.cakeDetails.size() <= 1000 &&
+             (data.get('vision', '') is string) &&
+             data.status in ['Pending', 'Needs Reply', 'Resolved'] &&
+             (data.get('createdAt', 0) is number || data.get('createdAt', 0) is timestamp);
+    }
+
+    match /inquiries/{inquiryId} {
+      allow get: if isValidId(inquiryId) && isAdmin();
+      allow list: if isAdmin();
+      allow create: if isValidId(inquiryId) && isValidInquiry(incoming()) && 
+                       incoming().status == 'Pending';
+      allow update: if isValidId(inquiryId) && isAdmin() && isValidInquiry(incoming());
+      allow delete: if isValidId(inquiryId) && isAdmin();
+    }
+  }
+}

@@ -15,7 +15,7 @@ export default function Story({ setView }: { setView: (v: string) => void }) {
     },
     {
       title: "The Slow Method",
-      desc: "We allow our doughs to rest and our flavors to mature, respecting the natural timeline of artisanal baking.",
+      desc: "We allow our doughs to rest and our flavors to mature, respecting the natural timeline of custom baking.",
       icon: Hourglass
     }
   ];
@@ -32,13 +32,13 @@ export default function Story({ setView }: { setView: (v: string) => void }) {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
           <div className="lg:col-span-5 order-2 lg:order-1">
             <span className="text-sm font-bold text-secondary tracking-[0.3em] block mb-6 uppercase">Since 1994</span>
-            <h1 className="text-6xl font-serif text-secondary mb-8 font-bold leading-tight">The Artisan's Journey</h1>
+            <h1 className="text-6xl font-serif text-secondary mb-8 font-bold leading-tight">The Baker's Journey</h1>
             <p className="text-xl text-on-surface-variant mb-10 leading-relaxed font-sans opacity-80">
-              What began as a quiet obsession in a sun-drenched Provence kitchen has evolved into Luxe Confections. Our founder, Elara Vance, spent decades mastering the chemistry of sugar and the soul of flour, believing that every cake tells a story of patience and precision.
+              What began as a passion for creating personalized memories has evolved into Wincer Cake House. We've spent years mastering the craft of custom cake making here in Nairobi, believing that every cake tells a unique story of joy and celebration.
             </p>
             <div className="italic text-2xl font-serif text-secondary border-l-4 border-secondary/20 pl-8 py-4 relative">
               <Quote className="absolute -top-4 -left-2 w-8 h-8 text-secondary/10" />
-              "We don't just bake; we curate moments of edible art that honor the traditions of old-world pâtisserie."
+              "We don't just bake; we create customized masterpieces that bring your sweetest visions to life."
             </div>
           </div>
           <div className="lg:col-span-7 order-1 lg:order-2">

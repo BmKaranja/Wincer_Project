@@ -11,9 +11,9 @@ export default function Footer() {
           ========================================== 
         */}
         <div className="space-y-2 text-center md:text-left">
-          <div className="text-lg font-serif italic text-secondary">Luxe Confections</div>
+          <div className="text-lg font-serif italic text-secondary">Wincer Cake House</div>
           <p className="font-serif text-sm tracking-wide text-on-surface-variant opacity-90">
-            © 2024 Luxe Confections. Handcrafted with Artisanal Elegance.
+            © 2024 Wincer Cake House. Bespoke Custom Cakes.
           </p>
         </div>
         

@@ -11,7 +11,7 @@ export default function Home({ setView }: HomeProps) {
       id: 1,
       title: "Velvet Rose & Gold",
       desc: "A delicate floral sponge layered with honey-infused cream.",
-      price: "$85.00",
+      price: "Kshs. 4500",
       tag: "Signature",
       img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBb1L8IJiijBqS2ki1ohlCW5R62bWidyuUsiubjN2RVcmRQ5e6ndjixFB-P1DX2xcxQqdJ_eHWmlGn2Jh3Gl_Qomih3CY5XdgLZAQajOgN3Jz63iiutELsKEfBFvnblMOXhZfHDsGmdQP_FjuUZAvok_gPsSMoPzeWTbgvnzQHnIgWL5-82FMzJGiNA4LcyK7uI-0geEB0m678Y8ebmd5LX4lughk0n06flC4ldfNTQ_wTMuKDV_zNyudI-jAC6Sdiy-EEKXfeoQQk"
     },
@@ -19,7 +19,7 @@ export default function Home({ setView }: HomeProps) {
       id: 2,
       title: "Midnight Truffle",
       desc: "70% dark Belgian chocolate with a liquid ganache center.",
-      price: "$72.00",
+      price: "Kshs. 3800",
       tag: "Bestseller",
       img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBjek62U8aFug_XpnKMod3SKr001uTavF6oxi1fy2TjlYVjgor9GnyqoQRjDZRp8Rq5MEuZK-_X9KmknTBf43ZTScsrZDG9AncwClUknG2rO9rTROBoPu3drcC6gfHqlMCLQAnQCqwPhR2MCfrkS79pukpcJWsP2n_I1nUAB58_U7KZ1WWLg81IiIw6dq32DRM9pBoIoboLgFa94crJhQact07Z0LJYgVloG-4X7AIF8Ma3L5iGRyCb6AMMcsmu42UyQy6ja8fnC3Q"
     },
@@ -27,8 +27,8 @@ export default function Home({ setView }: HomeProps) {
       id: 3,
       title: "Pistachio Dream",
       desc: "Sicilian pistachio praline and light mascarpone mousse.",
-      price: "$94.00",
-      tag: "Artisan",
+      price: "Kshs. 5000",
+      tag: "Custom",
       img: "https://lh3.googleusercontent.com/aida-public/AB6AXuDaw-Rl5g2Ypm3RKPgFxOkvzGz-lUk3K5HcvMjDhN7oxMkxJdWkmguQTSp3l_073n86yZujlbDEzcpHdJIWMQHNFFiHrlKhArk-aWDI5k4EAmWmSzKG2OHc6MGe5jbBjOFKwAQXc49PkTZ0KV7d3kaSvGKkfsULs7CiASUQWRLy5jE-BSuhHevZlaxJZTgneLvl3hgbSByPnq7OOEFsLHlDXBWzHAeWqM8Uba_kocZEnpL89ZL-Ly_2j16S4TH0RxAmfK7-oVnLZhM"
     }
   ];
@@ -45,7 +45,7 @@ export default function Home({ setView }: HomeProps) {
         <div className="absolute inset-0 z-0">
           <img 
             alt="Signature tiered wedding cake" 
-            className="w-full h-full object-cover" 
+            className="w-full h-full object-cover object-top" 
             src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-FTzK65bL-u-Fp_raXiU__oU98C2J3HNvBcBf7nIdWsviqs4lb_sHK8WNskiMMYjQ1mify0h4QUZTIEtqyBb7XUo8JCcCjNQmueqJRjFjZxV4qHyK86tK1g7N4b_rIXtrG4_QD2wHmBpliE7QGu7VJgGgheP0TQmQ0HHipTDttoARAk7l24gtl0G_xQPV3JhfEzhDGmV06hj-7oWWSjmQFyO7SU0RySx7A9_6GyIuOic6DYLLzQhUGDWMeHT7Xw24LhDuxqzvjMg" 
           />
           <div className="absolute inset-0 bg-gradient-to-r from-stone-900/60 to-transparent"></div>
@@ -59,24 +59,24 @@ export default function Home({ setView }: HomeProps) {
             className="max-w-2xl text-white"
           >
             <span className="font-label-md tracking-[0.2em] uppercase mb-4 block text-primary-fixed-dim">
-              Est. 1984 — Artisan Craft
+              Nairobi — Wincer Cake House
             </span>
             <h1 className="text-6xl font-serif font-bold mb-6 leading-tight">
-              Artistry You <br /> Can Taste.
+              Bespoke Cakes <br /> You Can Taste.
             </h1>
             <p className="text-xl mb-8 text-stone-100 font-sans opacity-90 leading-relaxed">
-              Handcrafted with precision, our confections are designed to elevate your most cherished moments into unforgettable memories.
+              Handcrafted in Nairobi, our custom cakes are designed to elevate your weddings, birthdays, and baby showers.
             </p>
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               <button 
                 onClick={() => setView('catalog')}
-                className="bg-secondary text-on-secondary px-8 py-4 rounded-lg font-bold macaron-raised hover:scale-105 transition-transform"
+                className="bg-secondary text-on-secondary px-8 py-4 rounded-lg font-bold macaron-raised hover:scale-105 transition-transform w-full sm:w-auto"
               >
                 Explore Collections
               </button>
               <button 
                 onClick={() => setView('story')}
-                className="border-2 border-white text-white px-8 py-4 rounded-lg font-bold hover:bg-white/10 transition-colors"
+                className="border-2 border-white text-white px-8 py-4 rounded-lg font-bold hover:bg-white/10 transition-colors w-full sm:w-auto"
               >
                 Our Heritage
               </button>
@@ -187,9 +187,9 @@ export default function Home({ setView }: HomeProps) {
       <section className="py-24 max-w-7xl mx-auto px-8">
         <div className="bg-primary-container/30 rounded-3xl p-12 flex flex-col md:flex-row items-center gap-16 border border-secondary/10">
           <div className="w-full md:w-1/2">
-            <h2 className="text-4xl font-serif text-secondary mb-6">Our Artisan Philosophy</h2>
+            <h2 className="text-4xl font-serif text-secondary mb-6">Our Custom Philosophy</h2>
             <p className="text-xl text-on-surface-variant mb-10 italic leading-relaxed">
-              "We believe a cake is more than a dessert; it's a centerpiece of conversation and a vessel for memory."
+              "We believe every cake should be as unique as the person it's made for. From elegant tiers to whimsical designs, we do it all."
             </p>
             <div className="space-y-8">
               {[
@@ -239,7 +239,7 @@ export default function Home({ setView }: HomeProps) {
           <span className="font-bold tracking-[0.3em] text-primary-fixed-dim mb-4 block uppercase text-sm">Bespoke Creations</span>
           <h2 className="text-5xl font-serif mb-8">Craft Your Own Masterpiece.</h2>
           <p className="max-w-2xl mx-auto text-xl text-stone-400 mb-12 opacity-90 font-sans leading-relaxed">
-            Choose your base, infusion, and décor. Our artisans will bring your unique vision to life with uncompromising quality.
+            Choose your base, infusion, and décor. Our team will bring your unique vision to life with uncompromising quality.
           </p>
           <button 
             onClick={() => setView('customizer')}

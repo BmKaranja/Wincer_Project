@@ -1,0 +1,81 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A user in the system.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "joinedAt": { "type": "number", "description": "Timestamp in milliseconds" },
+        "ordersCount": { "type": "number" }
+      },
+      "required": ["email", "name", "role", "joinedAt", "ordersCount"]
+    },
+    "Cake": {
+      "title": "Cake",
+      "description": "A cake product in the catalog.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "price": { "type": "string" },
+        "desc": { "type": "string" },
+        "tag": { "type": "string" },
+        "gauge": { "type": "string" },
+        "gaugeVal": { "type": "string" },
+        "img": { "type": "string" },
+        "createdAt": { "type": "number", "description": "Timestamp in milliseconds" }
+      },
+      "required": ["title", "price", "desc", "img", "createdAt"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "A cake order.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "customer": { "type": "string" },
+        "amount": { "type": "string" },
+        "paidAmount": { "type": "string" },
+        "paymentMethod": { "type": "string" },
+        "status": { "type": "string", "enum": ["Pending", "Confirmed (Pending Balance)", "Fully Paid", "Preparing", "Delivered", "Cancelled"] },
+        "createdAt": { "type": "number", "description": "Timestamp in milliseconds" }
+      },
+      "required": ["userId", "customer", "amount", "paidAmount", "paymentMethod", "status", "createdAt"]
+    },
+    "Inquiry": {
+      "title": "Inquiry",
+      "description": "An event inquiry.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "eventDate": { "type": "string" },
+        "occasionType": { "type": "string" },
+        "vision": { "type": "string" },
+        "status": { "type": "string", "enum": ["Pending", "Needs Reply", "Resolved"] },
+        "createdAt": { "type": "number", "description": "Timestamp in milliseconds" }
+      },
+      "required": ["name", "email", "eventDate", "occasionType", "vision", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles. Managed by the users themselves and admins."
+    },
+    "/cakes/{cakeId}": {
+      "schema": { "$ref": "#/entities/Cake" },
+      "description": "Cake products. Modifiable only by admins."
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/Order" },
+      "description": "Cake orders."
+    },
+    "/inquiries/{inquiryId}": {
+      "schema": { "$ref": "#/entities/Inquiry" },
+      "description": "Event inquiries."
+    }
+  }
+}
