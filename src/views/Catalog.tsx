@@ -9,7 +9,7 @@ export default function Catalog({ setView, onSelect, cakes = [] }: { setView: (v
   
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedDietary, setSelectedDietary] = useState<string[]>([]);
-  const [priceLimit, setPriceLimit] = useState<number>(10000);
+  const [priceLimit, setPriceLimit] = useState<number>(25000);
 
   const toggleCategory = (cat: string) => {
     setSelectedCategories(prev => 
@@ -25,9 +25,22 @@ export default function Catalog({ setView, onSelect, cakes = [] }: { setView: (v
 
   const filteredProducts = useMemo(() => {
     return cakes.filter(p => {
-      // Parse price (e.g. "Kshs. 4500" to 4500)
-      const numPrice = parseFloat(p.price.replace(/[^0-9.]/g, ''));
-      if (numPrice > priceLimit) return false;
+      // Parse price (e.g. "Kshs. 4,500" or "Kshs. 4500" to 4500)
+      let numPrice = 0;
+      if (typeof p.price === 'number') {
+        numPrice = p.price;
+      } else if (typeof p.price === 'string') {
+        // Remove all non-digits to get the absolute numerical value
+        // This handles "5,000", "5.000", "Kshs 5000" correctly as 5000
+        const digits = p.price.replace(/\D/g, '');
+        if (digits) {
+          numPrice = parseInt(digits, 10);
+        }
+      }
+      
+      // If we found a valid number, check it against the limit.
+      // If no valid price found (numPrice is 0), we keep it visible by default.
+      if (numPrice > 0 && numPrice > priceLimit) return false;
 
       // Filter by category (flavor profile) - check if desc or title contains category if no categories array on product
       if (selectedCategories.length > 0) {
@@ -54,7 +67,7 @@ export default function Catalog({ setView, onSelect, cakes = [] }: { setView: (v
 
       return true;
     });
-  }, [priceLimit, selectedCategories, selectedDietary]);
+  }, [cakes, priceLimit, selectedCategories, selectedDietary]);
 
   return (
     <motion.main 
@@ -121,14 +134,14 @@ export default function Catalog({ setView, onSelect, cakes = [] }: { setView: (v
                 </div>
                 <input 
                   type="range" 
-                  min="2000" max="15000" step="500" 
+                  min="0" max="25000" step="100" 
                   value={priceLimit}
                   onChange={(e) => setPriceLimit(Number(e.target.value))}
                   className="w-full h-1.5 bg-secondary/10 rounded-lg appearance-none cursor-pointer accent-secondary" 
                 />
                 <div className="flex justify-between text-[10px] uppercase font-bold text-on-surface-variant mt-2 tracking-widest">
-                  <span>Kshs. 2000</span>
-                  <span>Kshs. 15000+</span>
+                  <span>Kshs. 0</span>
+                  <span>Kshs. 25000+</span>
                 </div>
               </div>
             </div>
