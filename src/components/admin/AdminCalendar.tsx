@@ -74,7 +74,7 @@ export default function AdminCalendar({ orders, inquiries }: { orders: any[], in
                 
                 <div className="flex flex-col gap-1">
                   {dayEvents.slice(0, 3).map((ev, i) => (
-                    <div key={i} className="bg-white border border-secondary/10 rounded-md p-1 px-2 text-[10px] truncate" title={`${ev.name || ev.customer}'s ${ev.occasionType || 'Order'}`}>
+                    <div key={i} className="bg-surface border border-secondary/10 rounded-md p-1 px-2 text-[10px] truncate" title={`${ev.name || ev.customer}'s ${ev.occasionType || 'Order'}`}>
                       <span className="font-bold text-secondary mr-1">{ev.name || ev.customer}</span>
                       <span className="text-secondary/60">({ev.occasionType || 'Order'})</span>
                     </div>

@@ -69,7 +69,7 @@ export default function Story({ setView }: { setView: (v: string) => void }) {
                 whileInView={{ y: 0, opacity: 1 }}
                 transition={{ delay: idx * 0.1 }}
                 viewport={{ once: true }}
-                className="flex flex-col items-center text-center p-10 bg-white rounded-3xl shadow-sm hover:shadow-xl transition-all duration-500 border border-secondary/5 group"
+                className="flex flex-col items-center text-center p-10 bg-surface-container rounded-3xl shadow-sm hover:shadow-xl transition-all duration-500 border border-secondary/5 group"
               >
                 <div className="w-20 h-20 bg-primary-container rounded-full flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
                   <item.icon className="text-secondary w-10 h-10" />

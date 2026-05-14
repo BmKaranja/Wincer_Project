@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search, ShoppingBag, User, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import ThemeToggle from './ThemeToggle';
 
 interface HeaderProps {
   currentView: string;
@@ -56,6 +57,7 @@ export default function Header({ currentView, setView, cartCount }: HeaderProps)
         </nav>
 
         <div className="flex items-center gap-4 md:gap-5 text-secondary">
+          <ThemeToggle />
           <button 
             onClick={() => handleNavClick('search')}
             className={`hover:scale-110 transition-transform active:scale-90 ${currentView === 'search' ? 'text-secondary font-bold' : ''}`}

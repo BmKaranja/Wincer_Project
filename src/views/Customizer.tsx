@@ -178,7 +178,7 @@ export default function Customizer({ setView, selectedProduct, onAddToCart, edit
         {/* Left: Preview Canvas */}
         <div className="lg:col-span-7 lg:sticky lg:top-32">
           <div className="bg-primary-container/20 rounded-2xl p-8 border border-secondary/5 overflow-hidden">
-            <div className="aspect-square relative flex items-center justify-center bg-white/60 rounded-xl shadow-inner border border-white overflow-hidden group">
+            <div className="aspect-square relative flex items-center justify-center bg-surface-container/60 rounded-xl shadow-inner border border-white/10 overflow-hidden group">
               <motion.img 
                 key={sponge}
                 initial={{ scale: 1.1, opacity: 0.8 }}
@@ -198,7 +198,7 @@ export default function Customizer({ setView, selectedProduct, onAddToCart, edit
                       initial={{ scale: 0.8, opacity: 0, y: 20 }}
                       animate={{ scale: 1, opacity: 1, y: 0 }}
                       exit={{ scale: 0.8, opacity: 0, y: 20 }}
-                      className="w-2/3 h-1/2 border-2 border-dashed border-secondary/30 rounded-full flex flex-col items-center justify-center bg-white/40 backdrop-blur-sm shadow-xl p-6 text-center"
+                      className="w-2/3 h-1/2 border-2 border-dashed border-secondary/30 rounded-full flex flex-col items-center justify-center bg-surface-container/40 backdrop-blur-sm shadow-xl p-6 text-center"
                     >
                       <Sparkles className="text-secondary w-8 h-8 mb-3" />
                       <p className="text-2xl font-serif text-secondary italic font-bold leading-tight">
@@ -216,7 +216,7 @@ export default function Customizer({ setView, selectedProduct, onAddToCart, edit
                     initial={{ x: -20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
                     key={t} 
-                    className="bg-white/80 backdrop-blur-md p-2 rounded-full shadow-sm border border-secondary/10"
+                    className="bg-surface-container/80 backdrop-blur-md p-2 rounded-full shadow-sm border border-secondary/10"
                   >
                     <Check className="w-3 h-3 text-secondary" />
                   </motion.div>
@@ -224,7 +224,7 @@ export default function Customizer({ setView, selectedProduct, onAddToCart, edit
               </div>
             </div>
             
-            <div className="mt-8 p-8 bg-white/80 rounded-2xl border border-secondary/5 shadow-sm">
+            <div className="mt-8 p-8 bg-surface-container/80 rounded-2xl border border-secondary/5 shadow-sm">
               <h4 className="text-xs font-bold uppercase tracking-widest text-secondary mb-6 flex items-center gap-2">
                 <Wand2 className="w-4 h-4" /> Dynamic Flavor Profile
               </h4>
@@ -253,7 +253,7 @@ export default function Customizer({ setView, selectedProduct, onAddToCart, edit
 
         {/* Right: Configuration Panel */}
         <div className="lg:col-span-5 space-y-8">
-          <section className="bg-white rounded-2xl p-8 border border-secondary/5 shadow-sm">
+          <section className="bg-surface-container rounded-2xl p-8 border border-secondary/5 shadow-sm">
             <h3 className="text-xl font-serif text-secondary mb-6 font-bold">1. Select Size</h3>
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
               {sizes.map(s => (
@@ -274,7 +274,7 @@ export default function Customizer({ setView, selectedProduct, onAddToCart, edit
             </div>
           </section>
 
-          <section className="bg-white rounded-2xl p-8 border border-secondary/5 shadow-sm">
+          <section className="bg-surface-container rounded-2xl p-8 border border-secondary/5 shadow-sm">
             <h3 className="text-xl font-serif text-secondary mb-6 font-bold">2. Sponge & Filling</h3>
             <div className="space-y-6">
               <div>
@@ -311,7 +311,7 @@ export default function Customizer({ setView, selectedProduct, onAddToCart, edit
             </div>
           </section>
 
-          <section className="bg-white rounded-2xl p-8 border border-secondary/5 shadow-sm">
+          <section className="bg-surface-container rounded-2xl p-8 border border-secondary/5 shadow-sm">
             <h3 className="text-xl font-serif text-secondary mb-6 font-bold">3. Frosting Style</h3>
             <div className="grid grid-cols-2 gap-4">
               {[
@@ -327,7 +327,7 @@ export default function Customizer({ setView, selectedProduct, onAddToCart, edit
                 >
                   <img className="w-full h-32 object-cover" src={opt.img} alt={opt.name} />
                   <div className={`p-3 text-center text-[10px] font-bold uppercase tracking-widest ${
-                    frosting === opt.name ? 'bg-secondary text-white' : 'bg-white text-on-surface'
+                    frosting === opt.name ? 'bg-secondary text-white' : 'bg-surface text-on-surface'
                   }`}>
                     {opt.name}
                   </div>
@@ -336,7 +336,7 @@ export default function Customizer({ setView, selectedProduct, onAddToCart, edit
             </div>
           </section>
 
-          <section className="bg-white rounded-2xl p-8 border border-secondary/5 shadow-sm">
+          <section className="bg-surface-container rounded-2xl p-8 border border-secondary/5 shadow-sm">
             <h3 className="text-xl font-serif text-secondary mb-6 font-bold">4. Custom Toppings</h3>
             <div className="flex flex-wrap gap-2">
               {['Gold Leaf (+ Kshs. 500)', 'Fresh Berries (+ Kshs. 800)', 'Edible Florals (+ Kshs. 1200)', 'Macarons (+ Kshs. 1000)'].map(topping => (
@@ -346,7 +346,7 @@ export default function Customizer({ setView, selectedProduct, onAddToCart, edit
                   className={`flex items-center gap-3 px-6 py-3 border rounded-full transition-all text-xs font-bold shadow-sm ${
                     toppings.includes(topping) 
                       ? 'border-secondary bg-primary-container text-secondary' 
-                      : 'border-secondary/10 bg-white hover:border-secondary/40'
+                      : 'border-secondary/10 bg-surface hover:border-secondary/40'
                   }`}
                 >
                   <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${
@@ -360,7 +360,7 @@ export default function Customizer({ setView, selectedProduct, onAddToCart, edit
             </div>
           </section>
 
-          <section className="bg-white rounded-2xl p-8 border border-secondary/5 shadow-sm">
+          <section className="bg-surface-container rounded-2xl p-8 border border-secondary/5 shadow-sm">
             <h3 className="text-xl font-serif text-secondary mb-6 font-bold">5. Custom Topper Message</h3>
             <div className="relative">
               <input 
@@ -387,7 +387,7 @@ export default function Customizer({ setView, selectedProduct, onAddToCart, edit
               </div>
               <button 
                 onClick={handleReserve}
-                className="w-full md:w-auto bg-white text-secondary px-10 py-5 rounded-2xl font-bold uppercase tracking-widest text-xs hover:scale-105 active:scale-95 transition-all shadow-xl group text-center"
+                className="w-full md:w-auto bg-surface text-secondary px-10 py-5 rounded-2xl font-bold uppercase tracking-widest text-xs hover:scale-105 active:scale-95 transition-all shadow-xl group text-center"
               >
                 {editingItem ? 'Update Selection' : 'Place Your Order'}
               </button>

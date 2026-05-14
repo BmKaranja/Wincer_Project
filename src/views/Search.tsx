@@ -60,7 +60,7 @@ export default function Search({ setView, onSelect, cakes = [] }: { setView: (v:
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: idx * 0.05 }}
-                className="bg-white/50 backdrop-blur-sm rounded-2xl overflow-hidden diffusion-shadow group flex flex-col h-full border border-secondary/5"
+                className="bg-surface-container/50 backdrop-blur-sm rounded-2xl overflow-hidden diffusion-shadow group flex flex-col h-full border border-secondary/5"
               >
                 <div className="aspect-square relative overflow-hidden">
                   <img 

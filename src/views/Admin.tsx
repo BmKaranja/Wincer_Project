@@ -333,13 +333,13 @@ export default function Admin({ user, setView }: { user: any, setView: any }) {
                     <div className="absolute top-4 right-4 flex gap-2">
                       <button 
                         onClick={() => openEditForm(cake)}
-                        className="p-2 bg-white/90 backdrop-blur-sm rounded-lg text-secondary hover:bg-secondary hover:text-white transition-colors animate-fade-in"
+                        className="p-2 bg-surface/90 backdrop-blur-sm rounded-lg text-secondary hover:bg-secondary hover:text-white transition-colors animate-fade-in"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={() => handleDeleteCake(cake.id)}
-                        className="p-2 bg-white/90 backdrop-blur-sm rounded-lg text-red-500 hover:bg-red-500 hover:text-white transition-colors transition-all"
+                        className="p-2 bg-surface/90 backdrop-blur-sm rounded-lg text-red-500 hover:bg-red-500 hover:text-white transition-colors transition-all"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

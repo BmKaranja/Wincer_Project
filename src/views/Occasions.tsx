@@ -143,7 +143,7 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
                 { icon: Truck, text: "On-site assembly and white-glove setup" }
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-6 group">
-                  <div className="p-3 bg-white rounded-full shadow-sm text-secondary group-hover:scale-110 transition-transform">
+                  <div className="p-3 bg-surface rounded-full shadow-sm text-secondary group-hover:scale-110 transition-transform">
                     <item.icon className="w-6 h-6" />
                   </div>
                   <span className="text-lg font-medium text-on-surface">{item.text}</span>
@@ -210,7 +210,7 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
       {/* Inquiry Form */}
       <section id="inquiry-form" className="py-24 bg-surface-container-low scroll-mt-20">
         <div className="max-w-3xl mx-auto px-8">
-          <div className="bg-white p-12 rounded-3xl shadow-xl paper-texture border border-secondary/5 min-h-[500px] flex flex-col justify-center">
+          <div className="bg-surface p-12 rounded-3xl shadow-xl paper-texture border border-secondary/5 min-h-[500px] flex flex-col justify-center">
             {isSubmitted ? (
               <motion.div 
                 initial={{ opacity: 0, scale: 0.9 }}

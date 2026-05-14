@@ -161,7 +161,7 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-white rounded-[3rem] p-12 max-w-lg w-full shadow-2xl relative z-10 text-center"
+              className="bg-surface rounded-[3rem] p-12 max-w-lg w-full shadow-2xl relative z-10 text-center"
             >
               <button 
                 onClick={() => {
@@ -258,11 +258,11 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
                       {item.config.message && ` • "${item.config.message}"`}
                     </p>
                     
-                    <div className="bg-white/40 backdrop-blur-sm rounded-2xl p-6 border border-white/50">
+                    <div className="bg-surface-container/40 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
                       <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60 mb-4">Accents</p>
                       <div className="flex flex-wrap gap-2">
                         {item.config.toppings.map((topping: string) => (
-                          <span key={topping} className="px-3 py-1 bg-white/60 rounded-full text-[10px] font-bold text-secondary border border-secondary/10">
+                          <span key={topping} className="px-3 py-1 bg-surface-container/60 rounded-full text-[10px] font-bold text-secondary border border-secondary/10">
                             {topping}
                           </span>
                         ))}
@@ -280,7 +280,7 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
           </section>
 
           {/* Delivery Details */}
-          <section className="bg-white rounded-3xl p-10 border border-secondary/5 shadow-sm">
+          <section className="bg-surface-container rounded-3xl p-10 border border-secondary/5 shadow-sm">
             <div className="flex flex-col md:flex-row justify-between mb-8 md:items-end">
               <h2 className="text-2xl font-serif text-secondary font-bold">Delivery Details</h2>
               <p className="text-xs text-secondary/60 mt-2 md:mt-0 font-medium italic">We coordinate all deliveries directly via WhatsApp.</p>
@@ -355,7 +355,7 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
           </section>
 
           {/* Payment Method */}
-          <section className="bg-white rounded-3xl p-10 border border-secondary/5 shadow-sm">
+          <section className="bg-surface-container rounded-3xl p-10 border border-secondary/5 shadow-sm">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-2xl font-serif text-secondary font-bold">Payment Method</h2>
               <div className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-full">
@@ -404,7 +404,7 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
           </section>
 
           {/* Order Totals */}
-          <div className="bg-white p-10 rounded-3xl border border-secondary/5 diffusion-shadow border-4 border-primary-container">
+          <div className="bg-surface p-10 rounded-3xl border border-secondary/5 diffusion-shadow border-4 border-primary-container">
             <h2 className="text-2xl font-serif text-secondary mb-10 font-bold">Order Totals</h2>
             <div className="space-y-6 mb-10">
               <div className="flex justify-between items-center">
@@ -470,12 +470,12 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
 
           {/* Trust Indicators */}
           <div className="grid grid-cols-2 gap-6">
-            <div className="flex flex-col items-center p-8 bg-white rounded-3xl border border-secondary/5 shadow-sm text-center group hover:bg-primary-container/20 transition-colors">
+            <div className="flex flex-col items-center p-8 bg-surface-container rounded-3xl border border-secondary/5 shadow-sm text-center group hover:bg-primary-container/20 transition-colors">
               <ShieldCheck className="w-8 h-8 text-secondary mb-3 group-hover:scale-110 transition-transform" />
               <p className="text-xs font-bold text-secondary uppercase tracking-widest mb-1">Freshly Baked</p>
               <p className="text-[10px] font-medium text-on-surface-variant/60">Made to order</p>
             </div>
-            <div className="flex flex-col items-center p-8 bg-white rounded-3xl border border-secondary/5 shadow-sm text-center group hover:bg-primary-container/20 transition-colors">
+            <div className="flex flex-col items-center p-8 bg-surface-container rounded-3xl border border-secondary/5 shadow-sm text-center group hover:bg-primary-container/20 transition-colors">
               <Truck className="w-8 h-8 text-secondary mb-3 group-hover:scale-110 transition-transform" />
               <p className="text-xs font-bold text-secondary uppercase tracking-widest mb-1">Safe Delivery</p>
               <p className="text-[10px] font-medium text-on-surface-variant/60">Within Nairobi</p>
