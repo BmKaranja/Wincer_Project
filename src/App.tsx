@@ -8,6 +8,7 @@ import Occasions from './views/Occasions';
 import Search from './views/Search';
 import Account from './views/Account';
 import Story from './views/Story';
+import Blog from './views/Blog';
 import Checkout from './views/Checkout';
 import Admin from './views/Admin';
 import { AnimatePresence, motion } from 'motion/react';
@@ -23,12 +24,19 @@ export default function App() {
   const [user, setUser] = useState<any>(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [cakes, setCakes] = useState<any[]>([]);
+  const [blogPosts, setBlogPosts] = useState<any[]>([]);
 
   useEffect(() => {
     import('firebase/firestore').then(({ collection, onSnapshot, getDocs, updateDoc, doc }) => {
-      const unsub = onSnapshot(collection(db, 'cakes'), (snap) => {
+      const unsubCakes = onSnapshot(collection(db, 'cakes'), (snap) => {
         setCakes(snap.docs.map(d => ({ id: d.id, ...d.data() })));
       }, (err) => console.error("Error fetching cakes:", err));
+
+      const unsubPosts = onSnapshot(collection(db, 'blog_posts'), (snap) => {
+        setBlogPosts(snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a: any, b: any) => {
+          return new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime();
+        }));
+      }, (err) => console.error("Error fetching posts:", err));
       
       // Auto-migrate any existing $ prices to Kshs.
       if (user && user.role === 'admin') {
@@ -47,7 +55,7 @@ export default function App() {
           });
         });
       }
-      return () => unsub();
+      return () => { unsubCakes(); unsubPosts(); };
     });
   }, [user]);
 
@@ -197,6 +205,16 @@ export default function App() {
               <Story setView={handleNav} />
             </motion.div>
           )}
+          {view === 'blog' && (
+            <motion.div 
+              key="blog"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <Blog onSelectProduct={handleSelectProduct} cakes={cakes} posts={blogPosts} />
+            </motion.div>
+          )}
           {view === 'checkout' && (
             <motion.div 
               key="checkout"
@@ -241,7 +259,7 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <Admin user={user} setView={handleNav} />
+              <Admin user={user} setView={handleNav} blogPosts={blogPosts} />
             </motion.div>
           )}
         </AnimatePresence>

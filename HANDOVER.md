@@ -12,7 +12,6 @@
 - **Dynamic Catalog**: Filterable by price, category, and dietary requirements.
 - **Custom Cake Builder**: Interactive selection of sponge, filling, and frosting styles.
 - **Admin Dashboard**: Secure panel to manage orders, inquiries, and the product catalog.
-- **Dark Mode**: System-aware and toggleable theme support.
 - **Checkout**: Integrated with WhatsApp for delivery coordination and M-Pesa for payments.
 
 ## 3. Environment Variables

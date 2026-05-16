@@ -5,7 +5,7 @@
 // ==========================================
 
 // To change or add new categories to the catalog, update this array
-export const CATEGORIES = ["Vanilla", "Chocolate", "Marble", "Red Velvet", "Black Forest", "White Forest", "Strawberry", "Blueberry", "Passion", "Amarula", "Pina Colada", "Eggless", "Diabetic-friendly"];
+export const CATEGORIES = ["Vanilla", "Chocolate", "Marble", "Red Velvet", "Black Forest", "White Forest", "Strawberry", "Blueberry", "Passion", "Amarula", "Pina Colada", "Pistachio", "Lotus Biscoff", "Ferrero", "Eggless", "Diabetic-friendly"];
 
 // To change the cakes enlisted in the store, modify this array.
 // Each object represents a different cake offering.
@@ -15,7 +15,7 @@ export const PRODUCTS = [
     id: 1,
     title: "Signature Black Forest",
     price: "Kshs. 2200",
-    desc: "A rich German classic chocolate sponge layered with whipped cream and cherries.",
+    desc: "A rich German classic chocolate sponge layered with whipped cream and cherries. Experience the true essence of Belgian chocolate and fresh cherries.",
     tag: "Bestseller",
     gauge: "Premium",
     gaugeVal: "w-[90%]",
@@ -32,7 +32,7 @@ export const PRODUCTS = [
     id: 2,
     title: "Vanilla Strawberry Mix",
     price: "Kshs. 1800",
-    desc: "A timeless vanilla cake infused with fresh strawberry flavors, perfect for any occasion.",
+    desc: "A timeless vanilla cake infused with fresh strawberry flavors, perfect for any occasion. Light, airy, and delightfully sweet.",
     tag: "Eggless Available",
     gauge: "Delicate",
     gaugeVal: "w-[45%]",
@@ -42,7 +42,7 @@ export const PRODUCTS = [
     id: 3,
     title: "Classic Red Velvet",
     price: "Kshs. 2800",
-    desc: "A velvety, cocoa-infused sponge complete with our creamy, rich cream cheese frosting.",
+    desc: "A velvety, cocoa-infused sponge complete with our creamy, rich cream cheese frosting. The ultimate Wincer signature.",
     tag: "Signature",
     gauge: "Velvety",
     gaugeVal: "w-[75%]",
@@ -52,7 +52,7 @@ export const PRODUCTS = [
     id: 4,
     title: "Amarula Indulgence",
     price: "Kshs. 3100",
-    desc: "A specialty custom cake richly infused with Amarula cream liqueur for a sophisticated taste.",
+    desc: "A specialty custom cake richly infused with Amarula cream liqueur for a sophisticated taste. Perfect for adult celebrations.",
     tag: "Specialty",
     gauge: "Complex",
     gaugeVal: "w-[85%]",
@@ -62,7 +62,7 @@ export const PRODUCTS = [
     id: 5,
     title: "Tropical Pina Colada",
     price: "Kshs. 2900",
-    desc: "A bright and fruity themed cake bringing together coconut and pineapple flavors.",
+    desc: "A bright and fruity themed cake bringing together coconut and pineapple flavors. A summer breeze in every bite.",
     tag: "Custom",
     gauge: "Classic",
     gaugeVal: "w-[65%]",
@@ -72,10 +72,30 @@ export const PRODUCTS = [
     id: 6,
     title: "Diabetic-Friendly Marble",
     price: "Kshs. 2400",
-    desc: "A carefully crafted, low-sugar marble cake, perfect for those wanting a healthier choice.",
+    desc: "A carefully crafted, low-sugar marble cake, perfect for those wanting a healthier choice without compromising on taste.",
     tag: "Diabetic-Friendly",
     gauge: "Light",
     gaugeVal: "w-[30%]",
+    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuB9MiOU8G013CpO73S79R0UYoJSSZZKOncVhGpSdA_ytPhrvBsw6KSp5nOZq_hKVAjROaruUL-7RcxGINNrka0GlkcLwJEb98HT0pk0C1ldz3aQQtGt06mFJp3drPRJIXWSnfW80jOadJRRduuvXTA0PxOvleMsjqRkNLyk80hl4LhnUnnrgRkvSWMmGS7nhZXkKyiy0K43pqgkJbsgFhh9CokY7UBT_ZA_PIgUD4el6q2zqGAKNO7APwlqqBHH_TojkH04fGPc7hc"
+  },
+  {
+    id: 7,
+    title: "Biscoff Dream",
+    price: "Kshs. 3500",
+    desc: "Lotus Biscoff sponge with caramelized biscuit spread and crunchy bits. A modern favorite in Nairobi.",
+    tag: "Trending",
+    gauge: "Intense",
+    gaugeVal: "w-[95%]",
+    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCduC7-DGJ68RWEAf2l_fJs1p53PHh9Cy9cgU_ofEE8G8Z0OuNf2XwhXsTIF_tOoJ58uxs1EWWuSWckap5hMRsX3p2DkyVldDeQ60lTd5ptqeykxhefHcABsMP6jj0DiSjHjiv-24nYzYJ6vrR1TFWr8lRwlHOuWVHu7WHrE2X2Rkq3Ci6UFM_alU8vCAPGgo5e3xGH1J0Hmod_8CblUb6erShZSvPi7bo5cvDmxZ2e3mB5PVWiZiu8gtCiy5OLcEY2qKdytrDyGWs"
+  },
+  {
+    id: 8,
+    title: "White Forest Elegance",
+    price: "Kshs. 2300",
+    desc: "Light vanilla sponge with creamy white chocolate and cherries. A delicate alternative to the classic Black Forest.",
+    tag: "Classic",
+    gauge: "Light",
+    gaugeVal: "w-[50%]",
     img: "https://lh3.googleusercontent.com/aida-public/AB6AXuB9MiOU8G013CpO73S79R0UYoJSSZZKOncVhGpSdA_ytPhrvBsw6KSp5nOZq_hKVAjROaruUL-7RcxGINNrka0GlkcLwJEb98HT0pk0C1ldz3aQQtGt06mFJp3drPRJIXWSnfW80jOadJRRduuvXTA0PxOvleMsjqRkNLyk80hl4LhnUnnrgRkvSWMmGS7nhZXkKyiy0K43pqgkJbsgFhh9CokY7UBT_ZA_PIgUD4el6q2zqGAKNO7APwlqqBHH_TojkH04fGPc7hc"
   }
 ];

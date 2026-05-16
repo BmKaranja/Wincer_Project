@@ -10,14 +10,14 @@ export default function Footer() {
           Change the copyright and brand name here
           ========================================== 
         */}
-        <div className="space-y-2 text-center md:text-left">
+        <div className="space-y-4 text-center md:text-left">
           <div className="text-lg font-serif italic text-secondary">Wincer Cake House</div>
-          <p className="font-serif text-sm tracking-wide text-on-surface-variant opacity-90">
-            © 2024 Wincer Cake House. Bespoke Custom Cakes.
+          <p className="font-serif text-sm tracking-wide text-on-surface-variant opacity-90 max-w-xs">
+            © 2026 Wincer Cake House. Bespoke Custom Cakes. Handcrafted in Nairobi with love and the finest ingredients.
           </p>
         </div>
         
-        <div className="flex flex-wrap justify-center gap-8 font-serif text-sm tracking-wide text-on-surface-variant">
+        <div className="flex flex-wrap justify-center gap-6 font-serif text-sm tracking-wide text-on-surface-variant">
           <a className="hover:text-secondary transition-colors" href="#">Provenance</a>
           <a className="hover:text-secondary transition-colors" href="#">Wholesale</a>
           <a className="hover:text-secondary transition-colors" href="#">Sustainability</a>

@@ -58,6 +58,25 @@
         "createdAt": { "type": "number", "description": "Timestamp in milliseconds" }
       },
       "required": ["name", "email", "eventDate", "occasionType", "vision", "status", "createdAt"]
+    },
+    "BlogPost": {
+      "title": "Blog Post",
+      "description": "An article in the food blog.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "excerpt": { "type": "string" },
+        "content": { "type": "string" },
+        "category": { "type": "string" },
+        "img": { "type": "string" },
+        "author": { "type": "string" },
+        "date": { "type": "string" },
+        "tips": { "type": "array", "items": { "type": "string" } },
+        "likes": { "type": "number" },
+        "createdAt": { "type": "number", "description": "Timestamp in milliseconds" },
+        "updatedAt": { "type": "number", "description": "Timestamp in milliseconds" }
+      },
+      "required": ["title", "content", "img"]
     }
   },
   "firestore": {
@@ -76,6 +95,10 @@
     "/inquiries/{inquiryId}": {
       "schema": { "$ref": "#/entities/Inquiry" },
       "description": "Event inquiries."
+    },
+    "/blog_posts/{postId}": {
+      "schema": { "$ref": "#/entities/BlogPost" },
+      "description": "Blog articles. Publicly readable, modifiable by admins, likes can be incremented by anyone."
     }
   }
 }

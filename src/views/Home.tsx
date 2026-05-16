@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Clock, MapPin } from 'lucide-react';
 
 export interface HomeProps {
   setView: (view: string) => void;
@@ -8,28 +8,28 @@ export interface HomeProps {
 export default function Home({ setView }: HomeProps) {
   const bestsellers = [
     {
-      id: 1,
-      title: "Velvet Rose & Gold",
-      desc: "A delicate floral sponge layered with honey-infused cream.",
-      price: "Kshs. 4500",
-      tag: "Signature",
-      img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBb1L8IJiijBqS2ki1ohlCW5R62bWidyuUsiubjN2RVcmRQ5e6ndjixFB-P1DX2xcxQqdJ_eHWmlGn2Jh3Gl_Qomih3CY5XdgLZAQajOgN3Jz63iiutELsKEfBFvnblMOXhZfHDsGmdQP_FjuUZAvok_gPsSMoPzeWTbgvnzQHnIgWL5-82FMzJGiNA4LcyK7uI-0geEB0m678Y8ebmd5LX4lughk0n06flC4ldfNTQ_wTMuKDV_zNyudI-jAC6Sdiy-EEKXfeoQQk"
+      id: 7,
+      title: "Biscoff Dream",
+      desc: "Lotus Biscoff sponge with caramelized biscuit spread and crunchy bits. Nairobi's newest obsession.",
+      price: "Kshs. 3500",
+      tag: "Trending",
+      img: "/src/assets/images/regenerated_image_1778936816869.png"
     },
     {
-      id: 2,
-      title: "Midnight Truffle",
-      desc: "70% dark Belgian chocolate with a liquid ganache center.",
-      price: "Kshs. 3800",
+      id: 1,
+      title: "Signature Black Forest",
+      desc: "A rich German classic chocolate sponge layered with whipped cream and cherries.",
+      price: "Kshs. 2200",
       tag: "Bestseller",
-      img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBjek62U8aFug_XpnKMod3SKr001uTavF6oxi1fy2TjlYVjgor9GnyqoQRjDZRp8Rq5MEuZK-_X9KmknTBf43ZTScsrZDG9AncwClUknG2rO9rTROBoPu3drcC6gfHqlMCLQAnQCqwPhR2MCfrkS79pukpcJWsP2n_I1nUAB58_U7KZ1WWLg81IiIw6dq32DRM9pBoIoboLgFa94crJhQact07Z0LJYgVloG-4X7AIF8Ma3L5iGRyCb6AMMcsmu42UyQy6ja8fnC3Q"
+      img: "https://lh3.googleusercontent.com/aida-public/AB6AXuDNxYJrngqv4m-5-nDOT98WJJBsj4VLTJ-jVyN2GTmOgLLaIhA8e_J7zRCNu7PpNMhh3SahmEUA53TTuvP_NfFDfwxD4uZwx94gZRpEOpVB2bHIP0vwj-Wx9vYjLJ2l8sVDc8kVewXkWyeWyieVZi5uBKYxiLwi-EvwAcIZe3M1Ii4m5wF8t05CcyYZwjedKjQKNc9V3RVOiyxvIarZ6mAbQHOvOLrmcTN33J-TfWAmNVioejdOJeYI-Ux-YCz2ZeeK1NR1UzROn1Y"
     },
     {
       id: 3,
-      title: "Pistachio Dream",
-      desc: "Sicilian pistachio praline and light mascarpone mousse.",
-      price: "Kshs. 5000",
-      tag: "Custom",
-      img: "https://lh3.googleusercontent.com/aida-public/AB6AXuDaw-Rl5g2Ypm3RKPgFxOkvzGz-lUk3K5HcvMjDhN7oxMkxJdWkmguQTSp3l_073n86yZujlbDEzcpHdJIWMQHNFFiHrlKhArk-aWDI5k4EAmWmSzKG2OHc6MGe5jbBjOFKwAQXc49PkTZ0KV7d3kaSvGKkfsULs7CiASUQWRLy5jE-BSuhHevZlaxJZTgneLvl3hgbSByPnq7OOEFsLHlDXBWzHAeWqM8Uba_kocZEnpL89ZL-Ly_2j16S4TH0RxAmfK7-oVnLZhM"
+      title: "Classic Red Velvet",
+      desc: "A velvety, cocoa-infused sponge complete with our creamy, rich cream cheese frosting.",
+      price: "Kshs. 2800",
+      tag: "Signature",
+      img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCloe64oMMRQW-RnI7s-onNgc6APJHBIAt97hmCm0xA0nZCk-_2k47ue-ZyVMozgjLj5ziIAbzSqsbUAYSw6Dnqsx0_wgPLJjLIDVX3AHSbcn8JUI6aJXspnHvLDnDY6GQWtxMhjbfSLC2UmeOFc7u3HSY3OPWpAQgj7mvvNhNgQ5E9cYvzHkB9S_092HF3iwSS4IgN4dEWKTClywo2-r1sSlHk3EuV1qAkHjG5mQFheLWbg3XyGhHPVLnMKn4VudoraUG0qTgoV64"
     }
   ];
 
@@ -48,7 +48,7 @@ export default function Home({ setView }: HomeProps) {
             className="w-full h-full object-cover object-top" 
             src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-FTzK65bL-u-Fp_raXiU__oU98C2J3HNvBcBf7nIdWsviqs4lb_sHK8WNskiMMYjQ1mify0h4QUZTIEtqyBb7XUo8JCcCjNQmueqJRjFjZxV4qHyK86tK1g7N4b_rIXtrG4_QD2wHmBpliE7QGu7VJgGgheP0TQmQ0HHipTDttoARAk7l24gtl0G_xQPV3JhfEzhDGmV06hj-7oWWSjmQFyO7SU0RySx7A9_6GyIuOic6DYLLzQhUGDWMeHT7Xw24LhDuxqzvjMg" 
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-stone-900/60 to-transparent"></div>
+          <div className="absolute inset-0 bg-stone-900/60 transition-opacity"></div>
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-8 w-full">
@@ -70,7 +70,7 @@ export default function Home({ setView }: HomeProps) {
             <div className="flex flex-col sm:flex-row gap-4">
               <button 
                 onClick={() => setView('catalog')}
-                className="bg-secondary text-on-secondary px-8 py-4 rounded-lg font-bold macaron-raised hover:scale-105 transition-transform w-full sm:w-auto"
+                className="bg-secondary text-white px-8 py-4 rounded-lg font-bold macaron-raised hover:scale-105 transition-transform w-full sm:w-auto"
               >
                 Explore Collections
               </button>
@@ -78,7 +78,7 @@ export default function Home({ setView }: HomeProps) {
                 onClick={() => setView('story')}
                 className="border-2 border-white text-white px-8 py-4 rounded-lg font-bold hover:bg-white/10 transition-colors w-full sm:w-auto"
               >
-                Our Heritage
+                Read Our Story
               </button>
             </div>
           </motion.div>
@@ -88,7 +88,7 @@ export default function Home({ setView }: HomeProps) {
       {/* Bestsellers Section */}
       <section className="py-24 max-w-7xl mx-auto px-8">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-serif text-secondary mb-4">The Season's Bestsellers</h2>
+          <h2 className="text-4xl font-serif text-secondary mb-4 italic">The Season's Bestsellers</h2>
           <div className="w-16 h-1 bg-secondary mx-auto rounded-full"></div>
         </div>
         
@@ -100,7 +100,7 @@ export default function Home({ setView }: HomeProps) {
               whileInView={{ y: 0, opacity: 1 }}
               transition={{ delay: idx * 0.1 }}
               viewport={{ once: true }}
-              className="group bg-primary-container/40 rounded-2xl overflow-hidden diffusion-shadow transition-all hover:-translate-y-2"
+              className="group bg-primary-container/40 rounded-2xl overflow-hidden diffusion-shadow transition-all hover:-translate-y-2 border border-secondary/5"
             >
               <div className="aspect-square overflow-hidden">
                 <img 
@@ -111,16 +111,116 @@ export default function Home({ setView }: HomeProps) {
               </div>
               <div className="p-8 text-center">
                 <div className="flex justify-center gap-1 mb-3">
-                  <span className="bg-secondary-container text-on-secondary-container text-[11px] px-3 py-1 rounded-full uppercase font-bold tracking-wider">
+                  <span className="bg-secondary/10 text-secondary text-[11px] px-3 py-1 rounded-full uppercase font-bold tracking-wider">
                     {item.tag}
                   </span>
                 </div>
-                <h3 className="text-2xl font-serif text-secondary mb-2">{item.title}</h3>
-                <p className="text-on-surface-variant font-sans mb-4 min-h-[3rem] opacity-80">{item.desc}</p>
-                <span className="text-secondary font-bold text-2xl">{item.price}</span>
+                <h3 className="text-2xl font-serif text-secondary mb-2 italic">{item.title}</h3>
+                <p className="text-on-surface-variant font-sans mb-4 min-h-[3rem] opacity-80 leading-relaxed text-sm">{item.desc}</p>
+                <span className="text-secondary font-bold text-2xl font-serif">{item.price}</span>
               </div>
             </motion.div>
           ))}
+        </div>
+      </section>
+
+      {/* From the Blog Section */}
+      <section className="py-24 bg-surface">
+        <div className="max-w-7xl mx-auto px-8">
+           <div className="text-center mb-16">
+            <span className="text-secondary font-bold tracking-[0.2em] uppercase mb-4 block text-xs">Stories & Craftsmanship</span>
+            <h2 className="text-4xl font-serif text-secondary mb-4 italic">From Our Food Blog</h2>
+            <div className="w-16 h-1 bg-secondary mx-auto rounded-full opacity-30"></div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+             <div className="relative group cursor-pointer overflow-hidden rounded-[2rem] shadow-xl aspect-video">
+                <img 
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuDNxYJrngqv4m-5-nDOT98WJJBsj4VLTJ-jVyN2GTmOgLLaIhA8e_J7zRCNu7PpNMhh3SahmEUA53TTuvP_NfFDfwxD4uZwx94gZRpEOpVB2bHIP0vwj-Wx9vYjLJ2l8sVDc8kVewXkWyeWyieVZi5uBKYxiLwi-EvwAcIZe3M1Ii4m5wF8t05CcyYZwjedKjQKNc9V3RVOiyxvIarZ6mAbQHOvOLrmcTN33J-TfWAmNVioejdOJeYI-Ux-YCz2ZeeK1NR1UzROn1Y"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  alt="Blog featured"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                <div className="absolute bottom-10 left-10 text-white">
+                   <span className="bg-secondary text-white text-[10px] px-3 py-1 rounded-full uppercase font-bold tracking-wider mb-4 inline-block">Baking secrets</span>
+                   <h3 className="text-3xl font-serif mb-4 italic">The Secret to the <br/> Perfect Black Forest</h3>
+                   <button onClick={() => setView('blog')} className="text-xs font-bold uppercase tracking-widest border-b border-white pb-1 hover:pb-2 transition-all">View Post</button>
+                </div>
+             </div>
+             <div className="flex flex-col justify-center space-y-8">
+                {[
+                  { title: "2024 Wedding Cake Trends", date: "May 05, 2024" },
+                  { title: "Cake Storage 101: Freshness", date: "Apr 28, 2024" },
+                  { title: "Choosing Flavors for Kids", date: "Apr 21, 2024" }
+                ].map((post, i) => (
+                  <div key={i} className="group cursor-pointer border-l-2 border-secondary/10 hover:border-secondary pl-6 py-2 transition-all">
+                    <span className="text-[10px] font-bold text-secondary/50 uppercase tracking-widest block mb-2">{post.date}</span>
+                    <h3 className="text-xl font-serif text-secondary italic group-hover:translate-x-2 transition-transform">{post.title}</h3>
+                  </div>
+                ))}
+                <button onClick={() => setView('blog')} className="text-secondary font-bold text-xs uppercase tracking-widest flex items-center gap-2 hover:gap-4 transition-all pt-4">
+                  Explore Full Blog <ArrowRight className="w-4 h-4" />
+                </button>
+             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Opening Hours & Visit Section */}
+      <section className="py-24 bg-primary-container/20 border-y border-secondary/5">
+        <div className="max-w-7xl mx-auto px-8 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+          <div>
+            <span className="text-secondary font-bold tracking-[0.2em] uppercase mb-4 block text-xs">Come Visit Us</span>
+            <h2 className="text-4xl font-serif text-secondary mb-6 italic">Handcrafting Sweetness <br/> Seven Days a Week</h2>
+            <p className="text-on-surface-variant font-sans mb-8 opacity-80 leading-relaxed max-w-md">
+              Located in the heart of Nairobi, our bakery is a sanctuary for cake lovers. 
+              Drop by for a consultation or to pick up your daily treats.
+            </p>
+            <div className="flex items-start gap-4 mb-4">
+              <div className="bg-secondary/10 p-3 rounded-xl text-secondary">
+                <MapPin className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="font-serif text-secondary font-bold">Donholm Branch</p>
+                <p className="text-sm text-on-surface-variant opacity-70">Harambee Sacco Estate, Shopping Center, Donholm</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-12 rounded-[2rem] shadow-xl diffusion-shadow border border-secondary/5 relative overflow-hidden">
+             <div className="absolute top-0 right-0 w-32 h-32 bg-secondary/5 rounded-full -mr-16 -mt-16"></div>
+             <div className="flex items-center gap-3 mb-8">
+               <Clock className="w-5 h-5 text-secondary" />
+               <h3 className="text-xl font-serif text-secondary italic">Opening Hours</h3>
+             </div>
+             
+             <div className="space-y-4 font-sans text-sm tracking-wide">
+                {[
+                  { day: "Monday", hours: "07:29 - 20:00" },
+                  { day: "Tuesday", hours: "07:29 - 20:00" },
+                  { day: "Wednesday", hours: "07:30 - 20:00" },
+                  { day: "Thursday", hours: "07:29 - 20:00" },
+                  { day: "Friday", hours: "07:29 - 20:00" },
+                  { day: "Saturday", hours: "07:15 - 20:00" },
+                ].map((item) => (
+                  <div key={item.day} className="flex justify-between border-b border-stone-100 pb-2">
+                    <span className="text-secondary font-medium">{item.day}</span>
+                    <span className="text-on-surface-variant font-bold tabular-nums">{item.hours}</span>
+                  </div>
+                ))}
+                <div className="flex justify-between pt-2">
+                  <span className="text-secondary/50 font-medium italic">Sunday</span>
+                  <span className="text-secondary italic font-bold">Closed</span>
+                </div>
+             </div>
+             
+             <button 
+               onClick={() => window.open('https://maps.app.goo.gl/BHcNEEziXuGqYJxN8', '_blank')}
+               className="w-full mt-10 bg-secondary text-white py-4 rounded-xl font-bold hover:scale-[1.02] transition-transform shadow-lg flex items-center justify-center gap-2"
+             >
+               Get Directions <ArrowRight className="w-4 h-4" />
+             </button>
+          </div>
         </div>
       </section>
 
