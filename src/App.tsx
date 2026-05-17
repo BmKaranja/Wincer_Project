@@ -156,7 +156,7 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <Home setView={handleNav} />
+              <Home setView={handleNav} posts={blogPosts} />
             </motion.div>
           )}
           {view === 'catalog' && (

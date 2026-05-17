@@ -3,9 +3,10 @@ import { ArrowRight, Clock, MapPin } from 'lucide-react';
 
 export interface HomeProps {
   setView: (view: string) => void;
+  posts?: any[];
 }
 
-export default function Home({ setView }: HomeProps) {
+export default function Home({ setView, posts = [] }: HomeProps) {
   const bestsellers = [
     {
       id: 7,
@@ -13,7 +14,7 @@ export default function Home({ setView }: HomeProps) {
       desc: "Lotus Biscoff sponge with caramelized biscuit spread and crunchy bits. Nairobi's newest obsession.",
       price: "Kshs. 3500",
       tag: "Trending",
-      img: "/src/assets/images/regenerated_image_1778936816869.png"
+      img: "/src/assets/images/regenerated_image_1778937954411.png"
     },
     {
       id: 1,
@@ -46,7 +47,7 @@ export default function Home({ setView }: HomeProps) {
           <img 
             alt="Signature tiered wedding cake" 
             className="w-full h-full object-cover object-top" 
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-FTzK65bL-u-Fp_raXiU__oU98C2J3HNvBcBf7nIdWsviqs4lb_sHK8WNskiMMYjQ1mify0h4QUZTIEtqyBb7XUo8JCcCjNQmueqJRjFjZxV4qHyK86tK1g7N4b_rIXtrG4_QD2wHmBpliE7QGu7VJgGgheP0TQmQ0HHipTDttoARAk7l24gtl0G_xQPV3JhfEzhDGmV06hj-7oWWSjmQFyO7SU0RySx7A9_6GyIuOic6DYLLzQhUGDWMeHT7Xw24LhDuxqzvjMg" 
+            src="src/assets/images/541025122_18119969812495932_4751530949749935897_n.jpg" 
           />
           <div className="absolute inset-0 bg-stone-900/60 transition-opacity"></div>
         </div>
@@ -134,34 +135,50 @@ export default function Home({ setView }: HomeProps) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-             <div className="relative group cursor-pointer overflow-hidden rounded-[2rem] shadow-xl aspect-video">
-                <img 
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuDNxYJrngqv4m-5-nDOT98WJJBsj4VLTJ-jVyN2GTmOgLLaIhA8e_J7zRCNu7PpNMhh3SahmEUA53TTuvP_NfFDfwxD4uZwx94gZRpEOpVB2bHIP0vwj-Wx9vYjLJ2l8sVDc8kVewXkWyeWyieVZi5uBKYxiLwi-EvwAcIZe3M1Ii4m5wF8t05CcyYZwjedKjQKNc9V3RVOiyxvIarZ6mAbQHOvOLrmcTN33J-TfWAmNVioejdOJeYI-Ux-YCz2ZeeK1NR1UzROn1Y"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                  alt="Blog featured"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                <div className="absolute bottom-10 left-10 text-white">
-                   <span className="bg-secondary text-white text-[10px] px-3 py-1 rounded-full uppercase font-bold tracking-wider mb-4 inline-block">Baking secrets</span>
-                   <h3 className="text-3xl font-serif mb-4 italic">The Secret to the <br/> Perfect Black Forest</h3>
-                   <button onClick={() => setView('blog')} className="text-xs font-bold uppercase tracking-widest border-b border-white pb-1 hover:pb-2 transition-all">View Post</button>
-                </div>
-             </div>
-             <div className="flex flex-col justify-center space-y-8">
-                {[
-                  { title: "2024 Wedding Cake Trends", date: "May 05, 2024" },
-                  { title: "Cake Storage 101: Freshness", date: "Apr 28, 2024" },
-                  { title: "Choosing Flavors for Kids", date: "Apr 21, 2024" }
-                ].map((post, i) => (
-                  <div key={i} className="group cursor-pointer border-l-2 border-secondary/10 hover:border-secondary pl-6 py-2 transition-all">
-                    <span className="text-[10px] font-bold text-secondary/50 uppercase tracking-widest block mb-2">{post.date}</span>
-                    <h3 className="text-xl font-serif text-secondary italic group-hover:translate-x-2 transition-transform">{post.title}</h3>
-                  </div>
-                ))}
-                <button onClick={() => setView('blog')} className="text-secondary font-bold text-xs uppercase tracking-widest flex items-center gap-2 hover:gap-4 transition-all pt-4">
-                  Explore Full Blog <ArrowRight className="w-4 h-4" />
-                </button>
-             </div>
+             {posts.length > 0 ? (
+               <>
+                 <div 
+                   className="relative group cursor-pointer overflow-hidden rounded-[2rem] shadow-xl aspect-video"
+                   onClick={() => setView('blog')}
+                 >
+                    <img 
+                      src={posts[0].img}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      alt={posts[0].title}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                    <div className="absolute bottom-10 left-10 text-white right-10">
+                       <span className="bg-secondary text-white text-[10px] px-3 py-1 rounded-full uppercase font-bold tracking-wider mb-4 inline-block">
+                         {posts[0].category || 'Baking secrets'}
+                       </span>
+                       <h3 className="text-3xl font-serif mb-4 italic leading-tight">
+                         {posts[0].title}
+                       </h3>
+                       <button onClick={(e) => { e.stopPropagation(); setView('blog'); }} className="text-xs font-bold uppercase tracking-widest border-b border-white pb-1 hover:pb-2 transition-all">View Post</button>
+                    </div>
+                 </div>
+                 <div className="flex flex-col justify-center space-y-8">
+                    {posts.slice(1, 4).map((post, i) => (
+                      <div 
+                        key={post.id || i} 
+                        className="group cursor-pointer border-l-2 border-secondary/10 hover:border-secondary pl-6 py-2 transition-all"
+                        onClick={() => setView('blog')}
+                      >
+                        <span className="text-[10px] font-bold text-secondary/50 uppercase tracking-widest block mb-2">{post.date}</span>
+                        <h3 className="text-xl font-serif text-secondary italic group-hover:translate-x-2 transition-transform">{post.title}</h3>
+                      </div>
+                    ))}
+                    <button onClick={() => setView('blog')} className="text-secondary font-bold text-xs uppercase tracking-widest flex items-center gap-2 hover:gap-4 transition-all pt-4">
+                      Explore Full Blog <ArrowRight className="w-4 h-4" />
+                    </button>
+                 </div>
+               </>
+             ) : (
+               <div className="col-span-2 py-12 text-center bg-secondary/5 rounded-3xl border border-secondary/10">
+                 <p className="text-secondary/50 font-serif italic text-lg">Our latest stories are coming soon...</p>
+                 <button onClick={() => setView('blog')} className="mt-4 text-secondary font-bold text-xs uppercase tracking-widest hover:underline decoration-secondary/30">Visit Blog Page</button>
+               </div>
+             )}
           </div>
         </div>
       </section>
@@ -172,9 +189,17 @@ export default function Home({ setView }: HomeProps) {
           <div>
             <span className="text-secondary font-bold tracking-[0.2em] uppercase mb-4 block text-xs">Come Visit Us</span>
             <h2 className="text-4xl font-serif text-secondary mb-6 italic">Handcrafting Sweetness <br/> Seven Days a Week</h2>
+            <div className="relative mb-8 rounded-2xl overflow-hidden shadow-2xl aspect-[16/9] group">
+              <img 
+                src="/src/assets/images/regenerated_image_1778936816869.png" 
+                alt="Wincer Cake House Shop Front" 
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              />
+              <div className="absolute inset-0 bg-secondary/10 group-hover:bg-transparent transition-colors"></div>
+            </div>
             <p className="text-on-surface-variant font-sans mb-8 opacity-80 leading-relaxed max-w-md">
               Located in the heart of Nairobi, our bakery is a sanctuary for cake lovers. 
-              Drop by for a consultation or to pick up your daily treats.
+              Drop by for a consultation or to pick up your daily treats in our cozy store.
             </p>
             <div className="flex items-start gap-4 mb-4">
               <div className="bg-secondary/10 p-3 rounded-xl text-secondary">
