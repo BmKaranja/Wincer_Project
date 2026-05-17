@@ -86,7 +86,7 @@ export const PRODUCTS = [
     tag: "Trending",
     gauge: "Intense",
     gaugeVal: "w-[95%]",
-    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCduC7-DGJ68RWEAf2l_fJs1p53PHh9Cy9cgU_ofEE8G8Z0OuNf2XwhXsTIF_tOoJ58uxs1EWWuSWckap5hMRsX3p2DkyVldDeQ60lTd5ptqeykxhefHcABsMP6jj0DiSjHjiv-24nYzYJ6vrR1TFWr8lRwlHOuWVHu7WHrE2X2Rkq3Ci6UFM_alU8vCAPGgo5e3xGH1J0Hmod_8CblUb6erShZSvPi7bo5cvDmxZ2e3mB5PVWiZiu8gtCiy5OLcEY2qKdytrDyGWs"
+    img: "/src/assets/images/biscoff_dream_cake_1779025277501.png"
   },
   {
     id: 8,

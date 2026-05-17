@@ -45,9 +45,9 @@ export default function Story({ setView }: { setView: (v: string) => void }) {
             <div className="relative group">
               <div className="absolute -inset-6 bg-primary-container/40 -z-10 rounded-2xl blur-3xl group-hover:blur-2xl transition-all duration-700"></div>
               <img 
-                className="w-full aspect-[4/5] object-cover rounded-3xl shadow-2xl border border-secondary/5" 
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAKrMH7qKm3B8ACG4YoFGS_DC9xFzFPjTRXy3KlZvdUpANXOw434ZbAu65ZQQ_1FgLgHXgTCbg9D7_luj41VkFD8qB_yTc-fKqANBKn4vflV02ULvbbWwONRFYKFW3bfVfbSpQukC6pX-t752yZtCZUSgctwYCCRt1rld5p3PA5EfkgQRC96nG5ugSyVWLpO-kW2Zfbh4-4rqweufj18ag6i2_Vg02bX3f0yKvZ2cTQVF_b1kRfUIc4zeqi-27PZyzQyKuEbctzYaA" 
-                alt="Chef at Work"
+                className="w-full aspect-[4/5] object-cover rounded-3xl shadow-2xl border border-secondary/5 contrast-150 brightness-110" 
+                src="/src/assets/images/regenerated_image_1779024163803.png" 
+                alt="Wincer Cake House Story"
               />
             </div>
           </div>

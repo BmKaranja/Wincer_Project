@@ -10,11 +10,11 @@ export default function Home({ setView, posts = [] }: HomeProps) {
   const bestsellers = [
     {
       id: 7,
-      title: "Biscoff Dream",
+      title: "Biscoff Dream Cake",
       desc: "Lotus Biscoff sponge with caramelized biscuit spread and crunchy bits. Nairobi's newest obsession.",
       price: "Kshs. 3500",
       tag: "Trending",
-      img: "/src/assets/images/regenerated_image_1778937954411.png"
+      img: "/src/assets/images/biscoff_dream_cake_1779025277501.png"
     },
     {
       id: 1,
@@ -45,11 +45,11 @@ export default function Home({ setView, posts = [] }: HomeProps) {
       <section className="relative h-[80vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
-            alt="Signature tiered wedding cake" 
-            className="w-full h-full object-cover object-top" 
-            src="src/assets/images/541025122_18119969812495932_4751530949749935897_n.jpg" 
+            alt="Wincer Cake House Shop Front" 
+            className="w-full h-full object-cover object-center" 
+            src="/src/assets/images/541025122_18119969812495932_4751530949749935897_n.jpg" 
           />
-          <div className="absolute inset-0 bg-stone-900/60 transition-opacity"></div>
+          <div className="absolute inset-0 bg-stone-900/40 transition-opacity"></div>
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-8 w-full">
@@ -191,7 +191,7 @@ export default function Home({ setView, posts = [] }: HomeProps) {
             <h2 className="text-4xl font-serif text-secondary mb-6 italic">Handcrafting Sweetness <br/> Seven Days a Week</h2>
             <div className="relative mb-8 rounded-2xl overflow-hidden shadow-2xl aspect-[16/9] group">
               <img 
-                src="/src/assets/images/regenerated_image_1778936816869.png" 
+                src="/src/assets/images/regenerated_image_1779013135478.webp" 
                 alt="Wincer Cake House Shop Front" 
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
               />
@@ -345,7 +345,7 @@ export default function Home({ setView, posts = [] }: HomeProps) {
               <img 
                 alt="Pastry Chef Crafting" 
                 className="rounded-2xl shadow-2xl" 
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuACsBd3R5ahT1BuAVG2hGkePrFiYMLOiUi_1fD9k03Vv8zl2-hxycrReLxTChn2FQ965wfXCCC8d2bHI4R_GF6TkXYQGrb6gVGsTGVesK5a9cpnGH1rsGsqP0vFtWIx3R_61W5lVOxf9ZkuYNhuAd4oDrHCr3PSaMD2oN1xdRHbR8W2_Vw2LytuhLqXQ34vVg7xBFwe3SmJqwsLsPrpTejp__yVCy3W3Hy7lpbRr-c6zXwUT8LNNtWNuRWY3OqtPHTIMY_zg4WLVZ8" 
+                src="/src/assets/images/regenerated_image_1779013140846.webp" 
               />
               <div className="absolute -bottom-6 -right-6 bg-secondary p-8 rounded-2xl text-white hidden md:block shadow-xl">
                 <p className="text-2xl font-serif leading-tight">Hand-finished<br/>by master<br/>bakers.</p>
