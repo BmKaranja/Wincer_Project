@@ -75,8 +75,8 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
         <div className="absolute inset-0 z-0">
           <img 
             className="w-full h-full object-cover" 
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCfTtdx7t-UjBvElgp2yu8QUmFKhGjD3l-UTBQNQxBmgx1CZkaq5uopPjOZGSvl50tlIzYuZfmqAkIjoQZooQzJ3Stgkel-mB7Kh81X4DkFLe2H33gl0041aKnj1MAmA6e_ylGPOptq2Um8VBPG-ayWYc9bW-zYJ-u6uadiLM0y8b9ECZ2uok06Hp9UQfFrhDDV9BFp5alT4LQx6PSWh83z6KOeUriLRPr39xDbdkV4gTTzOL_49PzQW-rmvwHStlKP05EdXEIPMU0" 
-            alt="Wedding Cake"
+            src="/src/assets/images/regenerated_image_1779025502787.webp" 
+            alt="Floral Cake Bouquet"
           />
           <div className="absolute inset-0 bg-stone-900/40"></div>
         </div>
