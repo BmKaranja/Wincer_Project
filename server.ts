@@ -2,22 +2,56 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import fs from "fs";
+import { rateLimit } from 'express-rate-limit';
+import { body, param, validationResult } from 'express-validator';
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  // Middleware to parse JSON bodies
-  app.use(express.json());
+  // Trust proxy for rate limiting behind load balancers/proxies
+  app.set('trust proxy', 1);
 
-  // Wait for the environment variables to be populated in Production
-  // In development, they might be in .env, no extra action explicitly required now,
-  // but if needed we can import dotenv. 
-  
+  // Rate limiters
+  const generalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    limit: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes).
+    standardHeaders: 'draft-7', // set `RateLimit` and `RateLimit-Policy` headers
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
+    message: { success: false, error: 'Too many requests, please try again later.' },
+  });
+
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    limit: 5, // Limit each IP to 5 requests per `window` (here, per 15 minutes).
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    message: { success: false, error: 'Too many authentication attempts, please try again in 15 minutes.' },
+  });
+
+  // Apply general limiter to all API routes
+  app.use('/api/', generalLimiter);
+
+  // Apply stricter limiter to authentication routes (matching /api/auth/*)
+  app.use('/api/auth/', authLimiter);
+
+  // Middleware to parse JSON bodies with a strict limit
+  app.use(express.json({ limit: '10kb' }));
+  app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+
+  // Input validation middleware
+  const validate = (req: any, res: any, next: any) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+    next();
+  };
+
   // MPESA API ROUTES
 
   // Note: Daraja sandbox endpoints
-  const DARAJA_ENV = 'sandbox'; // sandbox or production
+  const DARAJA_ENV = process.env.DARAJA_ENV || 'sandbox'; // sandbox or production
   const DARAJA_BASE_URL = DARAJA_ENV === 'sandbox' 
     ? 'https://sandbox.safaricom.co.ke'
     : 'https://api.safaricom.co.ke';
@@ -76,15 +110,18 @@ async function startServer() {
   }
 
   // Endpoint to initiate STK Push
-  app.post('/api/mpesa/stkpush', async (req, res) => {
+  app.post('/api/mpesa/stkpush', 
+    [
+      body('phone').trim().notEmpty().withMessage('Phone is required').escape(),
+      body('amount').isNumeric().withMessage('Amount must be a number'),
+      body('reference').trim().escape(),
+      body('description').trim().escape(),
+    ],
+    validate,
+    async (req: express.Request, res: express.Response) => {
     try {
       const { phone, amount, reference, description } = req.body;
       const callbackBaseUrl = req.get('origin') || `https://${req.get('host')}`;
-
-      if (!phone || !amount) {
-         res.status(400).json({ success: false, error: 'Phone and amount are required' });
-         return;
-      }
 
       const phoneNumber = formatPhoneNumber(phone);
       const shortcode = process.env.MPESA_SHORTCODE;
@@ -179,7 +216,12 @@ async function startServer() {
   });
 
   // Polling endpoint for frontend to check if payment succeeded
-  app.get('/api/mpesa/status/:requestId', (req, res) => {
+  app.get('/api/mpesa/status/:requestId', 
+    [
+      param('requestId').trim().escape()
+    ],
+    validate,
+    (req: express.Request, res: express.Response) => {
     const status = paymentCallbacks.get(req.params.requestId);
     if (!status) {
        res.json({ status: 'pending' });
