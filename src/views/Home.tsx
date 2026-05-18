@@ -283,7 +283,7 @@ export default function Home({ setView, posts = [] }: HomeProps) {
               <img 
                 alt="Birthday Occasion" 
                 className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" 
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVdrfQRoVdrBKJB9GqK08xw8b1W7F2PH1eRj59mAuwXMDxee0aoLgjL3hsQAeXvjkcsOed_7Us1HhGbajrnsYUBDMk-UGHvghxrHR-7_HMEF0SFKzQNX7WQVchfKVFRt8ELfj0K_69tNN-cLQ2pXZeDutWvwBgdDoQ61QeTpVf4i4A2O0lGcXiZoPnowxnZN1WxzhL5u76p5QTlNaBnJUbVHZVUuH1MiRXEjp-IisVjrN9hjVBmNZyn5V0o9iF7YLexPY0AhsAt2k" 
+                src="/src/assets/images/home_birthday.jpg" 
               />
               <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors"></div>
               <div className="absolute bottom-8 left-8 text-white">

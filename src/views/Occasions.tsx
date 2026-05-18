@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useState } from 'react';
 import { motion } from 'motion/react';
 import { Utensils, Brush, Truck, CheckCircle } from 'lucide-react';
 import { db } from '../firebase';
@@ -74,8 +75,8 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
       <section className="relative h-[65vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
-            className="w-full h-full object-cover" 
-            src="/src/assets/images/regenerated_image_1779025502787.webp" 
+            className="w-full h-full object-cover contrast-125" 
+            src="/src/assets/images/occasion.webp" 
             alt="Floral Cake Bouquet"
           />
           <div className="absolute inset-0 bg-stone-900/40"></div>
@@ -186,23 +187,23 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
         
         <div className="grid grid-cols-1 md:grid-cols-4 grid-rows-2 gap-4 h-auto md:h-[800px]">
           <div className="md:col-span-2 md:row-span-2 relative overflow-hidden rounded-3xl group shadow-lg">
-            <img className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCwj3BAR1OJKxdb73ZI8-2KkGf0kQF_1CqIyiIS0mIAzyBWZMLrfQ6WNt6o8wGyXeCpIS0UxxdRTXG0z5G_iKP4Ou9YHNWs1qJnDrc__j-8lHgXtBMip2um-Liyf_uOcFfP0d4XAcqIrhF1RmRF32VjuT8l4Y8XapXfYDfPvGpkZt6vcVQDNFQ4EHCaPjKJ1uu1wUDuoNUJdkQuxM6BRtNyZUUbuRN5LxmVHLYqax6er8vYASKwlVQAGaobdVI54FT8FRFo65ZgqUQ" alt="Gala" />
+            <img className="w-full h-full object-cover brightness-110 transition-all duration-700 group-hover:scale-105" src="/src/assets/images/memory1.jpg" alt="Gala" />
             <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-all"></div>
             <div className="absolute bottom-8 left-8 text-white opacity-0 group-hover:opacity-100 transition-opacity">
-              <p className="text-xs font-bold uppercase tracking-widest">The Grand Gala</p>
+              <p className="text-xs font-bold uppercase tracking-widest">The Grand Wedding</p>
             </div>
           </div>
           
           <div className="col-span-1 row-span-1 relative overflow-hidden rounded-3xl group shadow-lg min-h-[250px]">
-            <img className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBt92KQt_4d2JZKmxeiDth0nw5geLHSC4DrMVXu-7u3fCI-xS5XbGRfYzJxs3Ttg0Kx8TaUfYDmwlfFk2CJeVGlQBeufID7OT5fmXJxHgqgh3g8eZ00HVEZRu6s36Vb69F1e5DK8dUZnq_-Dhqyqv4tZOOlQGh0RzlAQBHd2bVMWEcw6OOJbAdAF_jVV58wfxh9yrsDLJ2WTvCycfoM0kHGD6180_NiYoKdgjTOdegx1hA7Uoejz32OHwsdbwg0T1C23wqQmJGvyww" alt="Table" />
+            <img className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="/src/assets/images/memory4.jpg" alt="Table" />
           </div>
           
           <div className="col-span-1 row-span-1 relative overflow-hidden rounded-3xl group shadow-lg min-h-[250px]">
-            <img className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdsFaEPUW8clmOIPFyCkxGXGvdYU3ZLls0KciCwYey70v4UhlZbGXSCpvybl-a4OI5mHoxP1lyh_hyNuotAM6omn0L-HQEDrwTavNhhau6NpBQA6YFwAEdjGurLP9PD1OkRad4SSTbSWV4b-IaPRk_Tpo3z8PCr6-dJj9ADUFnVWHO97etrlHvW74Ll6ha5d4MHHuygnEO138dkRciu1cLDLYDoRT7jyYBuHwbmLGB6O_Bs2Ia6RAF2biNr_9JFYyLl5UxATGOKFQ" alt="Plated" />
+            <img className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="/src/assets/images/memory3.jpg" alt="Plated" />
           </div>
           
           <div className="md:col-span-2 md:row-span-1 relative overflow-hidden rounded-3xl group shadow-lg min-h-[250px]">
-            <img className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5DI82lYHgL2E3fr8PStDnmeahGAelnh3dl_D_RKE8Pj6MtPkPa0OfOFazaa8m1ryL0dV1J0O3J1hvBncVad4DiAih7pcdKpBvXVcjk8L6IbbIcaB_iBZ6IsLw2nMyO9piHz_IVEWf75txpy33jPChLVU74wPfX4bSunblimHJ4ppwQc7SomvX71kGCLy-rgMx6qRi-RYSkWtD2A-Vm9LqUGAvw05niqbpbDjC1dyrTvcm-VyhPcoi7H_N8Q-pyH83RD-dEeXki_E" alt="Pastries" />
+            <img className="w-full h-full object-cover contrast-125 transition-all duration-700 group-hover:scale-105" src="/src/assets/images/memory2.jpg" alt="Fun times" />
           </div>
         </div>
       </section>
