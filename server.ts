@@ -118,7 +118,7 @@ async function startServer() {
       body('description').trim().escape(),
     ],
     validate,
-    async (req: express.Request, res: express.Response) => {
+    async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     try {
       const { phone, amount, reference, description } = req.body;
       const callbackBaseUrl = req.get('origin') || `https://${req.get('host')}`;
@@ -128,7 +128,9 @@ async function startServer() {
       const passkey = process.env.MPESA_PASSKEY;
 
       if (!shortcode || !passkey) {
-        throw new Error('MPESA_SHORTCODE or MPESA_PASSKEY not configured');
+        const error: any = new Error('M-Pesa payment system is not fully configured.');
+        error.status = 503;
+        throw error;
       }
 
       const token = await getMpesaAccessToken();
@@ -168,14 +170,16 @@ async function startServer() {
       
       if (!response.ok) {
         console.error("STK Push error response:", data);
-        res.status(response.status).json({ success: false, error: data.errorMessage || 'STK Push failed', details: data });
+        res.status(response.status).json({ 
+          success: false, 
+          error: data.errorMessage || 'The payment request could not be processed at this time.' 
+        });
         return;
       }
 
       res.json({ success: true, data });
     } catch (error: any) {
-      console.error('STK push error:', error);
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   });
 
@@ -184,7 +188,7 @@ async function startServer() {
   // We'll expose an endpoint so the frontend can check the status.
   const paymentCallbacks = new Map<string, any>();
 
-  app.post('/api/mpesa/callback', async (req, res) => {
+  app.post('/api/mpesa/callback', async (req, res, next) => {
     try {
       console.log('Received Mpesa Callback:', JSON.stringify(req.body, null, 2));
       const reference = req.query.reference as string;
@@ -205,20 +209,18 @@ async function startServer() {
          res.json({ message: 'Success' });
          return;
       } else {
-         res.status(400).json({ error: 'Invalid payload' });
+         res.status(400).json({ success: false, error: 'Invalid callback payload' });
          return;
       }
     } catch (error) {
-      console.error('Callback error:', error);
-       res.status(500).json({ error: 'Server handling callback failed' });
-       return;
+      next(error);
     }
   });
 
   // Polling endpoint for frontend to check if payment succeeded
   app.get('/api/mpesa/status/:requestId', 
     [
-      param('requestId').trim().escape()
+      param('requestId').trim().notEmpty().escape()
     ],
     validate,
     (req: express.Request, res: express.Response) => {
@@ -229,12 +231,52 @@ async function startServer() {
     }
     
     if (status.resultCode === 0) {
-       res.json({ status: 'success', data: status });
+       res.json({ status: 'success' });
        return;
     } else {
-       res.json({ status: 'failed', data: status });
+       res.json({ status: 'failed', message: status.resultDesc });
        return;
     }
+  });
+
+
+  // ---------------------------------------------------------
+  // Error handling and 404
+  // ---------------------------------------------------------
+
+  // 404 handler for API routes
+  app.use('/api/*', (req, res) => {
+    res.status(404).json({
+      success: false,
+      error: 'Endpoint not found'
+    });
+  });
+
+  // Global Error Handler
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    if (!isProduction) {
+      console.error('Unhandled Error:', err);
+    }
+
+    const statusCode = err.status || err.statusCode || 500;
+    
+    // In production, we don't leak internal error messages or stack traces
+    let message = 'An unexpected error occurred. Please try again later.';
+    
+    if (!isProduction) {
+      message = err.message || 'Internal Server Error';
+    } else if (statusCode < 500) {
+      // For 4xx errors, we can be slightly more descriptive if it's a known error type
+      message = err.message;
+    }
+
+    res.status(statusCode).json({
+      success: false,
+      error: message,
+      ...( !isProduction && { stack: err.stack, details: err.details })
+    });
   });
 
 
