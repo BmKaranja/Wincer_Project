@@ -4,6 +4,19 @@ import path from "path";
 import fs from "fs";
 import { rateLimit } from 'express-rate-limit';
 import { body, param, validationResult } from 'express-validator';
+import { Agent, setGlobalDispatcher } from 'undici';
+
+// Initialize HTTP/HTTPS connection pooling via undici.
+// This configures robust socket reuse (Keep-Alive) on all outbound fetch requests.
+// This significantly reduces network overhead and latency when connecting to Safaricom Daraja API.
+const poolAgent = new Agent({
+  connections: 50,              // Maintain up to 50 active socket connections per origin
+  keepAliveTimeout: 60000,      // Keep idle sockets open for 60 seconds
+  keepAliveMaxTimeout: 600000,  // Max limit to recycle sockets (10 minutes)
+  pipelining: 1                 // Disable HTTP pipelining issues by setting to 1
+});
+
+setGlobalDispatcher(poolAgent);
 
 async function startServer() {
   const app = express();
