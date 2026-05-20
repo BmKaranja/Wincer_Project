@@ -66,7 +66,7 @@ export default function Home({ setView, posts = [] }: HomeProps) {
               Bespoke Cakes <br /> You Can Taste.
             </h1>
             <p className="text-xl mb-8 text-stone-100 font-sans opacity-90 leading-relaxed">
-              Handcrafted in Nairobi, our custom cakes are designed to elevate your weddings, birthdays, and baby showers.
+              Handcrafted in Nairobi, our custom cakes are designed to elevate your weddings, birthdays, and more.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <button 
