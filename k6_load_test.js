@@ -1,29 +1,24 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 
-// -------------------------------------------------------------------------------------------------
-// k6 Load Test Configuration
-// For more info, see: https://grafana.com/docs/k6/latest/
-// -------------------------------------------------------------------------------------------------
 export const options = {
-  // Test scenarios or stages for ramping up virtual users
   stages: [
-    { duration: '30s', target: 10 }, // Ramp-up: 0 to 10 users in 30 seconds
-    { duration: '1m', target: 10 },  // Plateau: hold 10 users for 1 minute
-    { duration: '15s', target: 0 },  // Ramp-down: 10 to 0 users in 15 seconds
+    { duration: '30s', target: 10 },
+    { duration: '1m', target: 10 },
+    { duration: '15s', target: 0 },
   ],
-  // Performance threshold parameters
   thresholds: {
-    http_req_failed: ['rate<0.05'], // Fail test if over 5% of requests return error status codes
-    http_req_duration: ['p(95)<1500'], // 95% of requests must complete under 1500ms
+    http_req_failed: ['rate<0.05'],
+    http_req_duration: ['p(95)<1500'],
   },
 };
 
-// Base URL of the deployed or local server
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:3000';
 
 export default function () {
-  // 1. Prepare JSON Payload for STK Push initiation
+  // Get auth token (adjust based on your auth mechanism)
+  const token = __ENV.AUTH_TOKEN || 'your-jwt-token-here';
+
   const stkPayload = JSON.stringify({
     phone: '0712345678',
     amount: 1,
@@ -33,16 +28,25 @@ export default function () {
 
   const headers = {
     'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`, // ADD THIS
   };
 
-  // 2. Query target Endpoint: STK Push API
+  // Log first request for debugging
+  if (__ITER === 0 && __VU === 1) {
+    console.log(`Testing endpoint: ${BASE_URL}/api/mpesa/stkpush`);
+    console.log(`Payload: ${stkPayload}`);
+  }
+
   const stkPushRes = http.post(`${BASE_URL}/api/mpesa/stkpush`, stkPayload, { headers });
 
-  // 3. Perform Response assertions
-  // The global rate limiter is configured with /api/ general limit rules (100 req per 15 minutes),
-  // so some virtual requests might encounter a 429 Too Many Requests response code if rate-limited.
+  // Enhanced logging on failure
+  if (stkPushRes.status !== 200 && __ITER < 3) {
+    console.log(`STK Push failed with status ${stkPushRes.status}`);
+    console.log(`Response: ${stkPushRes.body}`);
+  }
+
   check(stkPushRes, {
-    'stk push has valid status (200, 429, or 503)': (r) => 
+    'stk push has valid status (200, 429, or 503)': (r) =>
       [200, 429, 503].includes(r.status),
     'is not 500 internal error': (r) => r.status !== 500,
     'response has success framework wrapper': (r) => {
@@ -52,29 +56,30 @@ export default function () {
       } catch (e) {
         return false;
       }
-    }
+    },
   });
 
-  // Small delay to simulate user waiting for push notification screen
   sleep(1);
 
-  // 4. Simulate status polling behavior
-  // Check mock response for status tracking mapping
-  const sampleRequestId = 'ws_CO_20052026135455'; 
-  const statusRes = http.get(`${BASE_URL}/api/mpesa/status/${sampleRequestId}`);
+  const sampleRequestId = 'ws_CO_20052026135455';
+  const statusRes = http.get(`${BASE_URL}/api/mpesa/status/${sampleRequestId}`, { headers });
+
+  if (statusRes.status !== 200 && __ITER < 3) {
+    console.log(`Status poll failed with status ${statusRes.status}`);
+    console.log(`Response: ${statusRes.body}`);
+  }
 
   check(statusRes, {
     'status poll is 200': (r) => r.status === 200,
     'status payload matches standard states': (r) => {
       try {
         const body = JSON.parse(r.body);
-        return body.status === 'pending' || body.status === 'success' || body.status === 'failed';
+        return ['pending', 'success', 'failed'].includes(body.status);
       } catch (e) {
         return false;
       }
-    }
+    },
   });
 
-  // Sleep before next loop iteration to emulate organic human pacing
   sleep(2);
 }
