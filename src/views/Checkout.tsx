@@ -203,7 +203,7 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
         >Collections</span>
         <ChevronRight className="w-3 h-3" />
         <span 
-          onClick={() => setView('home')}
+          onClick={() => setView('cart')}
           className="hover:text-secondary cursor-pointer transition-colors"
         >Cart</span>
         <ChevronRight className="w-3 h-3" />

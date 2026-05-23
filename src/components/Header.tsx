@@ -63,8 +63,8 @@ export default function Header({ currentView, setView, cartCount }: HeaderProps)
             <Search className="w-5 h-5" />
           </button>
           <button 
-            onClick={() => handleNavClick('checkout')}
-            className={`relative hover:scale-110 transition-transform active:scale-90 ${currentView === 'checkout' ? 'text-secondary font-bold' : ''}`}
+            onClick={() => handleNavClick('cart')}
+            className={`relative hover:scale-110 transition-transform active:scale-90 ${currentView === 'cart' ? 'text-secondary font-bold' : ''}`}
           >
             <ShoppingBag className="w-5 h-5" />
             {cartCount > 0 && (

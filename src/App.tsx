@@ -11,6 +11,7 @@ import Story from './views/Story';
 import Blog from './views/Blog';
 import Checkout from './views/Checkout';
 import Admin from './views/Admin';
+import Cart from './views/Cart';
 import { AnimatePresence, motion } from 'motion/react';
 import { auth, db } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -20,7 +21,32 @@ export default function App() {
   const [view, setView] = useState('home');
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [editingItem, setEditingItem] = useState<any>(null);
-  const [cart, setCart] = useState<any[]>([]);
+  const [cart, setCart] = useState<any[]>(() => {
+    try {
+      const local = localStorage.getItem('wincer_cart');
+      return local ? JSON.parse(local) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [savedItems, setSavedItems] = useState<any[]>(() => {
+    try {
+      const local = localStorage.getItem('wincer_saved');
+      return local ? JSON.parse(local) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('wincer_cart', JSON.stringify(cart));
+  }, [cart]);
+
+  useEffect(() => {
+    localStorage.setItem('wincer_saved', JSON.stringify(savedItems));
+  }, [savedItems]);
+
   const [user, setUser] = useState<any>(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [cakes, setCakes] = useState<any[]>([]);
@@ -130,7 +156,21 @@ export default function App() {
     } else {
       setCart(prev => [...prev, item]);
     }
-    setView('checkout');
+  };
+
+  const saveItem = (item: any) => {
+    setSavedItems(prev => {
+      const exists = prev.some(existing => 
+        existing.name === item.name &&
+        JSON.stringify(existing.config) === JSON.stringify(item.config)
+      );
+      if (exists) return prev;
+      return [...prev, { ...item, id: Date.now() }];
+    });
+  };
+
+  const addSavedToCart = (item: any) => {
+    setCart(prev => [...prev, { ...item, id: Date.now() }]);
   };
 
   const clearCart = () => setCart([]);
@@ -179,9 +219,38 @@ export default function App() {
               <Customizer 
                 setView={handleNav} 
                 selectedProduct={selectedProduct} 
-                onAddToCart={addToCart} 
+                onAddToCart={(item) => {
+                  addToCart(item);
+                  setView('cart');
+                }}
+                onBuyNow={(item) => {
+                  addToCart(item);
+                  setView('checkout');
+                }}
+                onSave={saveItem}
+                savedItems={savedItems}
                 editingItem={editingItem}
                 cakes={cakes}
+              />
+            </motion.div>
+          )}
+          {view === 'cart' && (
+            <motion.div 
+              key="cart"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <Cart 
+                setView={handleNav} 
+                cart={cart}
+                onAddToCart={(item) => setCart(prev => [...prev, item])}
+                onRemove={removeFromCart} 
+                onEdit={handleEditItem}
+                savedItems={savedItems}
+                onRemoveSaved={(id) => setSavedItems(prev => prev.filter(i => i.id !== id))}
+                onAddSavedToCart={addSavedToCart}
+                onClearCart={clearCart}
               />
             </motion.div>
           )}
