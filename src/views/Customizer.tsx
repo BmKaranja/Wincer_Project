@@ -98,8 +98,8 @@ export default function Customizer({
   const getCartItem = () => {
     return {
       id: Date.now(),
-      name: internalBaseProduct?.title || 'Custom Cake',
-      img: internalBaseProduct?.img || "",
+      name: internalBaseProduct?.title || editingItem?.name || 'Custom Cake',
+      img: internalBaseProduct?.img || editingItem?.img || null,
       basePrice: parsedBasePrice,
       config: { size, sponge, filling, frosting, toppings, message },
       price: itemTotal
@@ -228,8 +228,8 @@ export default function Customizer({
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.4 }}
-              src={internalBaseProduct?.img || "https://via.placeholder.com/500"}
-              alt={internalBaseProduct?.title}
+              src={internalBaseProduct?.img || editingItem?.img || "https://via.placeholder.com/500"}
+              alt={internalBaseProduct?.title || editingItem?.name || "Cake"}
               className="w-full h-full object-cover"
               style={{
                 filter: sponge === 'Chocolate' ? 'hue-rotate(-10deg) saturate(1.1)' : 
@@ -256,7 +256,7 @@ export default function Customizer({
           <div className="flex gap-3">
             {[1, 2].map(i => (
               <div key={i} className="w-20 h-20 rounded-lg bg-secondary/5 border border-secondary/10 cursor-pointer hover:border-secondary/30 transition-colors overflow-hidden">
-                <img src={internalBaseProduct?.img} alt="thumbnail" className="w-full h-full object-cover opacity-60 hover:opacity-100" />
+                <img src={internalBaseProduct?.img || editingItem?.img || null} alt="thumbnail" className="w-full h-full object-cover opacity-60 hover:opacity-100" />
               </div>
             ))}
           </div>
@@ -544,7 +544,7 @@ export default function Customizer({
                 <X className="w-8 h-8" />
               </button>
               <img 
-                src={internalBaseProduct?.img}
+                src={internalBaseProduct?.img || editingItem?.img || null}
                 alt="zoomed"
                 className="w-full rounded-xl"
               />

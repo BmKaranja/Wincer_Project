@@ -223,12 +223,16 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
             <div className="space-y-12">
               {cart.map((item) => (
                 <div key={item.id} className="flex flex-col md:flex-row gap-8 items-start relative z-10">
-                  <div className="w-full md:w-40 aspect-square rounded-2xl overflow-hidden flex-shrink-0 shadow-lg border-4 border-white">
-                    <img 
-                      alt={item.name} 
-                      className="w-full h-full object-cover" 
-                      src={item.img} 
-                    />
+                  <div className="w-full md:w-40 aspect-square rounded-2xl overflow-hidden flex-shrink-0 shadow-lg border-4 border-white bg-stone-100 flex items-center justify-center">
+                    {item.img ? (
+                      <img 
+                        alt={item.name} 
+                        className="w-full h-full object-cover" 
+                        src={item.img} 
+                      />
+                    ) : (
+                      <span className="text-4xl">🍰</span>
+                    )}
                   </div>
                   <div className="flex-grow">
                     <div className="flex justify-between items-start mb-4">
