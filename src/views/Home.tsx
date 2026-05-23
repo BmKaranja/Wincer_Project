@@ -10,11 +10,11 @@ export default function Home({ setView, posts = [] }: HomeProps) {
   const bestsellers = [
     {
       id: 7,
-      title: "Biscoff Dream Cake",
-      desc: "Lotus Biscoff sponge with caramelized biscuit spread and crunchy bits. Nairobi's newest obsession.",
+      title: "Chocolate Drip Cake",
+      desc: "A decadent two-tier chocolate drip cake, lavishly adorned with wafers, gold coins, and assorted chocolates.",
       price: "Kshs. 3500",
       tag: "Trending",
-      img: "/src/assets/images/biscoff_dream_cake_1779025277501.png"
+      img: "/src/assets/images/chocolatecake.jpg"
     },
     {
       id: 1,

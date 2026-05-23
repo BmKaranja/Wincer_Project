@@ -59,12 +59,24 @@ export default function Account({ user, setUser, setView }: { user: any, setUser
       await signInWithPopup(auth, googleProvider);
       // navigation / logic handles via onAuthStateChanged in App.tsx
     } catch (err: any) {
-      console.error(err);
-      if (err.code === 'auth/popup-blocked') {
+      const isCancellation = 
+        err?.code === 'auth/user-cancelled' || 
+        err?.code === 'auth/popup-closed-by-user' || 
+        err?.code === 'auth/cancelled-popup-request' ||
+        (err?.message && (
+          err.message.includes('popup-closed-by-user') ||
+          err.message.includes('cancelled-popup-request') ||
+          err.message.includes('user-cancelled')
+        ));
+
+      if (isCancellation) {
+        console.warn('Sign-in popup was closed or cancelled by the user.');
+        setErrorMsg('Login was cancelled because the sign-in window was closed.');
+      } else if (err?.code === 'auth/popup-blocked' || (err?.message && err.message.includes('popup-blocked'))) {
+        console.warn('Sign-in popup blocked:', err);
         setErrorMsg('Login popup blocked. Please open this app in a new tab or allow popups.');
-      } else if (err.code === 'auth/user-cancelled' || err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
-        setErrorMsg('Login cancelled.');
       } else {
+        console.error('Authentication failed:', err);
         setErrorMsg('Authentication failed. Please try again.');
       }
     }

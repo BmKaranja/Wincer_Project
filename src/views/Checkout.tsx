@@ -24,7 +24,17 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
   const [paymentType, setPaymentType] = useState<'deposit' | 'full'>('deposit');
   const [isPromptingMpesa, setIsPromptingMpesa] = useState(false);
 
-  const isFormValid = deliveryDate.trim() !== '' && address.trim() !== '' && city.trim() !== '' && mpesaPhone.length >= 10;
+  // Get minimum date (at least 2 days in advance / 48hr prior) in YYYY-MM-DD
+  const minAllowedDate = (() => {
+    const today = new Date();
+    today.setDate(today.getDate() + 2);
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  })();
+
+  const isFormValid = deliveryDate.trim() !== '' && deliveryDate >= minAllowedDate && address.trim() !== '' && city.trim() !== '' && mpesaPhone.length >= 10;
 
   const subtotal = cart.reduce((sum, item) => sum + item.price, 0);
   const deliveryFee = cart.length > 0 ? 500 : 0;
@@ -291,12 +301,16 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
               <div className="space-y-3">
-                <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant/60">Delivery Date</label>
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant/60">Delivery Date</label>
+                  <span className="text-[10px] text-secondary/60 font-semibold italic">Requires 2 days notice</span>
+                </div>
                 <div className="relative">
                   <input 
                     className="w-full bg-background border border-secondary/10 rounded-2xl p-5 focus:ring-2 focus:ring-secondary/20 outline-none text-on-surface font-medium" 
                     type="date" 
                     id="delivery-date"
+                    min={minAllowedDate}
                     value={deliveryDate}
                     onChange={(e) => setDeliveryDate(e.target.value)}
                   />

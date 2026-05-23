@@ -19,6 +19,16 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
     vision: ''
   });
 
+  // Get minimum date (at least 2 days in advance / 48hr prior) in YYYY-MM-DD
+  const minAllowedDate = (() => {
+    const today = new Date();
+    today.setDate(today.getDate() + 2);
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  })();
+
   const handleInquirySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -260,8 +270,11 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase tracking-widest text-secondary/60">Event Date</label>
-                      <input required className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all font-medium" type="date" value={formData.eventDate} onChange={e => setFormData({...formData, eventDate: e.target.value})} />
+                      <div className="flex justify-between items-center">
+                        <label className="text-xs font-bold uppercase tracking-widest text-secondary/60">Event Date</label>
+                        <span className="text-[10px] text-secondary/60 font-semibold italic">Requires 2 days notice</span>
+                      </div>
+                      <input required className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all font-medium" type="date" min={minAllowedDate} value={formData.eventDate} onChange={e => setFormData({...formData, eventDate: e.target.value})} />
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-bold uppercase tracking-widest text-secondary/60">Occasion Type</label>
