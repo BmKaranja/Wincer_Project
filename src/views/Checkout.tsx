@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronRight, UtensilsCrossed, Calendar, CreditCard, PlusCircle, Lock, ShieldCheck, Truck, ArrowRight, CheckCircle2, X, Wand2 } from 'lucide-react';
 import { db } from '../firebase';
 import { doc, setDoc, increment, serverTimestamp } from 'firebase/firestore';
+import { DELIVERY_ZONES } from '../constants';
 
 export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemove, user }: { 
   setView: (v: string) => void, 
@@ -23,6 +24,10 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
   const [mpesaPhone, setMpesaPhone] = useState('07');
   const [paymentType, setPaymentType] = useState<'deposit' | 'full'>('deposit');
   const [isPromptingMpesa, setIsPromptingMpesa] = useState(false);
+  const [manualMpesaCode, setManualMpesaCode] = useState('');
+  const [isManualConfirming, setIsManualConfirming] = useState(false);
+  const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
+  const isManualVerifiedRef = useRef(false);
 
   // Get minimum date (at least 2 days in advance / 48hr prior) in YYYY-MM-DD
   const minAllowedDate = (() => {
@@ -34,26 +39,97 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
     return `${year}-${month}-${day}`;
   })();
 
-  const isFormValid = deliveryDate.trim() !== '' && deliveryDate >= minAllowedDate && address.trim() !== '' && city.trim() !== '' && mpesaPhone.length >= 10;
+  const [selectedZoneId, setSelectedZoneId] = useState<string>(() => {
+    return localStorage.getItem('wincer_delivery_zone') || 'cbd';
+  });
+
+  const selectedZone = useMemo(() => {
+    return DELIVERY_ZONES.find(zone => zone.id === selectedZoneId) || DELIVERY_ZONES[0];
+  }, [selectedZoneId]);
 
   const subtotal = cart.reduce((sum, item) => sum + item.price, 0);
-  const deliveryFee = cart.length > 0 ? 500 : 0;
-  const packagingFee = cart.length > 0 ? 200 : 0;
+  const deliveryFee = 0; // Disabled for now: cart.length > 0 ? selectedZone.fee : 0;
+  const packagingFee = 0; // Disabled for now: cart.length > 0 ? 200 : 0;
   const total = subtotal + deliveryFee + packagingFee;
   
   const depositAmount = Math.ceil(total * 0.5);
   const amountToPayNow = paymentType === 'deposit' ? depositAmount : total;
 
+  const isFormValid = deliveryDate.trim() !== '' && deliveryDate >= minAllowedDate && address.trim() !== '' && city.trim() !== '' && mpesaPhone.length >= 10;
+
   const [isPlacing, setIsPlacing] = useState(false);
   const [errorState, setErrorState] = useState('');
+
+  const createDatabaseOrder = async (orderId: string, mpesaTxCode?: string) => {
+    const cakeTitles = cart.map(c => c.name).join(', ');
+    const cakeDetails = cart.map(c => {
+      if (c.config) {
+        const configStr = Object.entries(c.config)
+          .filter(([_, v]) => v) // filter out empty values
+          .map(([k, v]) => Array.isArray(v) ? `${k}: ${v.join(', ')}` : `${k}: ${v}`)
+          .join(' | ');
+        return `${c.name} - ${configStr}`;
+      }
+      return c.name;
+    }).join('\n');
+    const gauge = cart[0]?.config?.size || cart[0]?.gauge || cart[0]?.basePrice || 'Standard';
+
+    const paymentInfo = mpesaTxCode 
+      ? `M-Pesa - Code: ${mpesaTxCode} (${paymentType === 'deposit' ? '50% Deposit' : 'Full Amount'})`
+      : `M-Pesa (${paymentType === 'deposit' ? '50% Deposit' : 'Full Amount'})`;
+
+    await setDoc(doc(db, 'orders', orderId), {
+      userId: user ? user.uid : 'guest',
+      customer: user ? (user.name || user.email || mpesaPhone) : mpesaPhone,
+      amount: `Kshs. ${total}`,
+      paidAmount: `Kshs. ${amountToPayNow}`,
+      paymentMethod: paymentInfo,
+      status: paymentType === 'deposit' ? 'Confirmed (Pending Balance)' : 'Fully Paid',
+      deliveryDate: deliveryDate,
+      deliveryWindow: deliveryWindow,
+      deliveryZone: selectedZone.name,
+      shippingAddress: address,
+      city: city,
+      cakeTitle: cakeTitles || 'Custom Cake',
+      cakeDetails: cakeDetails || 'Details TBD',
+      gauge: typeof gauge === 'string' ? gauge : String(gauge),
+      createdAt: serverTimestamp()
+    });
+  };
+
+  const handleManualCodeSubmit = async () => {
+    if (!manualMpesaCode || manualMpesaCode.trim().length < 5) {
+      setErrorState('Please enter a valid M-Pesa transaction code.');
+      return;
+    }
+    
+    setIsManualConfirming(true);
+    setErrorState('');
+    try {
+      const orderId = currentOrderId || Date.now().toString();
+      await createDatabaseOrder(orderId, manualMpesaCode.trim().toUpperCase());
+      isManualVerifiedRef.current = true;
+      setIsPromptingMpesa(false);
+      setIsSuccess(true);
+      onOrderPlaced();
+    } catch (err: any) {
+      console.error(err);
+      setErrorState('Failed to submit code manually: ' + (err.message || 'Unknown Error'));
+    } finally {
+      setIsManualConfirming(false);
+    }
+  };
 
   const handlePlaceOrder = async () => {
     setIsPromptingMpesa(true);
     setIsPlacing(true);
     setErrorState('');
+    setManualMpesaCode('');
+    isManualVerifiedRef.current = false;
     
     try {
       const orderId = Date.now().toString();
+      setCurrentOrderId(orderId);
 
       // 1. Initiate STK Push via backend
       const response = await fetch('/api/mpesa/stkpush', {
@@ -85,9 +161,14 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
       let paymentConfirmed = false;
       const maxAttempts = 20; // 20 * 6s = 120s
       
-      while (attempts < maxAttempts && !paymentConfirmed) {
+      while (attempts < maxAttempts && !paymentConfirmed && !isManualVerifiedRef.current) {
         await new Promise(r => setTimeout(r, 6000)); // wait 6 seconds
         attempts++;
+        
+        if (isManualVerifiedRef.current) {
+          paymentConfirmed = true;
+          break;
+        }
         
         try {
           const statusRes = await fetch(`/api/mpesa/status/${requestId}`);
@@ -104,38 +185,16 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
         }
       }
 
+      if (isManualVerifiedRef.current) {
+        return; // successfully handled by manual submit
+      }
+
       if (!paymentConfirmed) {
         throw new Error('M-Pesa payment timed out. Did you enter your PIN?');
       }
       
       setIsPromptingMpesa(false);
-      
-      const cakeTitles = cart.map(c => c.name).join(', ');
-      const cakeDetails = cart.map(c => {
-        if (c.config) {
-          const configStr = Object.entries(c.config)
-            .filter(([_, v]) => v) // filter out empty values
-            .map(([k, v]) => Array.isArray(v) ? `${k}: ${v.join(', ')}` : `${k}: ${v}`)
-            .join(' | ');
-          return `${c.name} - ${configStr}`;
-        }
-        return c.name;
-      }).join('\n');
-      const gauge = cart[0]?.config?.size || cart[0]?.gauge || cart[0]?.basePrice || 'Standard';
-      
-      await setDoc(doc(db, 'orders', orderId), {
-        userId: user ? user.uid : 'guest',
-        customer: user ? (user.name || user.email || mpesaPhone) : mpesaPhone,
-        amount: `Kshs. ${total}`,
-        paidAmount: `Kshs. ${amountToPayNow}`,
-        paymentMethod: `M-Pesa (${paymentType === 'deposit' ? '50% Deposit' : 'Full Amount'})`,
-        status: paymentType === 'deposit' ? 'Confirmed (Pending Balance)' : 'Fully Paid',
-        deliveryDate: deliveryDate,
-        cakeTitle: cakeTitles || 'Custom Cake',
-        cakeDetails: cakeDetails || 'Details TBD',
-        gauge: typeof gauge === 'string' ? gauge : String(gauge),
-        createdAt: serverTimestamp()
-      });
+      await createDatabaseOrder(orderId);
       setIsSuccess(true);
       onOrderPlaced();
     } catch (err: any) {
@@ -331,6 +390,29 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
                 </select>
               </div>
             </div>
+
+            <div className="grid grid-cols-1 gap-8 mb-8">
+              <div className="space-y-3">
+                <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant/60">Delivery Zone</label>
+                <div className="relative">
+                  <select 
+                    className="w-full bg-background border border-secondary/10 rounded-2xl p-5 focus:ring-2 focus:ring-secondary/20 outline-none text-on-surface font-medium cursor-pointer" 
+                    id="checkout-delivery-zone"
+                    value={selectedZoneId}
+                    onChange={(e) => {
+                      setSelectedZoneId(e.target.value);
+                      localStorage.setItem('wincer_delivery_zone', e.target.value);
+                    }}
+                  >
+                    {DELIVERY_ZONES.map((zone) => (
+                      <option key={zone.id} value={zone.id}>
+                        {zone.name} (Free Delivery)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
             
             <div className="grid grid-cols-1 gap-8 mb-8">
               <div className="space-y-3">
@@ -430,12 +512,15 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
                 <span className="text-lg font-bold text-on-surface">Kshs. {subtotal}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-on-surface-variant font-serif italic text-lg opacity-70">Delivery</span>
-                <span className="text-lg font-bold text-on-surface">Kshs. {deliveryFee}</span>
+                <span className="text-on-surface-variant font-serif italic text-lg opacity-70 flex flex-col sm:flex-row sm:items-baseline sm:gap-1">
+                  <span>Delivery</span>
+                  <span className="text-xs text-secondary/70 font-sans">({selectedZone.name.split(' (')[0]})</span>
+                </span>
+                <span className="font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full text-xs">Free</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-on-surface-variant font-serif italic text-lg opacity-70">Packaging</span>
-                <span className="text-lg font-bold text-on-surface">Kshs. {packagingFee}</span>
+                <span className="font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full text-xs">Free</span>
               </div>
               <div className="h-px bg-secondary/5 w-full"></div>
               
@@ -476,9 +561,78 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
             </button>
             
             {isPromptingMpesa && (
-              <p className="mt-4 text-center text-xs font-bold text-green-700 animate-pulse">
-                Please check your phone ({mpesaPhone}) to enter your M-Pesa PIN.
-              </p>
+              <div className="mt-6 bg-surface p-6 rounded-2xl border-2 border-secondary/15 space-y-4 shadow-lg text-center bg-[#FAF8F5]/50">
+                <div className="flex items-center justify-center gap-2 text-secondary">
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                  </span>
+                  <span className="text-sm font-bold tracking-wide uppercase">Waiting for M-Pesa PIN...</span>
+                </div>
+                
+                <p className="text-xs text-on-surface-variant/80">
+                  Please check your phone ({mpesaPhone}) to complete the payment. After entering your PIN, this screen will update automatically.
+                </p>
+
+                <div className="h-px bg-secondary/10 my-1"></div>
+
+                <div className="space-y-3 pt-1">
+                  <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest text-left">
+                    Paid already but still waiting?
+                  </p>
+                  <p className="text-[10px] text-on-surface-variant/60 leading-relaxed text-left">
+                    If Daraja successfully debited your account but Safaricom callbacks are taking too long, type your M-Pesa Transaction Code below (e.g., RE45TY78Z9) to complete your order manually.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <input
+                      type="text"
+                      maxLength={10}
+                      placeholder="e.g. RG85H91JK2"
+                      value={manualMpesaCode}
+                      onChange={(e) => setManualMpesaCode(e.target.value.toUpperCase().trim())}
+                      className="bg-background border border-secondary/15 rounded-xl px-4 py-3 text-xs font-bold outline-none uppercase focus:ring-2 focus:ring-secondary/10 flex-grow text-on-surface"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleManualCodeSubmit}
+                      disabled={isManualConfirming || manualMpesaCode.trim().length < 5}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-5 py-3 text-xs font-bold uppercase tracking-wider transition-all disabled:grayscale disabled:opacity-50 whitespace-nowrap"
+                    >
+                      {isManualConfirming ? 'Verifying...' : 'Submit Code'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {!isPromptingMpesa && errorState && (errorState.toLowerCase().includes('timeout') || errorState.toLowerCase().includes('time out') || errorState.toLowerCase().includes('pin')) && (
+              <div className="mt-4 bg-amber-50/50 p-6 rounded-2xl border border-amber-200/50 space-y-4 shadow-sm">
+                <div className="flex items-center gap-2 text-amber-800">
+                  <span className="text-lg">🛎️</span>
+                  <span className="text-xs font-bold uppercase tracking-wider">M-Pesa Verification Fallback</span>
+                </div>
+                <p className="text-xs text-amber-900/80 leading-relaxed">
+                  If you entered your PIN and received a confirmation message from M-Pesa but the website timed out, type your M-Pesa Transaction Code below to complete your order manually.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input
+                    type="text"
+                    maxLength={10}
+                    placeholder="e.g. RG85H91JK2"
+                    value={manualMpesaCode}
+                    onChange={(e) => setManualMpesaCode(e.target.value.toUpperCase().trim())}
+                    className="bg-background border border-amber-300 rounded-xl px-4 py-3 text-xs font-bold outline-none uppercase focus:ring-2 focus:ring-amber-200 flex-grow text-on-surface"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleManualCodeSubmit}
+                    disabled={isManualConfirming || manualMpesaCode.trim().length < 5}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-5 py-3 text-xs font-bold uppercase tracking-wider transition-all disabled:grayscale disabled:opacity-50 whitespace-nowrap"
+                  >
+                    {isManualConfirming ? 'Verifying...' : 'Submit Code'}
+                  </button>
+                </div>
+              </div>
             )}
             
             <p className="mt-8 text-center text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/40 px-8 leading-loose">

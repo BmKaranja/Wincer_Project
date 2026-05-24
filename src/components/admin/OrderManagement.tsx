@@ -196,6 +196,24 @@ export default function OrderManagement({ orders }: { orders: any[] }) {
                   <span className="text-secondary/60 text-sm font-bold uppercase tracking-widest">Delivery Date</span>
                   <span className="font-medium text-secondary">{viewingOrder.deliveryDate || 'N/A'}</span>
                 </div>
+                {viewingOrder.deliveryZone && (
+                  <div className="flex justify-between pb-4 border-b border-secondary/10">
+                    <span className="text-secondary/60 text-sm font-bold uppercase tracking-widest">Delivery Zone</span>
+                    <span className="font-medium text-secondary">{viewingOrder.deliveryZone}</span>
+                  </div>
+                )}
+                {viewingOrder.deliveryWindow && (
+                  <div className="flex justify-between pb-4 border-b border-secondary/10">
+                    <span className="text-secondary/60 text-sm font-bold uppercase tracking-widest">Delivery Window</span>
+                    <span className="font-medium text-secondary">{viewingOrder.deliveryWindow}</span>
+                  </div>
+                )}
+                {viewingOrder.shippingAddress && (
+                  <div className="flex justify-between pb-4 border-b border-secondary/10">
+                    <span className="text-secondary/60 text-sm font-bold uppercase tracking-widest">Address</span>
+                    <span className="font-medium text-secondary text-right">{viewingOrder.shippingAddress}, {viewingOrder.city || ''}</span>
+                  </div>
+                )}
                 <div className="flex justify-between pb-4 border-b border-secondary/10">
                   <span className="text-secondary/60 text-sm font-bold uppercase tracking-widest">Cake</span>
                   <span className="font-medium text-secondary">{viewingOrder.cakeTitle}</span>

@@ -18,6 +18,7 @@ import {
   Truck,
   ShieldCheck
 } from 'lucide-react';
+import { DELIVERY_ZONES } from '../constants';
 
 export default function Cart({ 
   setView, 
@@ -80,9 +81,24 @@ export default function Cart({
   }, [cart]);
 
   const subtotal = cart.reduce((sum, item) => sum + item.price, 0);
-  const deliveryFee = cart.length > 0 ? 500 : 0;
-  const packagingFee = cart.length > 0 ? 200 : 0;
+
+  const [selectedZoneId, setSelectedZoneId] = useState<string>(() => {
+    return localStorage.getItem('wincer_delivery_zone') || 'cbd';
+  });
+
+  const selectedZone = useMemo(() => {
+    return DELIVERY_ZONES.find(zone => zone.id === selectedZoneId) || DELIVERY_ZONES[0];
+  }, [selectedZoneId]);
+
+  const deliveryFee = 0; // Disabled for now: cart.length > 0 ? selectedZone.fee : 0;
+  const packagingFee = 0; // Disabled for now: cart.length > 0 ? 200 : 0;
   const total = subtotal + deliveryFee + packagingFee;
+
+  const handleZoneChange = (zoneId: string) => {
+    setSelectedZoneId(zoneId);
+    localStorage.setItem('wincer_delivery_zone', zoneId);
+    showToast(`Zone: ${DELIVERY_ZONES.find(z => z.id === zoneId)?.name.split(' (')[0]}`);
+  };
 
   const handleIncreaseQty = (item: any) => {
     // Clone and add to cart
@@ -356,13 +372,31 @@ export default function Cart({
                 <span className="text-on-surface-variant font-serif italic opacity-75">Subtotal</span>
                 <span className="font-bold text-on-surface">KShs {subtotal.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-on-surface-variant font-serif italic opacity-75">Nairobi Delivery</span>
-                <span className="font-bold text-on-surface">KShs {deliveryFee.toLocaleString()}</span>
+              
+              {cart.length > 0 && (
+                <div className="bg-secondary/5 p-4 rounded-2xl border border-secondary/15 space-y-2 mt-2">
+                  <span className="text-xs font-bold uppercase tracking-widest text-secondary block">Delivery Zone Selector</span>
+                  <select
+                    value={selectedZoneId}
+                    onChange={(e) => handleZoneChange(e.target.value)}
+                    className="w-full bg-surface border border-secondary/10 rounded-xl px-3 py-2 outline-none text-on-surface text-xs font-bold cursor-pointer hover:border-secondary/30 transition-all font-sans"
+                  >
+                    {DELIVERY_ZONES.map((zone) => (
+                      <option key={zone.id} value={zone.id}>
+                        {zone.name} (Free Delivery)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="flex justify-between text-sm items-center">
+                <span className="text-on-surface-variant font-serif italic opacity-75">Nairobi Delivery ({selectedZone.name.split(' (')[0]})</span>
+                <span className="font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full text-xs">Free</span>
               </div>
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-sm items-center">
                 <span className="text-on-surface-variant font-serif italic opacity-75">Signature Box Packaging</span>
-                <span className="font-bold text-on-surface">KShs {packagingFee.toLocaleString()}</span>
+                <span className="font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full text-xs">Free</span>
               </div>
               
               <div className="h-px bg-secondary/10 my-4"></div>

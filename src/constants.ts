@@ -99,3 +99,25 @@ export const PRODUCTS = [
     img: "https://lh3.googleusercontent.com/aida-public/AB6AXuB9MiOU8G013CpO73S79R0UYoJSSZZKOncVhGpSdA_ytPhrvBsw6KSp5nOZq_hKVAjROaruUL-7RcxGINNrka0GlkcLwJEb98HT0pk0C1ldz3aQQtGt06mFJp3drPRJIXWSnfW80jOadJRRduuvXTA0PxOvleMsjqRkNLyk80hl4LhnUnnrgRkvSWMmGS7nhZXkKyiy0K43pqgkJbsgFhh9CokY7UBT_ZA_PIgUD4el6q2zqGAKNO7APwlqqBHH_TojkH04fGPc7hc"
   }
 ];
+
+export interface DeliveryZone {
+  id: string;
+  name: string;
+  fee: number;
+}
+
+export const DELIVERY_ZONES: DeliveryZone[] = [
+  { id: 'cbd', name: 'Nairobi CBD & Central (greeenhouse/city center)', fee: 200 },
+  { id: 'westlands', name: 'Westlands, Parklands, Highridge & Gigiri', fee: 300 },
+  { id: 'kilimani', name: 'Kilimani, Kileleshwa, Lavington & Hurlingham', fee: 300 },
+  { id: 'karen', name: 'Karen & Lang\'ata', fee: 450 },
+  { id: 'runda', name: 'Runda, Muthaiga, Garden Estate & Ridgeways', fee: 400 },
+  { id: 'roysambu', name: 'Roysambu, Kasarani, Zimmerman & Kahawa', fee: 350 },
+  { id: 'embakasi', name: 'Embakasi, South B, South C & Eastlands', fee: 400 },
+  { id: 'thika', name: 'Thika Road (beyond Kahawa) & Ruiru', fee: 500 },
+  { id: 'syokimau', name: 'Syokimau, Mlolongo, Kitengela & Athi River', fee: 650 },
+  { id: 'kiambu', name: 'Kiambu Road & Northern Bypass', fee: 400 },
+  { id: 'other', name: 'Other Nairobi Suburbs (Standard)', fee: 450 },
+  { id: 'outside', name: 'Outside Nairobi (Special delivery / Courier)', fee: 900 }
+];
+
