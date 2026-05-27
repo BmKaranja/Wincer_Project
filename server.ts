@@ -5,10 +5,23 @@ import fs from "fs";
 import { rateLimit } from 'express-rate-limit';
 import { body, param, validationResult } from 'express-validator';
 import { Agent, setGlobalDispatcher } from 'undici';
-import * as admin from 'firebase-admin';
+import admin from 'firebase-admin';
+import { getFirestore } from 'firebase-admin/firestore';
+
+// Let's load the applet config if it exists
+let firebaseAppletConfig: any = null;
+try {
+  const configPath = path.join(process.cwd(), 'firebase-applet-config.json');
+  if (fs.existsSync(configPath)) {
+    firebaseAppletConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  }
+} catch (e) {
+  console.warn("Could not read firebase-applet-config.json:", e);
+}
 
 // Initialize Firebase Admin SDK using Application Default Credentials (ADC) or env fallback
-if (!admin.apps.length) {
+const apps = admin.apps || [];
+if (!apps.length) {
   if (process.env.FIREBASE_SERVICE_ACCOUNT) {
     try {
       const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
@@ -18,15 +31,21 @@ if (!admin.apps.length) {
       });
     } catch (e) {
       console.warn("Could not parse FIREBASE_SERVICE_ACCOUNT JSON, falling back to Application Default Credentials:", e);
-      admin.initializeApp();
+      admin.initializeApp({
+        projectId: firebaseAppletConfig?.projectId || process.env.FIREBASE_PROJECT_ID
+      });
     }
   } else {
     // Highly preferred in Cloud Run/Applet environment: uses built-in default container credentials
-    admin.initializeApp();
+    admin.initializeApp({
+      projectId: firebaseAppletConfig?.projectId || process.env.FIREBASE_PROJECT_ID
+    });
   }
 }
 
-const db = admin.firestore();
+// Initialize Firestore using the specific databaseId from the applet config
+const databaseId = firebaseAppletConfig?.firestoreDatabaseId;
+const db = databaseId ? getFirestore(databaseId) : getFirestore();
 
 // Setup FieldValue
 const { FieldValue } = admin.firestore;
@@ -207,7 +226,7 @@ app.post('/api/mpesa/stkpush',
       }
 
       // Store the request in Firestore for tracking
-      const checkoutRequestID = data.data.CheckoutRequestID;
+      const checkoutRequestID = data?.CheckoutRequestID || data?.data?.CheckoutRequestID;
       if (checkoutRequestID) {
         await db.collection('mpesa_requests').doc(checkoutRequestID).set({
           reference,

@@ -179,9 +179,9 @@ const handleManualCodeSubmit = async () => {
         throw new Error(data.error || 'Failed to initiate M-Pesa push');
       }
  
-      const requestId = data.data.CheckoutRequestID;
+      const requestId = data?.data?.CheckoutRequestID || data?.CheckoutRequestID;
       if (!requestId) {
-        throw new Error('No Request ID returned from M-Pesa');
+        throw new Error('No Request ID returned from M-Pesa. Response: ' + JSON.stringify(data));
       }
  
       // 2. Poll for status
