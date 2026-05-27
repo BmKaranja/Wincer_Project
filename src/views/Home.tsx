@@ -52,7 +52,7 @@ export default function Home({ setView, posts = [] }: HomeProps) {
           <div className="absolute inset-0 bg-stone-900/40 transition-opacity"></div>
         </div>
         
-        <div className="relative z-10 max-w-7xl mx-auto px-8 w-full">
+        <div className="relative z-10 max-w-7xl mx-auto px-8 w-full mt-32 sm:mt-0">
           <motion.div 
             initial={{ y: 30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -62,22 +62,22 @@ export default function Home({ setView, posts = [] }: HomeProps) {
             <span className="font-label-md tracking-[0.2em] uppercase mb-4 block text-primary-fixed-dim">
               Nairobi — Wincer Cake House
             </span>
-            <h1 className="text-6xl font-serif font-bold mb-6 leading-tight">
+            <h1 className="text-4xl md:text-6xl font-serif font-bold mb-6 leading-tight">
               Bespoke Cakes <br /> You Can Taste.
             </h1>
-            <p className="text-xl mb-8 text-stone-100 font-sans opacity-90 leading-relaxed">
+            <p className="text-lg md:text-xl mb-8 text-stone-100 font-sans opacity-90 leading-relaxed">
               Handcrafted in Nairobi, our custom cakes are designed to elevate your weddings, birthdays, and more.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-6 sm:gap-4 pb-16 sm:pb-0">
               <button 
                 onClick={() => setView('catalog')}
-                className="bg-secondary text-white px-8 py-4 rounded-lg font-bold macaron-raised hover:scale-105 transition-transform w-full sm:w-auto"
+                className="bg-secondary text-white px-8 py-4 rounded-lg font-bold macaron-raised hover:scale-105 transition-transform w-full sm:w-auto mb-2 sm:mb-0"
               >
                 Explore Collections
               </button>
               <button 
                 onClick={() => setView('story')}
-                className="border-2 border-white text-white px-8 py-4 rounded-lg font-bold hover:bg-white/10 transition-colors w-full sm:w-auto"
+                className="border-2 border-white text-white px-8 py-4 rounded-lg font-bold hover:bg-white/10 transition-colors w-full sm:w-auto mb-8 sm:mb-0"
               >
                 Read Our Story
               </button>

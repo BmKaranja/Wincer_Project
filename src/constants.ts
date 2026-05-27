@@ -29,16 +29,6 @@ export const PRODUCTS = [
     }
   },
   {
-    id: 2,
-    title: "Vanilla Strawberry Mix",
-    price: "Kshs. 1800",
-    desc: "A timeless vanilla cake infused with fresh strawberry flavors, perfect for any occasion. Light, airy, and delightfully sweet.",
-    tag: "Eggless Available",
-    gauge: "Delicate",
-    gaugeVal: "w-[45%]",
-    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuAXCz2WSWUlvtdP5LdWW3cMtIJK0itREwK2Pf8fynowLXCLjjqHq9Ub9kkJxfibYs_rvAsY3MgTvIgrBKEVsYDEwhH6TKHov2is5jOGRBuVVh-Ia19Nl94VqADDcg7Qclrc4KpJrVEHyPO-jVsGmKEA0WBl0eJ-NC3uasDY5zps5A-8RdbQ1QkTHhvRf4X-QSHSKThfx9_D3b0QcZ_RldR4xFlvEfv033Z5BnlKAPdU1Xrh7G2uUFC3ErivBXqKceg48lmEST09Yyw"
-  },
-  {
     id: 3,
     title: "Classic Red Velvet",
     price: "Kshs. 2800",
@@ -47,56 +37,6 @@ export const PRODUCTS = [
     gauge: "Velvety",
     gaugeVal: "w-[75%]",
     img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCloe64oMMRQW-RnI7s-onNgc6APJHBIAt97hmCm0xA0nZCk-_2k47ue-ZyVMozgjLj5ziIAbzSqsbUAYSw6Dnqsx0_wgPLJjLIDVX3AHSbcn8JUI6aJXspnHvLDnDY6GQWtxMhjbfSLC2UmeOFc7u3HSY3OPWpAQgj7mvvNhNgQ5E9cYvzHkB9S_092HF3iwSS4IgN4dEWKTClywo2-r1sSlHk3EuV1qAkHjG5mQFheLWbg3XyGhHPVLnMKn4VudoraUG0qTgoV64"
-  },
-  {
-    id: 4,
-    title: "Amarula Indulgence",
-    price: "Kshs. 3100",
-    desc: "A specialty custom cake richly infused with Amarula cream liqueur for a sophisticated taste. Perfect for adult celebrations.",
-    tag: "Specialty",
-    gauge: "Complex",
-    gaugeVal: "w-[85%]",
-    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCduC7-DGJ68RWEAf2l_fJs1p53PHh9Cy9cgU_ofEE8G8Z0OuNf2XwhXsTIF_tOoJ58uxs1EWWuSWckap5hMRsX3p2DkyVldDeQ60lTd5ptqeykxhefHcABsMP6jj0DiSjHjiv-24nYzYJ6vrR1TFWr8lRwlHOuWVHu7WHrE2X2Rkq3Ci6UFM_alU8vCAPGgo5e3xGH1J0Hmod_8CblUb6erShZSvPi7bo5cvDmxZ2e3mB5PVWiZiu8gtCiy5OLcEY2qKdytrDyGWs"
-  },
-  {
-    id: 5,
-    title: "Tropical Pina Colada",
-    price: "Kshs. 2900",
-    desc: "A bright and fruity themed cake bringing together coconut and pineapple flavors. A summer breeze in every bite.",
-    tag: "Custom",
-    gauge: "Classic",
-    gaugeVal: "w-[65%]",
-    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuB176m2zlRpaD5R6G1M4MidY7Cn9B1EvIvGGuCZvlEhdIyPt-n6G2ZQEaHKP_xR22yqVMVPXB7MMnZpWxQKlL79NK5EQeU2oNHiLTbgfvUu2Pd0tazVRZdDyo9TMVnWFuR3lT1iZgLdqOqYSiWriNcPVQ278V_eF7mJfmluKDzZ0-4x1t_TquTX6NR0jnp4d4VPK2-xXSOeOLYGFmewvOPgl2ZJCqQhvu_g-wtD0sUvohXbo9YkCXSIVB3us_WEuoEsmGyOFFj2oVs"
-  },
-  {
-    id: 6,
-    title: "Diabetic-Friendly Marble",
-    price: "Kshs. 2400",
-    desc: "A carefully crafted, low-sugar marble cake, perfect for those wanting a healthier choice without compromising on taste.",
-    tag: "Diabetic-Friendly",
-    gauge: "Light",
-    gaugeVal: "w-[30%]",
-    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuB9MiOU8G013CpO73S79R0UYoJSSZZKOncVhGpSdA_ytPhrvBsw6KSp5nOZq_hKVAjROaruUL-7RcxGINNrka0GlkcLwJEb98HT0pk0C1ldz3aQQtGt06mFJp3drPRJIXWSnfW80jOadJRRduuvXTA0PxOvleMsjqRkNLyk80hl4LhnUnnrgRkvSWMmGS7nhZXkKyiy0K43pqgkJbsgFhh9CokY7UBT_ZA_PIgUD4el6q2zqGAKNO7APwlqqBHH_TojkH04fGPc7hc"
-  },
-  {
-    id: 7,
-    title: "Biscoff Dream",
-    price: "Kshs. 3500",
-    desc: "Lotus Biscoff sponge with caramelized biscuit spread and crunchy bits. A modern favorite in Nairobi.",
-    tag: "Trending",
-    gauge: "Intense",
-    gaugeVal: "w-[95%]",
-    img: "/src/assets/images/biscoff_dream_cake_1779025277501.png"
-  },
-  {
-    id: 8,
-    title: "White Forest Elegance",
-    price: "Kshs. 2300",
-    desc: "Light vanilla sponge with creamy white chocolate and cherries. A delicate alternative to the classic Black Forest.",
-    tag: "Classic",
-    gauge: "Light",
-    gaugeVal: "w-[50%]",
-    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuB9MiOU8G013CpO73S79R0UYoJSSZZKOncVhGpSdA_ytPhrvBsw6KSp5nOZq_hKVAjROaruUL-7RcxGINNrka0GlkcLwJEb98HT0pk0C1ldz3aQQtGt06mFJp3drPRJIXWSnfW80jOadJRRduuvXTA0PxOvleMsjqRkNLyk80hl4LhnUnnrgRkvSWMmGS7nhZXkKyiy0K43pqgkJbsgFhh9CokY7UBT_ZA_PIgUD4el6q2zqGAKNO7APwlqqBHH_TojkH04fGPc7hc"
   }
 ];
 
