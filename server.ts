@@ -5,6 +5,31 @@ import fs from "fs";
 import { rateLimit } from 'express-rate-limit';
 import { body, param, validationResult } from 'express-validator';
 import { Agent, setGlobalDispatcher } from 'undici';
+import * as admin from 'firebase-admin';
+
+// Initialize Firebase Admin SDK using Application Default Credentials (ADC) or env fallback
+if (!admin.apps.length) {
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    try {
+      const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        projectId: process.env.FIREBASE_PROJECT_ID || serviceAccount.project_id
+      });
+    } catch (e) {
+      console.warn("Could not parse FIREBASE_SERVICE_ACCOUNT JSON, falling back to Application Default Credentials:", e);
+      admin.initializeApp();
+    }
+  } else {
+    // Highly preferred in Cloud Run/Applet environment: uses built-in default container credentials
+    admin.initializeApp();
+  }
+}
+
+const db = admin.firestore();
+
+// Setup FieldValue
+const { FieldValue } = admin.firestore;
 
 // Initialize HTTP/HTTPS connection pooling via undici.
 // This configures robust socket reuse (Keep-Alive) on all outbound fetch requests.
@@ -184,18 +209,15 @@ app.post('/api/mpesa/stkpush',
       // Store the request in Firestore for tracking
       const checkoutRequestID = data.data.CheckoutRequestID;
       if (checkoutRequestID) {
-        await setDoc(
-          doc(db, 'mpesa_requests', checkoutRequestID),
-          {
-            reference,
-            phone: phoneNumber,
-            amount,
-            checkoutRequestID,
-            status: 'pending',
-            createdAt: serverTimestamp(),
-            expiresAt: new Date(Date.now() + 2 * 60 * 1000) // 2 min expiry
-          }
-        );
+        await db.collection('mpesa_requests').doc(checkoutRequestID).set({
+          reference,
+          phone: phoneNumber,
+          amount,
+          checkoutRequestID,
+          status: 'pending',
+          createdAt: FieldValue.serverTimestamp(),
+          expiresAt: new Date(Date.now() + 2 * 60 * 1000) // 2 min expiry
+        });
       }
 
       res.json({ success: true, data });
@@ -220,17 +242,13 @@ app.post('/api/mpesa/callback', async (req, res, next) => {
       const resultCode = callbackData.ResultCode;
       
       // Store callback result in Firestore
-      await setDoc(
-        doc(db, 'mpesa_requests', checkoutRequestID),
-        {
-          resultCode,
-          resultDesc: callbackData.ResultDesc,
-          metadata: callbackData.CallbackMetadata?.Item || [],
-          callbackReceivedAt: serverTimestamp(),
-          reference
-        },
-        { merge: true }
-      );
+      await db.collection('mpesa_requests').doc(checkoutRequestID).set({
+        resultCode,
+        resultDesc: callbackData.ResultDesc,
+        metadata: callbackData.CallbackMetadata?.Item || [],
+        callbackReceivedAt: FieldValue.serverTimestamp(),
+        reference
+      }, { merge: true });
 
       // Acknowledge to Safaricom immediately
       res.json({ message: 'Success' });
@@ -259,14 +277,11 @@ app.post('/api/mpesa/verify-code',
       // Query Firestore for ANY request matching this code pattern
       // In a real scenario, you'd call Daraja's query API here
       // For now, we accept it if the user has an active pending request
-      const requestsRef = collection(db, 'mpesa_requests');
-      const q = query(
-        requestsRef,
-        where('reference', '==', reference),
-        where('status', '==', 'pending')
-      );
+      const q = db.collection('mpesa_requests')
+        .where('reference', '==', reference)
+        .where('status', '==', 'pending');
       
-      const snapshot = await getDocs(q);
+      const snapshot = await q.get();
       
       if (snapshot.empty) {
         return res.status(400).json({
@@ -279,9 +294,9 @@ app.post('/api/mpesa/verify-code',
       const requestData = pendingRequest.data();
 
       // Update the request with manual code
-      await updateDoc(pendingRequest.ref, {
+      await pendingRequest.ref.update({
         manualCode: code,
-        manualVerifiedAt: serverTimestamp(),
+        manualVerifiedAt: FieldValue.serverTimestamp(),
         status: 'manually_verified'
       });
 
@@ -301,14 +316,13 @@ app.get('/api/mpesa/status/:requestId',
   validate,
   async (req: express.Request, res: express.Response) => {
     try {
-      const requestRef = doc(db, 'mpesa_requests', req.params.requestId);
-      const requestSnap = await getDoc(requestRef);
+      const requestSnap = await db.collection('mpesa_requests').doc(req.params.requestId).get();
 
-      if (!requestSnap.exists()) {
+      if (!requestSnap.exists) {
         return res.json({ status: 'pending' });
       }
 
-      const data = requestSnap.data();
+      const data = requestSnap.data() || {};
 
       // Check callback result
       if (data.resultCode === 0) {
@@ -324,7 +338,7 @@ app.get('/api/mpesa/status/:requestId',
       if (data.status === 'pending') {
         // Check if expired (2 min timeout)
         const now = Date.now();
-        const created = data.createdAt?.toMillis?.() || 0;
+        const created = data.createdAt ? (data.createdAt.toMillis ? data.createdAt.toMillis() : (data.createdAt.toDate ? data.createdAt.toDate().getTime() : 0)) : 0;
         if (now - created > 2 * 60 * 1000) {
           return res.json({ status: 'expired' });
         }
