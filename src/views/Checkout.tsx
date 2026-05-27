@@ -101,33 +101,52 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
     });
   };
 
-  const handleManualCodeSubmit = async () => {
-    const cleanCode = manualMpesaCode.trim().toUpperCase();
+// src/views/Checkout.tsx - Replace handleManualCodeSubmit
+const handleManualCodeSubmit = async () => {
+  const cleanCode = manualMpesaCode.trim().toUpperCase();
+  
+  if (!/^[A-Z][A-Z0-9]{9}$/.test(cleanCode)) {
+    setErrorState('Invalid M-Pesa Code Format. Must be 10 chars starting with letter.');
+    return;
+  }
+  
+  setIsManualConfirming(true);
+  setErrorState('');
+  try {
+    const orderId = currentOrderId || Date.now().toString();
     
-    // Strict pattern matching for standard Safaricom check codes (e.g. RG85H91JK2)
-    const isValidMpesaFormat = /^[A-Z][A-Z0-9]{9}$/.test(cleanCode);
-    
-    if (!isValidMpesaFormat) {
-      setErrorState('Invalid M-Pesa Code Format. It must be exactly 10 alphanumeric characters and start with a letter (e.g., RG85H91JK2, SE45TY78Z9). Please verify and try again.');
+    // Call backend to verify code
+    const response = await fetch('/api/mpesa/verify-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phone: mpesaPhone,
+        amount: amountToPayNow,
+        reference: orderId,
+        code: cleanCode
+      })
+    });
+
+    const data = await response.json();
+
+    if (!data.success) {
+      setErrorState(data.error || 'Code verification failed');
       return;
     }
-    
-    setIsManualConfirming(true);
-    setErrorState('');
-    try {
-      const orderId = currentOrderId || Date.now().toString();
-      await createDatabaseOrder(orderId, cleanCode);
-      isManualVerifiedRef.current = true;
-      setIsPromptingMpesa(false);
-      setIsSuccess(true);
-      onOrderPlaced();
-    } catch (err: any) {
-      console.error(err);
-      setErrorState('Failed to submit code manually: ' + (err.message || 'Unknown Error'));
-    } finally {
-      setIsManualConfirming(false);
-    }
-  };
+
+    // Code verified, create order
+    await createDatabaseOrder(orderId, cleanCode);
+    isManualVerifiedRef.current = true;
+    setIsPromptingMpesa(false);
+    setIsSuccess(true);
+    onOrderPlaced();
+  } catch (err: any) {
+    console.error(err);
+    setErrorState('Failed to verify code: ' + (err.message || 'Unknown Error'));
+  } finally {
+    setIsManualConfirming(false);
+  }
+};  
 
   const handlePlaceOrder = async () => {
     setIsPromptingMpesa(true);

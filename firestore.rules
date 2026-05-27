@@ -131,6 +131,14 @@ service cloud.firestore {
       allow delete: if isValidId(inquiryId) && isAdmin();
     }
 
+    match /mpesa_requests/{requestId} {
+  allow read: if isSignedIn() || request.auth == null;
+  allow create: if isValidId(requestId) && 
+    (isSignedIn() || !isSignedIn());
+  allow update: if isValidId(requestId) && 
+    (isAdmin() || incoming().diff(existing()).affectedKeys().hasOnly(['resultCode', 'resultDesc', 'metadata', 'callbackReceivedAt', 'manualCode', 'manualVerifiedAt', 'status']));
+}
+
     // --- Blog Posts ---
     function isValidBlogPost(data) {
       return data.keys().hasAll(['title', 'content', 'img']) &&

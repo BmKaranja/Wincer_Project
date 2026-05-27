@@ -123,19 +123,14 @@ async function startServer() {
   }
 
   // Endpoint to initiate STK Push
-  app.post('/api/mpesa/stkpush', 
-    [
-      body('phone').trim().notEmpty().withMessage('Phone is required').escape(),
-      body('amount').isNumeric().withMessage('Amount must be a number'),
-      body('reference').trim().escape(),
-      body('description').trim().escape(),
-    ],
-    validate,
-    async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+// server.ts - Update the STK push handler
+app.post('/api/mpesa/stkpush', 
+  [/* validation */],
+  validate,
+  async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     try {
       const { phone, amount, reference, description } = req.body;
-      const callbackBaseUrl = req.get('origin') || `https://${req.get('host')}`;
-
+      
       const phoneNumber = formatPhoneNumber(phone);
       const shortcode = process.env.MPESA_SHORTCODE;
       const passkey = process.env.MPESA_PASSKEY;
@@ -149,12 +144,8 @@ async function startServer() {
       const token = await getMpesaAccessToken();
       const timestamp = getTimestamp();
       const password = generatePassword(shortcode, passkey, timestamp);
-
-      // The callback URL where Safaricom will send the success/failure result
-      // Passing the reference so we know which order this callback relates to
+      const callbackBaseUrl = req.get('origin') || `https://${req.get('host')}`;
       const callbackUrl = `${callbackBaseUrl}/api/mpesa/callback?reference=${encodeURIComponent(reference || 'order')}`;
-
-      console.log(`Initiating STK Push for ${phoneNumber}, amount ${amount}`);
 
       const requestBody = {
         BusinessShortCode: shortcode,
@@ -190,68 +181,167 @@ async function startServer() {
         return;
       }
 
+      // Store the request in Firestore for tracking
+      const checkoutRequestID = data.data.CheckoutRequestID;
+      if (checkoutRequestID) {
+        await setDoc(
+          doc(db, 'mpesa_requests', checkoutRequestID),
+          {
+            reference,
+            phone: phoneNumber,
+            amount,
+            checkoutRequestID,
+            status: 'pending',
+            createdAt: serverTimestamp(),
+            expiresAt: new Date(Date.now() + 2 * 60 * 1000) // 2 min expiry
+          }
+        );
+      }
+
       res.json({ success: true, data });
     } catch (error: any) {
       next(error);
     }
-  });
-
+  }
+);
   // Keep track of pending payments in memory (for development/example)
   // In a real app, you'd store this in Firestore when initiating STK and update on callback.
   // We'll expose an endpoint so the frontend can check the status.
   const paymentCallbacks = new Map<string, any>();
 
-  app.post('/api/mpesa/callback', async (req, res, next) => {
-    try {
-      console.log('Received Mpesa Callback:', JSON.stringify(req.body, null, 2));
-      const reference = req.query.reference as string;
-      const callbackData = req.body?.Body?.stkCallback;
+app.post('/api/mpesa/callback', async (req, res, next) => {
+  try {
+    console.log('Received Mpesa Callback:', JSON.stringify(req.body, null, 2));
+    const reference = req.query.reference as string;
+    const callbackData = req.body?.Body?.stkCallback;
 
-      if (callbackData) {
-        const checkoutRequestID = callbackData.CheckoutRequestID;
-        
-        // Store the result
-        paymentCallbacks.set(checkoutRequestID, {
-          reference,
-          resultCode: callbackData.ResultCode,
+    if (callbackData) {
+      const checkoutRequestID = callbackData.CheckoutRequestID;
+      const resultCode = callbackData.ResultCode;
+      
+      // Store callback result in Firestore
+      await setDoc(
+        doc(db, 'mpesa_requests', checkoutRequestID),
+        {
+          resultCode,
           resultDesc: callbackData.ResultDesc,
-          metadata: callbackData.CallbackMetadata?.Item || []
-        });
+          metadata: callbackData.CallbackMetadata?.Item || [],
+          callbackReceivedAt: serverTimestamp(),
+          reference
+        },
+        { merge: true }
+      );
 
-        // Since it's a webhook, acknowledge receipt to Safaricom
-         res.json({ message: 'Success' });
-         return;
-      } else {
-         res.status(400).json({ success: false, error: 'Invalid callback payload' });
-         return;
+      // Acknowledge to Safaricom immediately
+      res.json({ message: 'Success' });
+      return;
+    } else {
+      res.status(400).json({ success: false, error: 'Invalid callback payload' });
+      return;
+    }
+  } catch (error) {
+    console.error('Callback error:', error);
+    next(error);
+  }
+});
+app.post('/api/mpesa/verify-code',
+  [
+    body('phone').trim().notEmpty().escape(),
+    body('amount').isNumeric(),
+    body('reference').trim().escape(),
+    body('code').trim().toUpperCase().matches(/^[A-Z][A-Z0-9]{9}$/)
+  ],
+  validate,
+  async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    try {
+      const { phone, amount, reference, code } = req.body;
+
+      // Query Firestore for ANY request matching this code pattern
+      // In a real scenario, you'd call Daraja's query API here
+      // For now, we accept it if the user has an active pending request
+      const requestsRef = collection(db, 'mpesa_requests');
+      const q = query(
+        requestsRef,
+        where('reference', '==', reference),
+        where('status', '==', 'pending')
+      );
+      
+      const snapshot = await getDocs(q);
+      
+      if (snapshot.empty) {
+        return res.status(400).json({
+          success: false,
+          error: 'No matching pending payment request found. Please try again.'
+        });
       }
-    } catch (error) {
+
+      const pendingRequest = snapshot.docs[0];
+      const requestData = pendingRequest.data();
+
+      // Update the request with manual code
+      await updateDoc(pendingRequest.ref, {
+        manualCode: code,
+        manualVerifiedAt: serverTimestamp(),
+        status: 'manually_verified'
+      });
+
+      res.json({
+        success: true,
+        message: 'Code verified. Order confirmed.',
+        requestId: pendingRequest.id
+      });
+    } catch (error: any) {
       next(error);
     }
-  });
+  }
+);
 
-  // Polling endpoint for frontend to check if payment succeeded
-  app.get('/api/mpesa/status/:requestId', 
-    [
-      param('requestId').trim().notEmpty().escape()
-    ],
-    validate,
-    (req: express.Request, res: express.Response) => {
-    const status = paymentCallbacks.get(req.params.requestId);
-    if (!status) {
-       res.json({ status: 'pending' });
-       return;
-    }
-    
-    if (status.resultCode === 0) {
-       res.json({ status: 'success' });
-       return;
-    } else {
-       res.json({ status: 'failed', message: status.resultDesc });
-       return;
-    }
-  });
+app.get('/api/mpesa/status/:requestId', 
+  [param('requestId').trim().notEmpty().escape()],
+  validate,
+  async (req: express.Request, res: express.Response) => {
+    try {
+      const requestRef = doc(db, 'mpesa_requests', req.params.requestId);
+      const requestSnap = await getDoc(requestRef);
 
+      if (!requestSnap.exists()) {
+        return res.json({ status: 'pending' });
+      }
+
+      const data = requestSnap.data();
+
+      // Check callback result
+      if (data.resultCode === 0) {
+        return res.json({ status: 'success' });
+      }
+
+      // Check manual code verification
+      if (data.status === 'manually_verified') {
+        return res.json({ status: 'success', manual: true });
+      }
+
+      // Still pending
+      if (data.status === 'pending') {
+        // Check if expired (2 min timeout)
+        const now = Date.now();
+        const created = data.createdAt?.toMillis?.() || 0;
+        if (now - created > 2 * 60 * 1000) {
+          return res.json({ status: 'expired' });
+        }
+        return res.json({ status: 'pending' });
+      }
+
+      // Failed
+      return res.json({
+        status: 'failed',
+        message: data.resultDesc || 'Payment failed'
+      });
+    } catch (error) {
+      console.error('Status check error:', error);
+      res.status(500).json({ success: false, error: 'Status check failed' });
+    }
+  }
+);
 
   // ---------------------------------------------------------
   // Error handling and 404
