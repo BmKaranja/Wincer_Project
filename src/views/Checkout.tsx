@@ -173,12 +173,11 @@ const handleManualCodeSubmit = async () => {
         })
       });
  
-      const data = await response.json();
-      
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to initiate M-Pesa push');
-      }
- 
+const data = await response.json();
+
+if (!response.ok || !data.success) {
+  throw new Error(data.error || `Payment failed: ${response.status}`);
+} 
       const requestId = data?.data?.CheckoutRequestID || data?.CheckoutRequestID;
       if (!requestId) {
         throw new Error('No Request ID returned from M-Pesa. Response: ' + JSON.stringify(data));

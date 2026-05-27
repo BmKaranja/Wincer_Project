@@ -185,7 +185,11 @@ app.post('/api/mpesa/stkpush',
         throw error;
       }
 
+      console.log('Starting STK Push for phone:', phoneNumber);
+
       const token = await getMpesaAccessToken();
+      console.log('Got access token');
+
       const timestamp = getTimestamp();
       const password = generatePassword(shortcode, passkey, timestamp);
       const callbackBaseUrl = req.get('origin') || `https://${req.get('host')}`;
@@ -205,6 +209,8 @@ app.post('/api/mpesa/stkpush',
         TransactionDesc: description || "Payment for Order"
       };
 
+      console.log('STK Push Request Body:', JSON.stringify(requestBody, null, 2));
+
       const response = await fetch(`${DARAJA_BASE_URL}/mpesa/stkpush/v1/processrequest`, {
         method: 'POST',
         headers: {
@@ -214,40 +220,70 @@ app.post('/api/mpesa/stkpush',
         body: JSON.stringify(requestBody)
       });
 
-      const data = await response.json();
-      
-      if (!response.ok) {
-        console.error("STK Push error response:", data);
-        res.status(response.status).json({ 
-          success: false, 
-          error: data.errorMessage || 'The payment request could not be processed at this time.' 
+      console.log('STK Push Response Status:', response.status);
+      console.log('STK Push Response Headers:', {
+        'content-type': response.headers.get('content-type'),
+        'content-length': response.headers.get('content-length')
+      });
+
+      const responseText = await response.text();
+      console.log('STK Push Raw Response Body:', responseText);
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('Failed to parse JSON response:', parseError);
+        return res.status(502).json({
+          success: false,
+          error: 'Invalid response from M-Pesa (not JSON)',
+          rawResponse: responseText.substring(0, 500)
         });
-        return;
       }
 
-      // Store the request in Firestore for tracking
-      const checkoutRequestID = data?.CheckoutRequestID || data?.data?.CheckoutRequestID;
-      if (checkoutRequestID) {
-        await db.collection('mpesa_requests').doc(checkoutRequestID).set({
+      if (!response.ok) {
+        console.error("STK Push error:", data);
+        return res.status(response.status).json({ 
+          success: false, 
+          error: data.errorMessage || data.message || 'M-Pesa request failed'
+        });
+      }
+
+      const checkoutRequestID = data.CheckoutRequestID;
+      console.log('CheckoutRequestID:', checkoutRequestID);
+
+      if (!checkoutRequestID) {
+        console.error('No CheckoutRequestID in response:', data);
+        return res.status(400).json({ 
+          success: false, 
+          error: 'M-Pesa did not return a CheckoutRequestID'
+        });
+      }
+
+      await setDoc(
+        doc(db, 'mpesa_requests', checkoutRequestID),
+        {
           reference,
           phone: phoneNumber,
           amount,
           checkoutRequestID,
           status: 'pending',
-          createdAt: FieldValue.serverTimestamp(),
-          expiresAt: new Date(Date.now() + 2 * 60 * 1000) // 2 min expiry
-        });
-      }
+          createdAt: serverTimestamp(),
+          expiresAt: new Date(Date.now() + 2 * 60 * 1000)
+        }
+      );
 
       res.json({ success: true, data });
     } catch (error: any) {
+      console.error('STK Push Exception:', {
+        message: error.message,
+        stack: error.stack,
+        code: error.code
+      });
       next(error);
     }
   }
-);
-  // Keep track of pending payments in memory (for development/example)
-  // In a real app, you'd store this in Firestore when initiating STK and update on callback.
-  // We'll expose an endpoint so the frontend can check the status.
+);  // We'll expose an endpoint so the frontend can check the status.
   const paymentCallbacks = new Map<string, any>();
 
 app.post('/api/mpesa/callback', async (req, res, next) => {
