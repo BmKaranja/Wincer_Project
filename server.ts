@@ -260,19 +260,15 @@ app.post('/api/mpesa/stkpush',
         });
       }
 
-      await setDoc(
-        doc(db, 'mpesa_requests', checkoutRequestID),
-        {
-          reference,
-          phone: phoneNumber,
-          amount,
-          checkoutRequestID,
-          status: 'pending',
-          createdAt: serverTimestamp(),
-          expiresAt: new Date(Date.now() + 2 * 60 * 1000)
-        }
-      );
-
+await db.collection('mpesa_requests').doc(checkoutRequestID).set({
+  reference,
+  phone: phoneNumber,
+  amount,
+  checkoutRequestID,
+  status: 'pending',
+  createdAt: FieldValue.serverTimestamp(),
+  expiresAt: new Date(Date.now() + 2 * 60 * 1000)
+});
       res.json({ success: true, data });
     } catch (error: any) {
       console.error('STK Push Exception:', {

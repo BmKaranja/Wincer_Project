@@ -14,7 +14,7 @@ export default function Home({ setView, posts = [] }: HomeProps) {
       desc: "A decadent two-tier chocolate drip cake, lavishly adorned with wafers, gold coins, and assorted chocolates.",
       price: "Kshs. 3500",
       tag: "Trending",
-      img: "/src/assets/images/chocolatecake.jpg"
+      img: "/images/chocolatecake.jpg"
     },
     {
       id: 1,
@@ -47,7 +47,7 @@ export default function Home({ setView, posts = [] }: HomeProps) {
           <img 
             alt="Wincer Cake House Shop Front" 
             className="w-full h-full object-cover object-center" 
-            src="/src/assets/images/541025122_18119969812495932_4751530949749935897_n.jpg" 
+            src="/images/541025122_18119969812495932_4751530949749935897_n.jpg" 
           />
           <div className="absolute inset-0 bg-stone-900/40 transition-opacity"></div>
         </div>
@@ -191,7 +191,7 @@ export default function Home({ setView, posts = [] }: HomeProps) {
             <h2 className="text-4xl font-serif text-secondary mb-6 italic">Handcrafting Sweetness <br/> Seven Days a Week</h2>
             <div className="relative mb-8 rounded-2xl overflow-hidden shadow-2xl aspect-[16/9] group">
               <img 
-                src="/src/assets/images/regenerated_image_1779013135478.webp" 
+                src="/images/regenerated_image_1779013135478.webp" 
                 alt="Wincer Cake House Shop Front" 
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
               />
@@ -283,7 +283,7 @@ export default function Home({ setView, posts = [] }: HomeProps) {
               <img 
                 alt="Birthday Occasion" 
                 className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" 
-                src="/src/assets/images/home_birthday.jpg" 
+                src="/images/home_birthday.jpg" 
               />
               <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors"></div>
               <div className="absolute bottom-8 left-8 text-white">
@@ -343,9 +343,9 @@ export default function Home({ setView, posts = [] }: HomeProps) {
           <div className="w-full md:w-1/2">
             <div className="relative">
               <img 
-                alt="Pastry Chef Crafting" 
+                alt=" Chef Crafting" 
                 className="rounded-2xl shadow-2xl" 
-                src="/src/assets/images/regenerated_image_1779013140846.webp" 
+                src="/images/regenerated_image_1779013140846.webp" 
               />
               <div className="absolute -bottom-6 -right-6 bg-secondary p-8 rounded-2xl text-white hidden md:block shadow-xl">
                 <p className="text-2xl font-serif leading-tight">Hand-finished<br/>by master<br/>bakers.</p>

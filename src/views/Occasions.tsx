@@ -86,7 +86,7 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
         <div className="absolute inset-0 z-0">
           <img 
             className="w-full h-full object-cover contrast-125" 
-            src="/src/assets/images/occasion.webp" 
+            src="/images/occasion.webp" 
             alt="Floral Cake Bouquet"
           />
           <div className="absolute inset-0 bg-stone-900/40"></div>
@@ -197,7 +197,7 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
         
         <div className="grid grid-cols-1 md:grid-cols-4 grid-rows-2 gap-4 h-auto md:h-[800px]">
           <div className="md:col-span-2 md:row-span-2 relative overflow-hidden rounded-3xl group shadow-lg">
-            <img className="w-full h-full object-cover brightness-110 transition-all duration-700 group-hover:scale-105" src="/src/assets/images/memory1.jpg" alt="Gala" />
+            <img className="w-full h-full object-cover brightness-110 transition-all duration-700 group-hover:scale-105" src="/images/memory1.jpg" alt="Gala" />
             <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-all"></div>
             <div className="absolute bottom-8 left-8 text-white opacity-0 group-hover:opacity-100 transition-opacity">
               <p className="text-xs font-bold uppercase tracking-widest">The Grand Wedding</p>
@@ -205,15 +205,15 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
           </div>
           
           <div className="col-span-1 row-span-1 relative overflow-hidden rounded-3xl group shadow-lg min-h-[250px]">
-            <img className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="/src/assets/images/memory4.jpg" alt="Table" />
+            <img className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="/images/memory4.jpg" alt="Table" />
           </div>
           
           <div className="col-span-1 row-span-1 relative overflow-hidden rounded-3xl group shadow-lg min-h-[250px]">
-            <img className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="/src/assets/images/memory3.jpg" alt="Plated" />
+            <img className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="/images/memory3.jpg" alt="Plated" />
           </div>
           
           <div className="md:col-span-2 md:row-span-1 relative overflow-hidden rounded-3xl group shadow-lg min-h-[250px]">
-            <img className="w-full h-full object-cover contrast-125 transition-all duration-700 group-hover:scale-105" src="/src/assets/images/memory2.jpg" alt="Fun times" />
+            <img className="w-full h-full object-cover contrast-125 transition-all duration-700 group-hover:scale-105" src="/images/memory2.jpg" alt="Fun times" />
           </div>
         </div>
       </section>

@@ -160,7 +160,7 @@ const handleManualCodeSubmit = async () => {
       setCurrentOrderId(orderId);
  
       // 1. Initiate STK Push via backend
-      const response = await fetch('/api/mpesa/stkpush', {
+      const response = await fetch('/api/mpesa/stkpush',{
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -173,15 +173,15 @@ const handleManualCodeSubmit = async () => {
         })
       });
  
-const data = await response.json();
+const data = await response.json().catch(() => ({}));
 
 if (!response.ok || !data.success) {
   throw new Error(data.error || `Payment failed: ${response.status}`);
 } 
       const requestId = data?.data?.CheckoutRequestID || data?.CheckoutRequestID;
-      if (!requestId) {
-        throw new Error('No Request ID returned from M-Pesa. Response: ' + JSON.stringify(data));
-      }
+if (!requestId) {
+  throw new Error('No Request ID returned from M-Pesa. Response: ' + JSON.stringify(data));
+}
  
       // 2. Poll for status
       let attempts = 0;
