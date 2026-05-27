@@ -87,7 +87,7 @@ service cloud.firestore {
              data.userId is string && data.userId.size() > 0 && data.userId.size() <= 128 &&
              data.customer is string && data.customer.size() > 0 && data.customer.size() <= 100 &&
              data.amount is string && data.amount.size() > 0 && data.amount.size() <= 50 &&
-             data.status in ['Pending', 'Confirmed (Pending Balance)', 'Fully Paid', 'Preparing', 'Ready', 'Delivered', 'Cancelled'] &&
+             data.status in ['Pending', 'Pending Verification', 'Confirmed (Pending Balance)', 'Fully Paid', 'Preparing', 'Ready', 'Delivered', 'Cancelled'] &&
              (data.get('paidAmount', '') is string) &&
              (data.get('paymentMethod', '') is string) &&
              (data.get('createdAt', 0) is number || data.get('createdAt', 0) is timestamp) &&
@@ -103,7 +103,7 @@ service cloud.firestore {
       allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
       allow create: if isValidId(orderId) && isValidOrder(incoming()) && 
                        ((isSignedIn() && incoming().userId == request.auth.uid) || (!isSignedIn() && incoming().userId == 'guest')) &&
-                       incoming().status in ['Confirmed (Pending Balance)', 'Fully Paid', 'Pending'];
+                       incoming().status in ['Confirmed (Pending Balance)', 'Fully Paid', 'Pending', 'Pending Verification'];
       allow update: if isValidId(orderId) && isAdmin() && isValidOrder(incoming()) &&
                        incoming().userId == existing().userId;
       allow delete: if isValidId(orderId) && (isAdmin() || (isSignedIn() && resource.data.get('userId', '') == request.auth.uid));

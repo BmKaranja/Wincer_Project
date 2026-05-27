@@ -39,7 +39,7 @@
         "amount": { "type": "string" },
         "paidAmount": { "type": "string" },
         "paymentMethod": { "type": "string" },
-        "status": { "type": "string", "enum": ["Pending", "Confirmed (Pending Balance)", "Fully Paid", "Preparing", "Delivered", "Cancelled"] },
+        "status": { "type": "string", "enum": ["Pending", "Pending Verification", "Confirmed (Pending Balance)", "Fully Paid", "Preparing", "Delivered", "Cancelled"] },
         "createdAt": { "type": "number", "description": "Timestamp in milliseconds" }
       },
       "required": ["userId", "customer", "amount", "paidAmount", "paymentMethod", "status", "createdAt"]

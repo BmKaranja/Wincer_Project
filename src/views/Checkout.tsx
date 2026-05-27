@@ -78,13 +78,17 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
       ? `M-Pesa - Code: ${mpesaTxCode} (${paymentType === 'deposit' ? '50% Deposit' : 'Full Amount'})`
       : `M-Pesa (${paymentType === 'deposit' ? '50% Deposit' : 'Full Amount'})`;
 
+    const finalStatus = mpesaTxCode 
+      ? 'Pending Verification' 
+      : (paymentType === 'deposit' ? 'Confirmed (Pending Balance)' : 'Fully Paid');
+
     await setDoc(doc(db, 'orders', orderId), {
       userId: user ? user.uid : 'guest',
       customer: user ? (user.name || user.email || mpesaPhone) : mpesaPhone,
       amount: `Kshs. ${total}`,
       paidAmount: `Kshs. ${amountToPayNow}`,
       paymentMethod: paymentInfo,
-      status: paymentType === 'deposit' ? 'Confirmed (Pending Balance)' : 'Fully Paid',
+      status: finalStatus,
       deliveryDate: deliveryDate,
       deliveryWindow: deliveryWindow,
       deliveryZone: selectedZone.name,
@@ -98,8 +102,13 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
   };
 
   const handleManualCodeSubmit = async () => {
-    if (!manualMpesaCode || manualMpesaCode.trim().length < 5) {
-      setErrorState('Please enter a valid M-Pesa transaction code.');
+    const cleanCode = manualMpesaCode.trim().toUpperCase();
+    
+    // Strict pattern matching for standard Safaricom check codes (e.g. RG85H91JK2)
+    const isValidMpesaFormat = /^[A-Z][A-Z0-9]{9}$/.test(cleanCode);
+    
+    if (!isValidMpesaFormat) {
+      setErrorState('Invalid M-Pesa Code Format. It must be exactly 10 alphanumeric characters and start with a letter (e.g., RG85H91JK2, SE45TY78Z9). Please verify and try again.');
       return;
     }
     
@@ -107,7 +116,7 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
     setErrorState('');
     try {
       const orderId = currentOrderId || Date.now().toString();
-      await createDatabaseOrder(orderId, manualMpesaCode.trim().toUpperCase());
+      await createDatabaseOrder(orderId, cleanCode);
       isManualVerifiedRef.current = true;
       setIsPromptingMpesa(false);
       setIsSuccess(true);
@@ -130,7 +139,7 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
     try {
       const orderId = Date.now().toString();
       setCurrentOrderId(orderId);
-
+ 
       // 1. Initiate STK Push via backend
       const response = await fetch('/api/mpesa/stkpush', {
         method: 'POST',
@@ -144,25 +153,25 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
           description: `WincerCakeHouse Order ${orderId}`
         })
       });
-
+ 
       const data = await response.json();
       
       if (!data.success) {
         throw new Error(data.error || 'Failed to initiate M-Pesa push');
       }
-
+ 
       const requestId = data.data.CheckoutRequestID;
       if (!requestId) {
         throw new Error('No Request ID returned from M-Pesa');
       }
-
+ 
       // 2. Poll for status
       let attempts = 0;
       let paymentConfirmed = false;
-      const maxAttempts = 20; // 20 * 6s = 120s
+      const maxAttempts = 40; // 40 * 3s = 120s total lock
       
       while (attempts < maxAttempts && !paymentConfirmed && !isManualVerifiedRef.current) {
-        await new Promise(r => setTimeout(r, 6000)); // wait 6 seconds
+        await new Promise(r => setTimeout(r, 3000)); // wait 3 seconds (snappier!)
         attempts++;
         
         if (isManualVerifiedRef.current) {

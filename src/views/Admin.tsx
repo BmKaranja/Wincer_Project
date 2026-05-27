@@ -307,7 +307,7 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
                   const numStr = cleanStr.replace(/[^0-9.-]/g, '');
                   return acc + ((parseFloat(numStr) || 0) * mult);
                 }, 0).toLocaleString(), icon: Banknote },
-                { label: 'Active Orders', value: orders.filter(o => o.status === 'Pending' || o.status === 'Preparing').length.toString(), icon: Package },
+                { label: 'Active Orders', value: orders.filter(o => o.status === 'Pending' || o.status === 'Pending Verification' || o.status === 'Confirmed (Pending Balance)' || o.status === 'Preparing').length.toString(), icon: Package },
                 { label: 'Total Users', value: siteUsers.length.toString(), icon: Users },
                 { label: 'Site Traffic', value: '+14%', icon: Activity },
               ].map((stat, idx) => (

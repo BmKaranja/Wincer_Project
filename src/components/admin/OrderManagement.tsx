@@ -11,7 +11,7 @@ export default function OrderManagement({ orders }: { orders: any[] }) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const stats = [
-    { label: 'New Orders', count: orders.filter(o => o.status === 'Pending' || o.status === 'Confirmed (Pending Balance)').length, color: 'bg-yellow-100 text-yellow-800' },
+    { label: 'New Orders', count: orders.filter(o => o.status === 'Pending' || o.status === 'Pending Verification' || o.status === 'Confirmed (Pending Balance)').length, color: 'bg-yellow-100 text-yellow-800' },
     { label: 'In Progress', count: orders.filter(o => o.status === 'Preparing').length, color: 'bg-blue-100 text-blue-800' },
     { label: 'Ready', count: orders.filter(o => o.status === 'Ready').length, color: 'bg-indigo-100 text-indigo-800' },
     { label: 'Completed', count: orders.filter(o => o.status === 'Fully Paid' || o.status === 'Delivered').length, color: 'bg-green-100 text-green-800' }
@@ -80,6 +80,7 @@ export default function OrderManagement({ orders }: { orders: any[] }) {
                         }}
                         className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider outline-none appearance-none cursor-pointer border ${
                           row.status === 'Pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                          row.status === 'Pending Verification' ? 'bg-amber-100 text-amber-900 border-amber-300 animate-pulse' :
                           row.status === 'Confirmed (Pending Balance)' ? 'bg-blue-100 text-blue-800 border-blue-200' :
                           row.status === 'Fully Paid' ? 'bg-green-100 text-green-800 border-green-200' :
                           row.status === 'Preparing' ? 'bg-purple-100 text-purple-800 border-purple-200' :
@@ -89,6 +90,7 @@ export default function OrderManagement({ orders }: { orders: any[] }) {
                         }`}
                       >
                          <option value="Pending">Pending</option>
+                         <option value="Pending Verification">⚠️ Pending M-Pesa Verification</option>
                          <option value="Confirmed (Pending Balance)">Confirmed</option>
                          <option value="Preparing">In Progress</option>
                          <option value="Ready">Ready</option>
