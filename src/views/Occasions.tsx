@@ -1,7 +1,7 @@
 import React from 'react';
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { Utensils, Brush, Truck, CheckCircle } from 'lucide-react';
+import { Utensils, Brush, Truck, CheckCircle, Upload, Image, X } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -9,6 +9,7 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -16,8 +17,50 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
     eventDate: '',
     occasionType: 'Wedding',
     cakeDetails: '',
-    vision: ''
+    vision: '',
+    sketchUrl: ''
   });
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const processFile = (file: File) => {
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({
+          ...prev,
+          sketchUrl: reader.result as string
+        }));
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setErrorMsg('Please select a valid image file (PNG/JPG/WEBP).');
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      processFile(file);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processFile(file);
+    }
+  };
 
   // Get minimum date (at least 2 days in advance / 48hr prior) in YYYY-MM-DD
   const minAllowedDate = (() => {
@@ -296,6 +339,66 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-widest text-secondary/60">Tell us about your vision</label>
                     <textarea required className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all placeholder:text-stone-300 font-medium h-40 resize-none" placeholder="Guest count, theme details, inspiration..." value={formData.vision} onChange={e => setFormData({...formData, vision: e.target.value})}></textarea>
+                  </div>
+
+                  {/* Drag & Drop Inspiration Section */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-secondary/60 block mb-1">Inspiration / Design Reference (Optional)</label>
+                    
+                    <div 
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition-all ${
+                        isDragging 
+                          ? 'border-secondary bg-secondary/10 scale-[1.01]' 
+                          : 'border-secondary/20 bg-secondary/[0.01] hover:border-secondary/40 hover:bg-secondary/[0.03]'
+                      }`}
+                    >
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleFileChange}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                        id="inquiry-upload"
+                      />
+                      
+                      <div className="flex flex-col items-center justify-center space-y-3">
+                        <div className="p-3 bg-secondary/5 rounded-full text-secondary">
+                          <Upload className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-secondary">
+                            Drag & drop your custom inspiration photo here
+                          </p>
+                          <p className="text-xs text-secondary/50 font-medium mt-1">
+                            Or click to browse from files (PNG, JPG, WEBP)
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {formData.sketchUrl && (
+                      <div className="flex items-center justify-between bg-surface rounded-xl p-4 border border-secondary/10 mt-3 shadow-md">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-lg overflow-hidden border border-secondary/10">
+                            <img src={formData.sketchUrl} alt="Inspiration preview" className="w-full h-full object-cover" />
+                          </div>
+                          <div>
+                            <span className="text-xs font-bold text-secondary uppercase block">Reference Loaded</span>
+                            <span className="text-[10px] text-secondary/50 font-medium">Ready to submit</span>
+                          </div>
+                        </div>
+                        <button 
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, sketchUrl: '' }))}
+                          className="p-2 hover:bg-red-50 text-red-500 hover:text-red-700 rounded-full transition-colors"
+                          title="Remove reference photo"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex justify-center pt-6">

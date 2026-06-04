@@ -29,6 +29,8 @@ export default function Customizer({
   const [frosting, setFrosting] = useState('Smooth Silk');
   const [toppings, setToppings] = useState<string[]>([]);
   const [message, setMessage] = useState('');
+  const [dietary, setDietary] = useState<'standard' | 'eggless' | 'vegan'>('standard');
+  const [sketchUrl, setSketchUrl] = useState<string | null>(null);
   const [showZoom, setShowZoom] = useState(false);
   const [toastText, setToastText] = useState<string | null>(null);
 
@@ -48,6 +50,8 @@ export default function Customizer({
       setFrosting(config.frosting || 'Smooth Silk');
       setToppings(config.toppings || []);
       setMessage(config.message || '');
+      setDietary(config.dietary || 'standard');
+      setSketchUrl(config.sketchUrl || null);
     } else if (internalBaseProduct?.customDefaults) {
       const defaults = internalBaseProduct.customDefaults;
       setSponge(defaults.sponge || 'Vanilla');
@@ -55,6 +59,8 @@ export default function Customizer({
       setFrosting(defaults.frosting || 'Smooth Silk');
       setToppings(defaults.toppings || []);
       setMessage(defaults.message || '');
+      setDietary(defaults.dietary || 'standard');
+      setSketchUrl(defaults.sketchUrl || null);
     }
   }, [internalBaseProduct, editingItem]);
 
@@ -92,7 +98,8 @@ export default function Customizer({
     const match = t.match(/\(\+\s*Kshs\.\s*(\d+)\)/);
     return acc + (match ? parseInt(match[1], 10) : 0);
   }, 0);
-  const itemTotal = basePrice + toppingPrice;
+  const dietaryFee = dietary === 'eggless' ? 500 : dietary === 'vegan' ? 800 : 0;
+  const itemTotal = basePrice + toppingPrice + dietaryFee;
   const total = itemTotal * quantity;
 
   const getCartItem = () => {
@@ -101,7 +108,7 @@ export default function Customizer({
       name: internalBaseProduct?.title || editingItem?.name || 'Custom Cake',
       img: internalBaseProduct?.img || editingItem?.img || null,
       basePrice: parsedBasePrice,
-      config: { size, sponge, filling, frosting, toppings, message },
+      config: { size, sponge, filling, frosting, toppings, message, dietary, sketchUrl },
       price: itemTotal
     };
   };
@@ -358,6 +365,36 @@ export default function Customizer({
               </div>
             </div>
 
+            {/* DIETARY PREFERENCES */}
+            <div>
+              <label className="text-sm font-bold uppercase tracking-widest text-secondary/60 block mb-3">
+                Dietary Preference
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { value: 'standard', label: 'Standard', fee: 0 },
+                  { value: 'eggless', label: 'Eggless', fee: 500 },
+                  { value: 'vegan', label: 'Vegan', fee: 800 }
+                ].map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setDietary(opt.value as any)}
+                    className={`px-3 py-2.5 border rounded-lg text-xs font-bold transition-all transition-colors flex flex-col items-center justify-center ${
+                      dietary === opt.value
+                        ? 'border-secondary bg-secondary/10 text-secondary'
+                        : 'border-secondary/20 bg-surface hover:border-secondary/50 text-on-surface'
+                    }`}
+                  >
+                    <span>{opt.label}</span>
+                    <span className="text-[9px] font-medium opacity-65">
+                      {opt.fee > 0 ? `+ Kshs. ${opt.fee}` : 'Free'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* CUSTOM MESSAGE */}
             <div>
               <label className="text-sm font-bold uppercase tracking-widest text-secondary/60 block mb-3">
@@ -373,6 +410,52 @@ export default function Customizer({
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] font-bold text-secondary/40">
                   {message.length}/25
                 </span>
+              </div>
+            </div>
+
+            {/* DESIGN SKETCH UPLOAD */}
+            <div>
+              <label className="text-sm font-bold uppercase tracking-widest text-secondary/60 block mb-3">
+                Inspiration Sketch / Design Photo (Optional)
+              </label>
+              <div className="flex flex-col gap-3">
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setSketchUrl(reader.result as string);
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  className="hidden" 
+                  id="sketch-upload-file"
+                />
+                <div className="flex gap-4 items-center">
+                  <label 
+                    htmlFor="sketch-upload-file"
+                    className="px-4 py-3 bg-surface border-2 border-dashed border-secondary/20 hover:border-secondary/40 rounded-xl cursor-pointer text-xs font-bold text-secondary flex items-center gap-2 transition-all"
+                  >
+                    Upload Design File / Screenshot
+                  </label>
+                  {sketchUrl && (
+                    <div className="flex items-center gap-2 bg-secondary/5 rounded-xl px-3 py-1.5 border border-secondary/10">
+                      <img src={sketchUrl} alt="Sketch" className="w-8 h-8 rounded-lg object-cover" />
+                      <span className="text-[10px] text-secondary font-bold uppercase">Ready!</span>
+                      <button 
+                        type="button"
+                        onClick={() => setSketchUrl(null)}
+                        className="text-red-500 hover:text-red-700 font-bold ml-1 text-xs"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>

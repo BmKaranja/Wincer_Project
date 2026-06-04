@@ -7,6 +7,8 @@ import { body, param, validationResult } from 'express-validator';
 import { Agent, setGlobalDispatcher } from 'undici';
 import admin from 'firebase-admin';
 import { getFirestore } from 'firebase-admin/firestore';
+import { initializeApp as initializeClientApp } from 'firebase/app';
+import { getFirestore as getClientFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, updateDoc, serverTimestamp } from 'firebase/firestore';
 
 // Let's load the applet config if it exists
 let firebaseAppletConfig: any = null;
@@ -21,33 +23,38 @@ try {
 
 // Initialize Firebase Admin SDK using Application Default Credentials (ADC) or env fallback
 const apps = admin.apps || [];
+let firebaseApp: admin.app.App;
+
 if (!apps.length) {
   if (process.env.FIREBASE_SERVICE_ACCOUNT) {
     try {
       const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-      admin.initializeApp({
+      firebaseApp = admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
         projectId: process.env.FIREBASE_PROJECT_ID || serviceAccount.project_id
       });
     } catch (e) {
       console.warn("Could not parse FIREBASE_SERVICE_ACCOUNT JSON, falling back to Application Default Credentials:", e);
-      admin.initializeApp({
+      firebaseApp = admin.initializeApp({
         projectId: firebaseAppletConfig?.projectId || process.env.FIREBASE_PROJECT_ID
       });
     }
   } else {
     // Highly preferred in Cloud Run/Applet environment: uses built-in default container credentials
-    admin.initializeApp({
+    firebaseApp = admin.initializeApp({
       projectId: firebaseAppletConfig?.projectId || process.env.FIREBASE_PROJECT_ID
     });
   }
+} else {
+  firebaseApp = admin.app();
 }
 
-// Initialize Firestore using the specific databaseId from the applet config
-const databaseId = firebaseAppletConfig?.firestoreDatabaseId;
-const db = databaseId ? getFirestore(databaseId) : getFirestore();
+// Initialize Firestore using the Firebase Client SDK with API key Authentication.
+// This avoids project-cross/IAM permission limitations in Cloud Run on custom named databases.
+const clientApp = initializeClientApp(firebaseAppletConfig);
+const db = getClientFirestore(clientApp, firebaseAppletConfig.firestoreDatabaseId);
 
-// Setup FieldValue
+// Setup FieldValue (kept for backward compatibility, although client SDK functions are preferred now)
 const { FieldValue } = admin.firestore;
 
 // Initialize HTTP/HTTPS connection pooling via undici.
@@ -260,13 +267,13 @@ app.post('/api/mpesa/stkpush',
         });
       }
 
-await db.collection('mpesa_requests').doc(checkoutRequestID).set({
+await setDoc(doc(db, 'mpesa_requests', checkoutRequestID), {
   reference,
   phone: phoneNumber,
   amount,
   checkoutRequestID,
   status: 'pending',
-  createdAt: FieldValue.serverTimestamp(),
+  createdAt: serverTimestamp(),
   expiresAt: new Date(Date.now() + 2 * 60 * 1000)
 });
       res.json({ success: true, data });
@@ -293,11 +300,11 @@ app.post('/api/mpesa/callback', async (req, res, next) => {
       const resultCode = callbackData.ResultCode;
       
       // Store callback result in Firestore
-      await db.collection('mpesa_requests').doc(checkoutRequestID).set({
+      await setDoc(doc(db, 'mpesa_requests', checkoutRequestID), {
         resultCode,
         resultDesc: callbackData.ResultDesc,
         metadata: callbackData.CallbackMetadata?.Item || [],
-        callbackReceivedAt: FieldValue.serverTimestamp(),
+        callbackReceivedAt: serverTimestamp(),
         reference
       }, { merge: true });
 
@@ -328,11 +335,13 @@ app.post('/api/mpesa/verify-code',
       // Query Firestore for ANY request matching this code pattern
       // In a real scenario, you'd call Daraja's query API here
       // For now, we accept it if the user has an active pending request
-      const q = db.collection('mpesa_requests')
-        .where('reference', '==', reference)
-        .where('status', '==', 'pending');
+      const q = query(
+        collection(db, 'mpesa_requests'),
+        where('reference', '==', reference),
+        where('status', '==', 'pending')
+      );
       
-      const snapshot = await q.get();
+      const snapshot = await getDocs(q);
       
       if (snapshot.empty) {
         return res.status(400).json({
@@ -345,9 +354,9 @@ app.post('/api/mpesa/verify-code',
       const requestData = pendingRequest.data();
 
       // Update the request with manual code
-      await pendingRequest.ref.update({
+      await updateDoc(pendingRequest.ref, {
         manualCode: code,
-        manualVerifiedAt: FieldValue.serverTimestamp(),
+        manualVerifiedAt: serverTimestamp(),
         status: 'manually_verified'
       });
 
@@ -367,9 +376,9 @@ app.get('/api/mpesa/status/:requestId',
   validate,
   async (req: express.Request, res: express.Response) => {
     try {
-      const requestSnap = await db.collection('mpesa_requests').doc(req.params.requestId).get();
+      const requestSnap = await getDoc(doc(db, 'mpesa_requests', req.params.requestId));
 
-      if (!requestSnap.exists) {
+      if (!requestSnap.exists()) {
         return res.json({ status: 'pending' });
       }
 

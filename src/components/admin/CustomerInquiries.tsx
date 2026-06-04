@@ -211,6 +211,19 @@ export default function CustomerInquiries({ inquiries }: { inquiries: any[] }) {
                   {viewingInquiry.vision || 'N/A'}
                 </div>
               </div>
+
+              {viewingInquiry.sketchUrl && (
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-secondary/60">Inspiration Reference Photo</label>
+                  <div className="mt-2 text-center bg-secondary/[0.02] p-4 rounded-xl border border-secondary/10 flex items-center justify-center">
+                    <img 
+                      src={viewingInquiry.sketchUrl} 
+                      alt="Customer Design Reference" 
+                      className="max-h-80 w-auto rounded-xl object-contain border border-secondary/10 shadow-sm"
+                    />
+                  </div>
+                </div>
+              )}
             </motion.div>
           </motion.div>
         )}

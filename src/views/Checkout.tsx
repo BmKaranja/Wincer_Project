@@ -40,7 +40,7 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
   })();
 
   const [selectedZoneId, setSelectedZoneId] = useState<string>(() => {
-    return localStorage.getItem('wincer_delivery_zone') || 'cbd';
+    return localStorage.getItem('wincer_delivery_zone') || 'local';
   });
 
   const selectedZone = useMemo(() => {
@@ -48,8 +48,8 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
   }, [selectedZoneId]);
 
   const subtotal = cart.reduce((sum, item) => sum + item.price, 0);
-  const deliveryFee = 0; // Disabled for now: cart.length > 0 ? selectedZone.fee : 0;
-  const packagingFee = 0; // Disabled for now: cart.length > 0 ? 200 : 0;
+  const deliveryFee = cart.length > 0 ? selectedZone.fee : 0;
+  const packagingFee = 0; // Keeping packaging complementary
   const total = subtotal + deliveryFee + packagingFee;
   
   const depositAmount = Math.ceil(total * 0.5);
@@ -64,8 +64,8 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
     const cakeTitles = cart.map(c => c.name).join(', ');
     const cakeDetails = cart.map(c => {
       if (c.config) {
-        const configStr = Object.entries(c.config)
-          .filter(([_, v]) => v) // filter out empty values
+         const configStr = Object.entries(c.config)
+          .filter(([k, v]) => v && k !== 'sketchUrl') // filter out empty values and base64 sketches
           .map(([k, v]) => Array.isArray(v) ? `${k}: ${v.join(', ')}` : `${k}: ${v}`)
           .join(' | ');
         return `${c.name} - ${configStr}`;
@@ -96,6 +96,7 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
       city: city,
       cakeTitle: cakeTitles || 'Custom Cake',
       cakeDetails: cakeDetails || 'Details TBD',
+      designSketch: cart.find(c => c.config?.sketchUrl)?.config?.sketchUrl || null,
       gauge: typeof gauge === 'string' ? gauge : String(gauge),
       createdAt: serverTimestamp()
     });
@@ -433,7 +434,7 @@ if (!requestId) {
                   >
                     {DELIVERY_ZONES.map((zone) => (
                       <option key={zone.id} value={zone.id}>
-                        {zone.name} (Free Delivery)
+                        {zone.name}
                       </option>
                     ))}
                   </select>
@@ -541,13 +542,15 @@ if (!requestId) {
               <div className="flex justify-between items-center">
                 <span className="text-on-surface-variant font-serif italic text-lg opacity-70 flex flex-col sm:flex-row sm:items-baseline sm:gap-1">
                   <span>Delivery</span>
-                  <span className="text-xs text-secondary/70 font-sans">({selectedZone.name.split(' (')[0]})</span>
+                  <span className="text-xs text-secondary/70 font-sans">({selectedZone.id === 'local' ? 'Local' : 'Uber/Bolt'})</span>
                 </span>
-                <span className="font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full text-xs">Free</span>
+                <span className="text-lg font-bold text-on-surface">
+                  {deliveryFee > 0 ? `Kshs. ${deliveryFee}` : 'Transit Paid by Client'}
+                </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-on-surface-variant font-serif italic text-lg opacity-70">Packaging</span>
-                <span className="font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full text-xs">Free</span>
+                <span className="font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full text-xs">Complementary</span>
               </div>
               <div className="h-px bg-secondary/5 w-full"></div>
               

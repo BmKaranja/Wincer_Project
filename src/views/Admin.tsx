@@ -399,7 +399,7 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
               <div className="text-red-500 text-sm mb-4 bg-red-50 p-3 rounded-lg border border-red-100">{cakeFormError}</div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {cakes.map(cake => (
                 <div key={cake.id} className="bg-surface rounded-3xl overflow-hidden border border-secondary/10 shadow-sm group">
                   <div className="h-40 overflow-hidden relative">

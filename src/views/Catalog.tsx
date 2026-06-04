@@ -148,7 +148,7 @@ export default function Catalog({ setView, onSelect, cakes = [] }: { setView: (v
                 <Flame className="w-5 h-5 text-orange-500" />
                 <h2 className="text-2xl font-serif text-secondary font-bold">Most Wanted</h2>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 mb-16">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-16">
                 {bestsellers.map((p, idx) => (
                   <BestsellerCard key={p.id} product={p} idx={idx} onSelect={onSelect} />
                 ))}
@@ -161,7 +161,7 @@ export default function Catalog({ setView, onSelect, cakes = [] }: { setView: (v
           {regular.length > 0 ? (
             <div>
               <h2 className="text-2xl font-serif text-secondary font-bold mb-8">Full Catalog</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {regular.map((p, idx) => (
                   <StandardCard key={p.id} product={p} idx={idx} onSelect={onSelect} />
                 ))}

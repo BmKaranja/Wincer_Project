@@ -1,5 +1,8 @@
 import { motion } from 'motion/react';
 import { ArrowRight, Clock, MapPin } from 'lucide-react';
+import heroBg from '../assets/images/regenerated_image_1780567161635.png';
+import collectionImg3 from '../assets/images/regenerated_image_1780566435533.png';
+import collectionImg4 from '../assets/images/regenerated_image_1780566437370.png';
 
 export interface HomeProps {
   setView: (view: string) => void;
@@ -7,30 +10,30 @@ export interface HomeProps {
 }
 
 export default function Home({ setView, posts = [] }: HomeProps) {
-  const bestsellers = [
+  const collections = [
     {
-      id: 7,
-      title: "Chocolate Drip Cake",
-      desc: "A decadent two-tier chocolate drip cake, lavishly adorned with wafers, gold coins, and assorted chocolates.",
-      price: "Kshs. 3500",
-      tag: "Trending",
+      title: "The Classics Collection",
+      desc: "Time-tested recipes baked to airy perfection, layered with fluffy cream and rich gourmet fillings.",
+      tags: ["Black Forest", "Red Velvet", "White Forest"],
+      img: "/images/home_birthday.jpg"
+    },
+    {
+      title: "Modern Indulgence",
+      desc: "Daring, contemporary cake profiles featuring luscious cascading drips, Biscoff, and premium Ferrero themes.",
+      tags: ["Lotus Biscoff", "Chocolate Drip", "Ferrero"],
       img: "/images/chocolatecake.jpg"
     },
     {
-      id: 1,
-      title: "Signature Black Forest",
-      desc: "A rich German classic chocolate sponge layered with whipped cream and cherries.",
-      price: "Kshs. 2200",
-      tag: "Bestseller",
-      img: "https://lh3.googleusercontent.com/aida-public/AB6AXuDNxYJrngqv4m-5-nDOT98WJJBsj4VLTJ-jVyN2GTmOgLLaIhA8e_J7zRCNu7PpNMhh3SahmEUA53TTuvP_NfFDfwxD4uZwx94gZRpEOpVB2bHIP0vwj-Wx9vYjLJ2l8sVDc8kVewXkWyeWyieVZi5uBKYxiLwi-EvwAcIZe3M1Ii4m5wF8t05CcyYZwjedKjQKNc9V3RVOiyxvIarZ6mAbQHOvOLrmcTN33J-TfWAmNVioejdOJeYI-Ux-YCz2ZeeK1NR1UzROn1Y"
+      title: "Artisan Floral Cakes",
+      desc: "Delicately handcrafted floral arrangements and elegant piping crowning moist, rich sponges.",
+      tags: ["Floral Design", "Buttercream", "Elegant"],
+      img: collectionImg3
     },
     {
-      id: 3,
-      title: "Classic Red Velvet",
-      desc: "A velvety, cocoa-infused sponge complete with our creamy, rich cream cheese frosting.",
-      price: "Kshs. 2800",
-      tag: "Signature",
-      img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCloe64oMMRQW-RnI7s-onNgc6APJHBIAt97hmCm0xA0nZCk-_2k47ue-ZyVMozgjLj5ziIAbzSqsbUAYSw6Dnqsx0_wgPLJjLIDVX3AHSbcn8JUI6aJXspnHvLDnDY6GQWtxMhjbfSLC2UmeOFc7u3HSY3OPWpAQgj7mvvNhNgQ5E9cYvzHkB9S_092HF3iwSS4IgN4dEWKTClywo2-r1sSlHk3EuV1qAkHjG5mQFheLWbg3XyGhHPVLnMKn4VudoraUG0qTgoV64"
+      title: "Gourmet Masterpieces",
+      desc: "Rich, decadent creations loaded with premium toppings, fresh fruits, and artisan finishes.",
+      tags: ["Premium", "Fresh Fruit", "Decadent"],
+      img: collectionImg4
     }
   ];
 
@@ -47,7 +50,7 @@ export default function Home({ setView, posts = [] }: HomeProps) {
           <img 
             alt="Wincer Cake House Shop Front" 
             className="w-full h-full object-cover object-center" 
-            src="/images/541025122_18119969812495932_4751530949749935897_n.jpg" 
+            src={heroBg} 
           />
           <div className="absolute inset-0 bg-stone-900/40 transition-opacity"></div>
         </div>
@@ -86,39 +89,50 @@ export default function Home({ setView, posts = [] }: HomeProps) {
         </div>
       </section>
 
-      {/* Bestsellers Section */}
+      {/* Curated Collections Preview Section */}
       <section className="py-24 max-w-7xl mx-auto px-8">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-serif text-secondary mb-4 italic">The Season's Bestsellers</h2>
+          <span className="text-secondary font-bold tracking-[0.2em] uppercase mb-4 block text-xs">Exquisite Range</span>
+          <h2 className="text-4xl font-serif text-secondary mb-4 italic">Explore Our Curated Collections</h2>
           <div className="w-16 h-1 bg-secondary mx-auto rounded-full"></div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {bestsellers.map((item, idx) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {collections.map((col, idx) => (
             <motion.div 
-              key={item.id}
+              key={col.title}
               initial={{ y: 20, opacity: 0 }}
               whileInView={{ y: 0, opacity: 1 }}
               transition={{ delay: idx * 0.1 }}
               viewport={{ once: true }}
-              className="group bg-primary-container/40 rounded-2xl overflow-hidden diffusion-shadow transition-all hover:-translate-y-2 border border-secondary/5"
+              onClick={() => setView('catalog')}
+              className="group bg-primary-container/40 rounded-3xl overflow-hidden cursor-pointer diffusion-shadow transition-all duration-300 hover:-translate-y-2 border border-secondary/5 flex flex-col h-full"
             >
-              <div className="aspect-square overflow-hidden">
+              <div className="aspect-[4/3] overflow-hidden relative">
                 <img 
-                  alt={item.title} 
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                  src={item.img} 
+                  alt={col.title} 
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                  src={col.img} 
                 />
+                <div className="absolute inset-0 bg-stone-950/10 group-hover:bg-transparent transition-colors duration-300" />
               </div>
-              <div className="p-8 text-center">
-                <div className="flex justify-center gap-1 mb-3">
-                  <span className="bg-secondary/10 text-secondary text-[11px] px-3 py-1 rounded-full uppercase font-bold tracking-wider">
-                    {item.tag}
+              <div className="p-8 flex flex-col flex-grow text-center">
+                <div className="flex flex-wrap justify-center gap-1.5 mb-4">
+                  {col.tags.map(tag => (
+                    <span key={tag} className="bg-secondary/10 text-secondary text-[10px] px-2.5 py-0.5 rounded-full uppercase font-bold tracking-wider">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+                <h3 className="text-2xl font-serif text-secondary mb-3 italic">{col.title}</h3>
+                <p className="text-on-surface-variant font-sans opacity-80 leading-relaxed text-sm flex-grow mb-6">
+                  {col.desc}
+                </p>
+                <div className="pt-2">
+                  <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-secondary group-hover:gap-4 transition-all">
+                    Discover Collection <ArrowRight className="w-3.5 h-3.5" />
                   </span>
                 </div>
-                <h3 className="text-2xl font-serif text-secondary mb-2 italic">{item.title}</h3>
-                <p className="text-on-surface-variant font-sans mb-4 min-h-[3rem] opacity-80 leading-relaxed text-sm">{item.desc}</p>
-                <span className="text-secondary font-bold text-2xl font-serif">{item.price}</span>
               </div>
             </motion.div>
           ))}

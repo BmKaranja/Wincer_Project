@@ -230,6 +230,20 @@ export default function OrderManagement({ orders }: { orders: any[] }) {
                     <span className="font-medium text-secondary/80 text-sm">{viewingOrder.cakeDetails}</span>
                   </div>
                 )}
+                {viewingOrder.designSketch && (
+                  <div className="pb-4 border-b border-secondary/10">
+                    <span className="text-secondary/60 text-sm font-bold uppercase tracking-widest block mb-2">Inspiration Sketch / Design Photo</span>
+                    <div className="mt-2 text-center">
+                      <a href={viewingOrder.designSketch} target="_blank" rel="noreferrer" title="Click to view full size">
+                        <img 
+                          src={viewingOrder.designSketch} 
+                          alt="Customer Design Sketch" 
+                          className="max-w-full max-h-[250px] mx-auto rounded-xl border border-secondary/10 shadow-md hover:brightness-95 transition-all cursor-zoom-in"
+                        />
+                      </a>
+                    </div>
+                  </div>
+                )}
                 {viewingOrder.notes && (
                   <div className="pb-4 border-b border-secondary/10">
                     <span className="text-secondary/60 text-sm font-bold uppercase tracking-widest block mb-2">Notes</span>
