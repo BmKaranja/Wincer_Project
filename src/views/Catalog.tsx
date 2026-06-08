@@ -81,8 +81,8 @@ export default function Catalog({ setView, onSelect, cakes = [] }: { setView: (v
       <div className="flex flex-col lg:flex-row gap-8 mb-12">
         {/* Filter Sidebar */}
         <aside className="w-full lg:w-64 space-y-8 shrink-0">
-          <div className="p-8 bg-primary-container/40 rounded-2xl border border-secondary/5">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-secondary mb-6 border-b border-secondary/10 pb-3">
+          <div className="p-8 bg-primary text-on-primary rounded-2xl border border-on-primary/10">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-on-primary/90 mb-6 border-b border-on-primary/20 pb-3">
               Refine Selection
             </h3>
             <div className="space-y-8">
@@ -116,7 +116,7 @@ export default function Catalog({ setView, onSelect, cakes = [] }: { setView: (v
                         onChange={() => toggleDietary(opt)}
                         className="w-4 h-4 rounded border-secondary/20 text-secondary focus:ring-secondary" 
                       />
-                      <span className="text-sm text-on-surface-variant group-hover:text-secondary transition-colors font-medium">{opt}</span>
+                      <span className="text-sm text-white/90 group-hover:text-white transition-colors font-medium">{opt}</span>
                     </label>
                   ))}
                 </div>
@@ -125,14 +125,14 @@ export default function Catalog({ setView, onSelect, cakes = [] }: { setView: (v
               <div>
                 <div className="flex justify-between mb-4">
                   <span className="text-sm font-bold">Price Range</span>
-                  <span className="text-sm font-medium text-secondary">Up to Kshs. {priceLimit}</span>
+                  <span className="text-sm font-medium text-white">Up to Kshs. {priceLimit}</span>
                 </div>
                 <input 
                   type="range" 
                   min="0" max="25000" step="100" 
                   value={priceLimit}
                   onChange={(e) => setPriceLimit(Number(e.target.value))}
-                  className="w-full h-1.5 bg-secondary/10 rounded-lg appearance-none cursor-pointer accent-secondary" 
+                  className="w-full h-1.5 bg-white/50 rounded-lg appearance-none cursor-pointer accent-black" 
                 />
               </div>
             </div>

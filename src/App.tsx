@@ -12,6 +12,7 @@ import Blog from './views/Blog';
 import Checkout from './views/Checkout';
 import Admin from './views/Admin';
 import Cart from './views/Cart';
+import PrivacyPolicy from './views/PrivacyPolicy';
 import { AnimatePresence, motion } from 'motion/react';
 import { auth, db } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -331,6 +332,16 @@ export default function App() {
               <Admin user={user} setView={handleNav} blogPosts={blogPosts} />
             </motion.div>
           )}
+          {view === 'privacy' && (
+            <motion.div 
+              key="privacy"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <PrivacyPolicy />
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
       
@@ -354,7 +365,7 @@ export default function App() {
         </div>
       </a>
 
-      <Footer />
+      <Footer setView={handleNav} />
     </div>
   );
 }

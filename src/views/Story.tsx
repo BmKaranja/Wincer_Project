@@ -46,7 +46,7 @@ export default function Story({ setView }: { setView: (v: string) => void }) {
               <div className="absolute -inset-6 bg-primary-container/40 -z-10 rounded-2xl blur-3xl group-hover:blur-2xl transition-all duration-700"></div>
               <img 
                 className="w-full aspect-[4/5] object-cover rounded-3xl shadow-2xl border border-secondary/5 contrast-150 brightness-110" 
-                src="/images/regenerated_image_1779024163803.png" 
+                src="https://karanjamaina.sirv.com/Images/regenerated_image_1779024163803.png" 
                 alt="Wincer Cake House Story"
               />
             </div>

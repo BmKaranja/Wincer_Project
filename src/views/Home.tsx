@@ -1,9 +1,5 @@
 import { motion } from 'motion/react';
 import { ArrowRight, Clock, MapPin } from 'lucide-react';
-import heroBg from '../assets/images/regenerated_image_1780567161635.png';
-import collectionImg3 from '../assets/images/regenerated_image_1780566435533.png';
-import collectionImg4 from '../assets/images/regenerated_image_1780566437370.png';
-
 export interface HomeProps {
   setView: (view: string) => void;
   posts?: any[];
@@ -15,25 +11,25 @@ export default function Home({ setView, posts = [] }: HomeProps) {
       title: "The Classics Collection",
       desc: "Time-tested recipes baked to airy perfection, layered with fluffy cream and rich gourmet fillings.",
       tags: ["Black Forest", "Red Velvet", "White Forest"],
-      img: "/images/home_birthday.jpg"
+      img: "https://karanjamaina.sirv.com/Images/home_birthday.jpg"
     },
     {
       title: "Modern Indulgence",
       desc: "Daring, contemporary cake profiles featuring luscious cascading drips, Biscoff, and premium Ferrero themes.",
       tags: ["Lotus Biscoff", "Chocolate Drip", "Ferrero"],
-      img: "/images/chocolatecake.jpg"
+      img: "https://karanjamaina.sirv.com/Images/chocolatecake.jpg"
     },
     {
       title: "Artisan Floral Cakes",
       desc: "Delicately handcrafted floral arrangements and elegant piping crowning moist, rich sponges.",
       tags: ["Floral Design", "Buttercream", "Elegant"],
-      img: collectionImg3
+      img: 'https://karanjamaina.sirv.com/Images/regenerated_image_1780566435533.png'
     },
     {
       title: "Gourmet Masterpieces",
       desc: "Rich, decadent creations loaded with premium toppings, fresh fruits, and artisan finishes.",
       tags: ["Premium", "Fresh Fruit", "Decadent"],
-      img: collectionImg4
+      img: 'https://karanjamaina.sirv.com/Images/regenerated_image_1780566437370.png'
     }
   ];
 
@@ -50,9 +46,9 @@ export default function Home({ setView, posts = [] }: HomeProps) {
           <img 
             alt="Wincer Cake House Shop Front" 
             className="w-full h-full object-cover object-center" 
-            src={heroBg} 
+            src='https://karanjamaina.sirv.com/Images/regenerated_image_1780567161635.png'
           />
-          <div className="absolute inset-0 bg-stone-900/40 transition-opacity"></div>
+          <div className="absolute inset-0 bg-stone-900/20 transition-opacity"></div>
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-8 w-full mt-32 sm:mt-0">
@@ -205,7 +201,7 @@ export default function Home({ setView, posts = [] }: HomeProps) {
             <h2 className="text-4xl font-serif text-secondary mb-6 italic">Handcrafting Sweetness <br/> Seven Days a Week</h2>
             <div className="relative mb-8 rounded-2xl overflow-hidden shadow-2xl aspect-[16/9] group">
               <img 
-                src="/images/regenerated_image_1779013135478.webp" 
+                src="https://karanjamaina.sirv.com/Images/regenerated_image_1779013135478.webp" 
                 alt="Wincer Cake House Shop Front" 
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
               />
@@ -297,7 +293,7 @@ export default function Home({ setView, posts = [] }: HomeProps) {
               <img 
                 alt="Birthday Occasion" 
                 className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" 
-                src="/images/home_birthday.jpg" 
+                src="https://karanjamaina.sirv.com/Images/home_birthday.jpg" 
               />
               <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors"></div>
               <div className="absolute bottom-8 left-8 text-white">
@@ -359,7 +355,7 @@ export default function Home({ setView, posts = [] }: HomeProps) {
               <img 
                 alt=" Chef Crafting" 
                 className="rounded-2xl shadow-2xl" 
-                src="/images/regenerated_image_1779013140846.webp" 
+                src="https://karanjamaina.sirv.com/Images/regenerated_image_1779013140846.webp" 
               />
               <div className="absolute -bottom-6 -right-6 bg-secondary p-8 rounded-2xl text-white hidden md:block shadow-xl">
                 <p className="text-2xl font-serif leading-tight">Hand-finished<br/>by master<br/>bakers.</p>
