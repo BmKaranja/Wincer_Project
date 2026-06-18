@@ -14,9 +14,7 @@ import Admin from './views/Admin';
 import Cart from './views/Cart';
 import PrivacyPolicy from './views/PrivacyPolicy';
 import { AnimatePresence, motion } from 'motion/react';
-import { auth, db } from './firebase';
-import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { supabase } from './supabase';
 
 export default function App() {
   const [view, setView] = useState('home');
@@ -54,75 +52,107 @@ export default function App() {
   const [blogPosts, setBlogPosts] = useState<any[]>([]);
 
   useEffect(() => {
-    import('firebase/firestore').then(({ collection, onSnapshot, getDocs, updateDoc, doc }) => {
-      const unsubCakes = onSnapshot(collection(db, 'cakes'), (snap) => {
-        setCakes(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-      }, (err) => console.error("Error fetching cakes:", err));
-
-      const unsubPosts = onSnapshot(collection(db, 'blog_posts'), (snap) => {
-        setBlogPosts(snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a: any, b: any) => {
+    const fetchCakes = async () => {
+      const { data, error } = await supabase.from('cakes').select('*');
+      if (error) console.error("Error fetching cakes:", error);
+      else setCakes(data || []);
+    };
+    
+    const fetchPosts = async () => {
+      const { data, error } = await supabase.from('blog_posts').select('*');
+      if (error) console.error("Error fetching posts:", error);
+      else {
+        const sorted = (data || []).sort((a: any, b: any) => {
           return new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime();
-        }));
-      }, (err) => console.error("Error fetching posts:", err));
+        });
+        setBlogPosts(sorted);
+      }
+    };
+    
+    fetchCakes();
+    fetchPosts();
+
+    const cakesSub = supabase.channel('cakes_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cakes' }, () => {
+        fetchCakes();
+      }).subscribe();
       
-      // Auto-migrate any existing $ prices to Kshs.
-      if (user && user.role === 'admin') {
-        getDocs(collection(db, 'cakes')).then(snap => {
-          snap.docs.forEach(d => {
-            const data = d.data();
-            if (data.price && typeof data.price === 'string' && data.price.includes('$')) {
-              // Extract number and convert
-              const numMatch = data.price.match(/\d+/);
+    const postsSub = supabase.channel('posts_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'blog_posts' }, () => {
+        fetchPosts();
+      }).subscribe();
+
+    return () => {
+      supabase.removeChannel(cakesSub);
+      supabase.removeChannel(postsSub);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (user && user.role === 'admin') {
+      const migratePrices = async () => {
+        const { data } = await supabase.from('cakes').select('*');
+        if (data) {
+          for (const d of data) {
+            if (d.price && typeof d.price === 'string' && d.price.includes('$')) {
+              const numMatch = d.price.match(/\d+/);
               if (numMatch) {
                 const convertedValue = parseInt(numMatch[0]) * 130;
                 const newPrice = `Kshs. ${convertedValue}`;
-                updateDoc(doc(db, 'cakes', d.id), { price: newPrice }).catch(console.error);
+                await supabase.from('cakes').update({ price: newPrice }).eq('id', d.id);
               }
             }
-          });
-        });
-      }
-      return () => { unsubCakes(); unsubPosts(); };
-    });
+          }
+        }
+      };
+      migratePrices();
+    }
   }, [user]);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    const handleUserSession = async (currentUser: any) => {
       if (currentUser) {
-        // user is signed in, get their role from firestore
         try {
-          const userDocRef = doc(db, 'users', currentUser.uid);
-          const userDoc = await getDoc(userDocRef);
-          if (userDoc.exists()) {
-            let userData = userDoc.data();
+          const { data: userDoc, error } = await supabase.from('users').select('*').eq('uid', currentUser.id).single();
+          if (userDoc && !error) {
+            let userData = userDoc;
             if ((currentUser.email?.toLowerCase() === 'bmkaranja001@gmail.com' || currentUser.email?.toLowerCase() === 'medillin254@gmail.com') && userData.role !== 'admin') {
               userData.role = 'admin';
-              await setDoc(userDocRef, { role: 'admin' }, { merge: true });
+              await supabase.from('users').update({ role: 'admin' }).eq('uid', currentUser.id);
             }
-            setUser({ ...userData, uid: currentUser.uid });
+            setUser({ ...userData, uid: currentUser.id });
           } else {
-            // New user, create them (with 'user' role by default unless bmkaranja001@gmail.com)
             const role = (currentUser.email?.toLowerCase() === 'bmkaranja001@gmail.com' || currentUser.email?.toLowerCase() === 'medillin254@gmail.com') ? 'admin' : 'user';
             const newUser = {
+              uid: currentUser.id,
               email: currentUser.email || '',
-              name: currentUser.displayName || 'New User',
+              name: currentUser.user_metadata?.full_name || 'New User',
               role,
-              joinedAt: serverTimestamp(),
+              joinedAt: new Date().toISOString(),
               ordersCount: 0
             };
-            await setDoc(userDocRef, newUser);
-            setUser({ ...newUser, uid: currentUser.uid });
+            await supabase.from('users').insert([newUser]);
+            setUser(newUser);
           }
         } catch (err) {
           console.error("Error fetching user data:", err);
-          setUser({ email: currentUser.email, role: 'user', uid: currentUser.uid }); // Fallback
+          setUser({ email: currentUser.email, role: 'user', uid: currentUser.id }); 
         }
       } else {
         setUser(null);
       }
       setLoadingAuth(false);
+    };
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      handleUserSession(session?.user || null);
     });
-    return () => unsubscribe();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      handleUserSession(session?.user || null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleNav = (newView: string) => {
@@ -186,7 +216,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col selection:bg-secondary/20 selection:text-secondary">
-      <Header currentView={view} setView={handleNav} cartCount={cart.length} />
+      <Header currentView={view} setView={handleNav} cartCount={cart.length} user={user} />
       
       <div className="flex-grow">
         <AnimatePresence mode="wait">

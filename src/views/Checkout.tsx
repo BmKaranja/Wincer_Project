@@ -1,8 +1,7 @@
 import { useState, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronRight, UtensilsCrossed, Calendar, CreditCard, PlusCircle, Lock, ShieldCheck, Truck, ArrowRight, CheckCircle2, X, Wand2 } from 'lucide-react';
-import { db } from '../firebase';
-import { doc, setDoc, increment, serverTimestamp } from 'firebase/firestore';
+import { supabase } from '../supabase';
 import { DELIVERY_ZONES } from '../constants';
 
 export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemove, user }: { 
@@ -82,7 +81,8 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
       ? 'Pending Verification' 
       : (paymentType === 'deposit' ? 'Confirmed (Pending Balance)' : 'Fully Paid');
 
-    await setDoc(doc(db, 'orders', orderId), {
+    await supabase.from('orders').insert([{
+      id: orderId,
       userId: user ? user.uid : 'guest',
       customer: user ? (user.name || user.email || mpesaPhone) : mpesaPhone,
       amount: `Kshs. ${total}`,
@@ -98,8 +98,8 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
       cakeDetails: cakeDetails || 'Details TBD',
       designSketch: cart.find(c => c.config?.sketchUrl)?.config?.sketchUrl || null,
       gauge: typeof gauge === 'string' ? gauge : String(gauge),
-      createdAt: serverTimestamp()
-    });
+      createdAt: new Date().toISOString()
+    }]);
   };
 
 // src/views/Checkout.tsx - Replace handleManualCodeSubmit

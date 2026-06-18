@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Calendar, User, ArrowRight, ArrowLeft, Heart, Share2, ShoppingBag, Star, Check } from 'lucide-react';
-import { db } from '../firebase';
-import { doc, updateDoc, increment } from 'firebase/firestore';
+import { supabase } from '../supabase';
 
 interface BlogProps {
   onSelectProduct?: (product: any) => void;
@@ -53,10 +52,9 @@ export default function Blog({ onSelectProduct, cakes, posts = [] }: BlogProps) 
     
     try {
       setHasLiked(true);
-      const postRef = doc(db, 'blog_posts', String(currentPost.id));
-      await updateDoc(postRef, {
-        likes: increment(1)
-      });
+      await supabase.from('blog_posts')
+        .update({ likes: (currentPost.likes || 0) + 1 })
+        .eq('id', currentPost.id);
     } catch (err) {
       console.error('Failed to like post:', err);
       setHasLiked(false);

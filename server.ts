@@ -5,57 +5,16 @@ import fs from "fs";
 import { rateLimit } from 'express-rate-limit';
 import { body, param, validationResult } from 'express-validator';
 import { Agent, setGlobalDispatcher } from 'undici';
-import admin from 'firebase-admin';
-import { getFirestore } from 'firebase-admin/firestore';
-import { initializeApp as initializeClientApp } from 'firebase/app';
-import { getFirestore as getClientFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { createClient } from '@supabase/supabase-js';
 
-// Let's load the applet config if it exists
-let firebaseAppletConfig: any = null;
-try {
-  const configPath = path.join(process.cwd(), 'firebase-applet-config.json');
-  if (fs.existsSync(configPath)) {
-    firebaseAppletConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-  }
-} catch (e) {
-  console.warn("Could not read firebase-applet-config.json:", e);
-}
+// Initialize Supabase client
+const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || '';
 
-// Initialize Firebase Admin SDK using Application Default Credentials (ADC) or env fallback
-const apps = admin.apps || [];
-let firebaseApp: admin.app.App;
-
-if (!apps.length) {
-  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-    try {
-      const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-      firebaseApp = admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-        projectId: process.env.FIREBASE_PROJECT_ID || serviceAccount.project_id
-      });
-    } catch (e) {
-      console.warn("Could not parse FIREBASE_SERVICE_ACCOUNT JSON, falling back to Application Default Credentials:", e);
-      firebaseApp = admin.initializeApp({
-        projectId: firebaseAppletConfig?.projectId || process.env.FIREBASE_PROJECT_ID
-      });
-    }
-  } else {
-    // Highly preferred in Cloud Run/Applet environment: uses built-in default container credentials
-    firebaseApp = admin.initializeApp({
-      projectId: firebaseAppletConfig?.projectId || process.env.FIREBASE_PROJECT_ID
-    });
-  }
-} else {
-  firebaseApp = admin.app();
-}
-
-// Initialize Firestore using the Firebase Client SDK with API key Authentication.
-// This avoids project-cross/IAM permission limitations in Cloud Run on custom named databases.
-const clientApp = initializeClientApp(firebaseAppletConfig);
-const db = getClientFirestore(clientApp, firebaseAppletConfig.firestoreDatabaseId);
-
-// Setup FieldValue (kept for backward compatibility, although client SDK functions are preferred now)
-const { FieldValue } = admin.firestore;
+const supabase = createClient(
+  supabaseUrl || 'https://placeholder-url.supabase.co',
+  supabaseAnonKey || 'placeholder-key'
+);
 
 // Initialize HTTP/HTTPS connection pooling via undici.
 // This configures robust socket reuse (Keep-Alive) on all outbound fetch requests.
@@ -267,15 +226,16 @@ app.post('/api/mpesa/stkpush',
         });
       }
 
-await setDoc(doc(db, 'mpesa_requests', checkoutRequestID), {
-  reference,
-  phone: phoneNumber,
-  amount,
-  checkoutRequestID,
-  status: 'pending',
-  createdAt: serverTimestamp(),
-  expiresAt: new Date(Date.now() + 2 * 60 * 1000)
-});
+      await supabase.from('mpesa_requests').insert([{
+        id: checkoutRequestID,
+        reference,
+        phone: phoneNumber,
+        amount,
+        checkoutRequestID,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 2 * 60 * 1000).toISOString()
+      }]);
       res.json({ success: true, data });
     } catch (error: any) {
       console.error('STK Push Exception:', {
@@ -299,14 +259,14 @@ app.post('/api/mpesa/callback', async (req, res, next) => {
       const checkoutRequestID = callbackData.CheckoutRequestID;
       const resultCode = callbackData.ResultCode;
       
-      // Store callback result in Firestore
-      await setDoc(doc(db, 'mpesa_requests', checkoutRequestID), {
+      // Store callback result in Supabase
+      await supabase.from('mpesa_requests').update({
         resultCode,
         resultDesc: callbackData.ResultDesc,
         metadata: callbackData.CallbackMetadata?.Item || [],
-        callbackReceivedAt: serverTimestamp(),
+        callbackReceivedAt: new Date().toISOString(),
         reference
-      }, { merge: true });
+      }).eq('id', checkoutRequestID);
 
       // Acknowledge to Safaricom immediately
       res.json({ message: 'Success' });
@@ -332,33 +292,30 @@ app.post('/api/mpesa/verify-code',
     try {
       const { phone, amount, reference, code } = req.body;
 
-      // Query Firestore for ANY request matching this code pattern
+      // Query Supabase for ANY request matching this code pattern
       // In a real scenario, you'd call Daraja's query API here
       // For now, we accept it if the user has an active pending request
-      const q = query(
-        collection(db, 'mpesa_requests'),
-        where('reference', '==', reference),
-        where('status', '==', 'pending')
-      );
-      
-      const snapshot = await getDocs(q);
-      
-      if (snapshot.empty) {
+      const { data: snapshot, error } = await supabase
+        .from('mpesa_requests')
+        .select('*')
+        .eq('reference', reference)
+        .eq('status', 'pending');
+        
+      if (error || !snapshot || snapshot.length === 0) {
         return res.status(400).json({
           success: false,
           error: 'No matching pending payment request found. Please try again.'
         });
       }
 
-      const pendingRequest = snapshot.docs[0];
-      const requestData = pendingRequest.data();
+      const pendingRequest = snapshot[0];
 
       // Update the request with manual code
-      await updateDoc(pendingRequest.ref, {
+      await supabase.from('mpesa_requests').update({
         manualCode: code,
-        manualVerifiedAt: serverTimestamp(),
+        manualVerifiedAt: new Date().toISOString(),
         status: 'manually_verified'
-      });
+      }).eq('id', pendingRequest.id);
 
       res.json({
         success: true,
@@ -376,13 +333,17 @@ app.get('/api/mpesa/status/:requestId',
   validate,
   async (req: express.Request, res: express.Response) => {
     try {
-      const requestSnap = await getDoc(doc(db, 'mpesa_requests', req.params.requestId));
+      const { data: requestSnap, error } = await supabase
+        .from('mpesa_requests')
+        .select('*')
+        .eq('id', req.params.requestId)
+        .single();
 
-      if (!requestSnap.exists()) {
+      if (error || !requestSnap) {
         return res.json({ status: 'pending' });
       }
 
-      const data = requestSnap.data() || {};
+      const data = requestSnap || {};
 
       // Check callback result
       if (data.resultCode === 0) {

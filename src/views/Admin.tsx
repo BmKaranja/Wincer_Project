@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Package, Users, Banknote, Activity, Plus, Trash2, Edit2, Search, FileText, Heart } from 'lucide-react';
-import { db } from '../firebase';
-import { collection, onSnapshot, doc, setDoc, deleteDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { supabase } from '../supabase';
 
 import OrderManagement from '../components/admin/OrderManagement';
 import CustomerInquiries from '../components/admin/CustomerInquiries';
@@ -19,27 +18,51 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
 
   useEffect(() => {
     if (!user || user.role !== 'admin') return;
-    const unsubCakes = onSnapshot(collection(db, 'cakes'), (snap) => {
-      setCakes(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    }, (err) => console.error(err));
-    const unsubUsers = onSnapshot(collection(db, 'users'), (snap) => {
-      setSiteUsers(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    }, (err) => console.error(err));
-    const unsubOrders = onSnapshot(collection(db, 'orders'), (snap) => {
-      setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a: any, b: any) => {
-        const timeA = a.createdAt?.seconds || 0;
-        const timeB = b.createdAt?.seconds || 0;
-        return timeB - timeA;
-      }));
-    }, (err) => console.error(err));
-    const unsubInquiries = onSnapshot(collection(db, 'inquiries'), (snap) => {
-      setInquiries(snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a: any, b: any) => {
-        const timeA = a.createdAt?.seconds || 0;
-        const timeB = b.createdAt?.seconds || 0;
-        return timeB - timeA;
-      }));
-    }, (err) => console.error(err));
-    return () => { unsubCakes(); unsubUsers(); unsubOrders(); unsubInquiries(); };
+
+    const fetchCakes = async () => {
+      const { data } = await supabase.from('cakes').select('*');
+      setCakes(data || []);
+    };
+
+    const fetchUsers = async () => {
+      const { data } = await supabase.from('users').select('*');
+      setSiteUsers(data || []);
+    };
+
+    const fetchOrders = async () => {
+      const { data } = await supabase.from('orders').select('*');
+      if (data) {
+        setOrders(data.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()));
+      }
+    };
+
+    const fetchInquiries = async () => {
+      const { data } = await supabase.from('inquiries').select('*');
+      if (data) {
+        setInquiries(data.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()));
+      }
+    };
+
+    fetchCakes();
+    fetchUsers();
+    fetchOrders();
+    fetchInquiries();
+
+    const cakesSub = supabase.channel('cakes_admin')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cakes' }, fetchCakes).subscribe();
+    const usersSub = supabase.channel('users_admin')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, fetchUsers).subscribe();
+    const ordersSub = supabase.channel('orders_admin')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, fetchOrders).subscribe();
+    const inquiriesSub = supabase.channel('inquiries_admin')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'inquiries' }, fetchInquiries).subscribe();
+
+    return () => {
+      supabase.removeChannel(cakesSub);
+      supabase.removeChannel(usersSub);
+      supabase.removeChannel(ordersSub);
+      supabase.removeChannel(inquiriesSub);
+    };
   }, [user]);
 
   const [newCakeTitle, setNewCakeTitle] = useState('');
@@ -94,15 +117,15 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
         date: postForm.date,
         tips: tipsArray,
         relatedCakeId: postForm.relatedCakeId,
-        updatedAt: serverTimestamp(),
+        updatedAt: new Date().toISOString(),
         likes: editingPost ? (editingPost.likes || 0) : 0
       };
 
       if (editingPost) {
-        await updateDoc(doc(db, 'blog_posts', editingPost.id), postData);
+        await supabase.from('blog_posts').update(postData).eq('id', editingPost.id);
       } else {
         const id = Date.now().toString();
-        await setDoc(doc(db, 'blog_posts', id), { ...postData, createdAt: serverTimestamp() });
+        await supabase.from('blog_posts').insert([{ ...postData, id, createdAt: new Date().toISOString() }]);
       }
       setIsAddingPost(false);
       setEditingPost(null);
@@ -115,7 +138,7 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
   const handleDeletePost = async (id: string) => {
     if (!confirm('Are you sure you want to delete this post?')) return;
     try {
-      await deleteDoc(doc(db, 'blog_posts', id));
+      await supabase.from('blog_posts').delete().eq('id', id);
     } catch (err) {
       console.error(err);
     }
@@ -150,7 +173,7 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
 
   const handleDeleteCake = async (id: string) => {
     try {
-      await deleteDoc(doc(db, 'cakes', id));
+      await supabase.from('cakes').delete().eq('id', id);
     } catch (err) {
       console.error(err);
       alert('Failed to delete cake: ' + (err as Error).message);
@@ -166,7 +189,7 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
     }
     try {
       if (editingCake) {
-        await updateDoc(doc(db, 'cakes', editingCake.id), {
+        await supabase.from('cakes').update({
           title: cakeForm.title,
           price: cakeForm.price,
           desc: cakeForm.desc,
@@ -174,10 +197,11 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
           tag: cakeForm.tag || '',
           gauge: cakeForm.gauge || '',
           gaugeVal: cakeForm.gaugeVal || ''
-        });
+        }).eq('id', editingCake.id);
       } else {
         const id = Date.now().toString();
-        await setDoc(doc(db, 'cakes', id), {
+        await supabase.from('cakes').insert([{
+          id,
           title: cakeForm.title,
           price: cakeForm.price,
           desc: cakeForm.desc,
@@ -185,8 +209,8 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
           tag: cakeForm.tag || '',
           gauge: cakeForm.gauge || '',
           gaugeVal: cakeForm.gaugeVal || '',
-          createdAt: serverTimestamp()
-        });
+          createdAt: new Date().toISOString()
+        }]);
       }
       clearCakeForm();
     } catch (err) {
@@ -197,7 +221,7 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
 
   const handleDeleteUser = async (id: string) => {
     try {
-      await deleteDoc(doc(db, 'users', id));
+      await supabase.from('users').delete().eq('id', id);
     } catch (err) {
       console.error(err);
     }
@@ -209,16 +233,15 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
     e.preventDefault();
     if (!newUserEmail) return;
     try {
-      // In a real app we might call a server function to create a new auth user,
-      // but here we just create a User doc and rely on logic
       const id = Date.now().toString(); // placeholder ID
-      await setDoc(doc(db, 'users', id), {
+      await supabase.from('users').insert([{
+        id,
         email: newUserEmail,
         name: 'New Member',
         role: 'user',
-        joinedAt: Date.now(),
+        joinedAt: new Date().toISOString(),
         ordersCount: 0
-      });
+      }]);
       setNewUserEmail('');
     } catch (err) {
       console.error(err);

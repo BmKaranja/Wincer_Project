@@ -48,7 +48,7 @@ export default function Home({ setView, posts = [] }: HomeProps) {
             className="w-full h-full object-cover object-center" 
             src='https://karanjamaina.sirv.com/Images/regenerated_image_1780567161635.png'
           />
-          <div className="absolute inset-0 bg-stone-900/20 transition-opacity"></div>
+          <div className="absolute inset-0 bg-stone-900/30 transition-opacity"></div>
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-8 w-full mt-32 sm:mt-0">

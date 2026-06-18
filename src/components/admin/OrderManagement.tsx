@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { db } from '../../firebase';
-import { doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { supabase } from '../../supabase';
 import { Package, Trash2, Edit2, Eye, X, CheckCircle } from 'lucide-react';
 
 export default function OrderManagement({ orders }: { orders: any[] }) {
@@ -72,7 +71,7 @@ export default function OrderManagement({ orders }: { orders: any[] }) {
                         onChange={async (e) => {
                            try {
                               setErrorMsg(null);
-                              await setDoc(doc(db, 'orders', row.id), { status: e.target.value }, { merge: true });
+                              await supabase.from('orders').update({ status: e.target.value }).eq('id', row.id);
                            } catch (err: any) {
                               setErrorMsg("Failed to update status: " + err.message);
                               console.error(err);
@@ -159,7 +158,7 @@ export default function OrderManagement({ orders }: { orders: any[] }) {
                   onClick={async () => {
                     try {
                       setErrorMsg(null);
-                      await deleteDoc(doc(db, 'orders', deletingOrder.id));
+                      await supabase.from('orders').delete().eq('id', deletingOrder.id);
                       setDeletingOrder(null);
                     } catch (err: any) {
                       setErrorMsg("Failed to delete: " + err.message);
@@ -315,7 +314,7 @@ export default function OrderManagement({ orders }: { orders: any[] }) {
                       try {
                         const { id, saving, ...updateData } = editingOrder;
                         setErrorMsg(null);
-                        await setDoc(doc(db, 'orders', id), updateData, { merge: true });
+                        await supabase.from('orders').update(updateData).eq('id', id);
                         setEditingOrder(null);
                       } catch (err: any) {
                         setErrorMsg("Update failed: " + err.message);

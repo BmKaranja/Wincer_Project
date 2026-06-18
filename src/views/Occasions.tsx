@@ -2,8 +2,7 @@ import React from 'react';
 import { useState } from 'react';
 import { motion } from 'motion/react';
 import { Utensils, Brush, Truck, CheckCircle, Upload, Image, X } from 'lucide-react';
-import { db } from '../firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { supabase } from '../supabase';
 
 export default function Occasions({ setView }: { setView: (v: string) => void }) {
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -77,11 +76,11 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
     setIsSubmitting(true);
     
     try {
-      await addDoc(collection(db, 'inquiries'), {
+      await supabase.from('inquiries').insert([{
         ...formData,
         status: 'Pending',
-        createdAt: serverTimestamp()
-      });
+        createdAt: new Date().toISOString()
+      }]);
       setIsSubmitted(true);
       setTimeout(() => {
         setView('home');

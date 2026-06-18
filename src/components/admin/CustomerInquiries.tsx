@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { db } from '../../firebase';
-import { doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { supabase } from '../../supabase';
 import { MessageSquare, Trash2, Eye, X } from 'lucide-react';
 
 export default function CustomerInquiries({ inquiries }: { inquiries: any[] }) {
@@ -73,7 +72,7 @@ export default function CustomerInquiries({ inquiries }: { inquiries: any[] }) {
                         onChange={async (e) => {
                            try {
                               setErrorMsg(null);
-                              await setDoc(doc(db, 'inquiries', row.id), { status: e.target.value }, { merge: true });
+                              await supabase.from('inquiries').update({ status: e.target.value }).eq('id', row.id);
                            } catch (err: any) {
                               setErrorMsg("Failed to update status: " + err.message);
                               console.error(err);
@@ -148,7 +147,7 @@ export default function CustomerInquiries({ inquiries }: { inquiries: any[] }) {
                   onClick={async () => {
                     try {
                       setErrorMsg(null);
-                      await deleteDoc(doc(db, 'inquiries', deletingInquiry.id));
+                      await supabase.from('inquiries').delete().eq('id', deletingInquiry.id);
                       setDeletingInquiry(null);
                     } catch (err: any) {
                       setErrorMsg("Failed to delete: " + err.message);

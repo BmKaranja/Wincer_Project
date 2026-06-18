@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { User, Mail, Lock, ArrowRight, ShieldCheck, Gem, Package, RotateCcw, LogOut, Trash2, X } from 'lucide-react';
-import { auth, googleProvider, db } from '../firebase';
-import { signInWithPopup, signOut } from 'firebase/auth';
-import { collection, query, where, getDocs, deleteDoc, doc, orderBy } from 'firebase/firestore';
+import { supabase } from '../supabase';
 
 export default function Account({ user, setUser, setView }: { user: any, setUser: any, setView: any }) {
   const [mode, setMode] = useState<'welcome' | 'signin' | 'register'>('welcome');
@@ -21,17 +19,14 @@ export default function Account({ user, setUser, setView }: { user: any, setUser
   const fetchOrders = async () => {
     setLoadingOrders(true);
     try {
-      const q = query(
-        collection(db, 'orders'),
-        where('userId', '==', user.uid),
-        orderBy('createdAt', 'desc')
-      );
-      const snapshot = await getDocs(q);
-      const fetchedOrders = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setOrders(fetchedOrders);
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('userId', user.uid)
+        .order('createdAt', { ascending: false });
+
+      if (error) throw error;
+      setOrders(data || []);
     } catch (err: any) {
       console.error(err);
     } finally {
@@ -44,7 +39,8 @@ export default function Account({ user, setUser, setView }: { user: any, setUser
   const handleDeleteOrder = async (orderId: string) => {
     try {
       setErrorMsg('');
-      await deleteDoc(doc(db, 'orders', orderId));
+      const { error } = await supabase.from('orders').delete().eq('id', orderId);
+      if (error) throw error;
       setOrders(orders.filter(o => o.id !== orderId));
       setDeletingOrder(null);
     } catch (err: any) {
@@ -56,34 +52,18 @@ export default function Account({ user, setUser, setView }: { user: any, setUser
   const handleGoogleSignIn = async () => {
     setErrorMsg('');
     try {
-      await signInWithPopup(auth, googleProvider);
-      // navigation / logic handles via onAuthStateChanged in App.tsx
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+      });
+      if (error) throw error;
     } catch (err: any) {
-      const isCancellation = 
-        err?.code === 'auth/user-cancelled' || 
-        err?.code === 'auth/popup-closed-by-user' || 
-        err?.code === 'auth/cancelled-popup-request' ||
-        (err?.message && (
-          err.message.includes('popup-closed-by-user') ||
-          err.message.includes('cancelled-popup-request') ||
-          err.message.includes('user-cancelled')
-        ));
-
-      if (isCancellation) {
-        console.warn('Sign-in popup was closed or cancelled by the user.');
-        setErrorMsg('Login was cancelled because the sign-in window was closed.');
-      } else if (err?.code === 'auth/popup-blocked' || (err?.message && err.message.includes('popup-blocked'))) {
-        console.warn('Sign-in popup blocked:', err);
-        setErrorMsg('Login popup blocked. Please open this app in a new tab or allow popups.');
-      } else {
-        console.error('Authentication failed:', err);
-        setErrorMsg('Authentication failed. Please try again.');
-      }
+      console.error('Authentication failed:', err);
+      setErrorMsg('Authentication failed. Please try again.');
     }
   };
 
   const handleSignOut = async () => {
-    await signOut(auth);
+    await supabase.auth.signOut();
   };
 
   const containerVariants = {
@@ -124,7 +104,7 @@ export default function Account({ user, setUser, setView }: { user: any, setUser
       >
         <div className="flex justify-between items-end mb-12 border-b border-secondary/10 pb-6">
           <div>
-            <h1 className="text-4xl font-serif text-secondary mb-2">My Account</h1>
+            <h1 className="text-4xl font-serif text-secondary mb-2">My Orders</h1>
             <p className="text-on-surface-variant font-medium opacity-70">Welcome back, {user.email}</p>
           </div>
           <button 
@@ -135,8 +115,7 @@ export default function Account({ user, setUser, setView }: { user: any, setUser
           </button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-8">
+        <div className="max-w-4xl mx-auto space-y-8">
             <section className="bg-surface rounded-3xl p-8 border border-secondary/10 shadow-sm">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-serif text-secondary flex items-center gap-3">
@@ -202,30 +181,6 @@ export default function Account({ user, setUser, setView }: { user: any, setUser
                 </button>
               </div>
             </section>
-          </div>
-
-          <div className="space-y-8">
-            <section className="bg-primary-container/20 rounded-3xl p-8 border border-secondary/5">
-              <h2 className="text-xl font-serif text-secondary flex items-center gap-3 mb-6">
-                <User className="w-5 h-5" /> Details
-              </h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-secondary/50 block mb-1">Email</label>
-                  <p className="font-medium text-secondary">{user.email}</p>
-                </div>
-                <div>
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-secondary/50 block mb-1">Membership</label>
-                  <p className="font-medium text-secondary flex items-center gap-2">
-                    <Gem className="w-3.5 h-3.5" /> Elite Club Member
-                  </p>
-                </div>
-              </div>
-              <button className="mt-8 text-[10px] font-bold uppercase tracking-widest bg-secondary text-white px-6 py-3 rounded-xl w-full hover:bg-stone-800 transition-colors">
-                Update Details
-              </button>
-            </section>
-          </div>
         </div>
       </motion.main>
     );
