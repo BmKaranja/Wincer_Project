@@ -287,7 +287,7 @@ async function startServer() {
       body('phone').trim().notEmpty().escape(),
       body('amount').isNumeric(),
       body('reference').trim().escape(),
-      body('code').trim().toUpperCase().matches(/^[A-Z][A-Z0-9]{9}$/)
+      body('code').trim().toUpperCase().matches(/^[A-Z0-9]{10}$/)
     ],
     validate,
     async (req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -307,24 +307,14 @@ async function startServer() {
           });
         }
 
-        let pendingRequest;
+        // Reject if no real M-Pesa request was initiated for this order
         if (!snapshot || snapshot.length === 0) {
-          // If no matching request exists, create a simulated one to prevent blocking
-          const id = 'MOCK_' + Math.random().toString(36).substring(2, 10).toUpperCase();
-          const newReq = {
-            id,
-            reference,
-            phone: phone,
-            amount: amount,
-            checkoutRequestID: id,
-            status: 'completed',
-            createdAt: new Date().toISOString()
-          };
-          await supabase.from('mpesa_requests').insert([newReq]);
-          pendingRequest = newReq;
-        } else {
-          pendingRequest = snapshot[0];
+          return res.status(400).json({
+            success: false,
+            error: 'No M-Pesa payment was found for this order. Please use the Pay button to initiate payment first.'
+          });
         }
+        const pendingRequest = snapshot[0];
 
         // Update the request with manual code
         await supabase.from('mpesa_requests').update({
@@ -343,6 +333,27 @@ async function startServer() {
       }
     }
   );
+
+  // Helper: actively query Safaricom for STK push status (used in status endpoint)
+  async function queryStkPushStatus(checkoutRequestID: string) {
+    const shortcode = process.env.MPESA_SHORTCODE;
+    const passkey = process.env.MPESA_PASSKEY;
+    if (!shortcode || !passkey) throw new Error('M-Pesa not configured');
+    const token = await getMpesaAccessToken();
+    const timestamp = getTimestamp();
+    const password = generatePassword(shortcode, passkey, timestamp);
+    const response = await fetch(`${DARAJA_BASE_URL}/mpesa/stkpushquery/v1/query`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        BusinessShortCode: shortcode,
+        Password: password,
+        Timestamp: timestamp,
+        CheckoutRequestID: checkoutRequestID
+      })
+    });
+    return response.json();
+  }
 
   app.get('/api/mpesa/status/:requestId',
     [param('requestId').trim().notEmpty().escape()],
@@ -379,21 +390,40 @@ async function startServer() {
           });
         }
 
-        // Still pending — check expiry using ISO date string (Supabase format)
+        // Still pending — actively query Safaricom + check expiry
         if (data.status === 'pending') {
           const now = Date.now();
           const created = data.createdAt ? new Date(data.createdAt).getTime() : 0;
-          
-          // Auto-confirm sandbox payments after 6 seconds of pending to ensure successful completion in preview/sandbox
-          if (process.env.DARAJA_ENV === 'sandbox' || !process.env.DARAJA_ENV) {
-            if (created > 0 && now - created > 6 * 1000) {
-              await supabase.from('mpesa_requests').update({
-                status: 'completed',
-                resultCode: 0,
-                resultDesc: 'Simulated Sandbox Auto-Approval'
-              }).eq('id', req.params.requestId);
-              return res.json({ status: 'success' });
+
+          // Actively poll Safaricom's STK Push Query API instead of
+          // relying solely on the passive callback reaching our server.
+          try {
+            const stkData = await queryStkPushStatus(req.params.requestId);
+            
+            // M-Pesa error format when transaction is still processing
+            if (stkData?.errorCode === '500.001.1001') {
+              // Still being processed by user (typing PIN)
+            } else {
+              const resultCode = stkData?.ResultCode ?? stkData?.Body?.stkCallback?.ResultCode;
+              if (resultCode === 0 || resultCode === '0') {
+                await supabase.from('mpesa_requests').update({
+                  status: 'completed',
+                  resultCode: 0,
+                  resultDesc: stkData.ResultDesc || 'Payment confirmed'
+                }).eq('id', req.params.requestId);
+                return res.json({ status: 'success' });
+              } else if (resultCode !== undefined && resultCode !== null && resultCode !== 1032 && resultCode !== '1032') {
+                // 1032 = cancelled by user; any other code = definitive failure
+                await supabase.from('mpesa_requests').update({
+                  status: 'failed',
+                  resultCode,
+                  resultDesc: stkData.ResultDesc || 'Payment failed'
+                }).eq('id', req.params.requestId);
+                return res.json({ status: 'failed', message: stkData.ResultDesc || 'Payment failed or cancelled' });
+              }
             }
+          } catch (queryErr) {
+            console.warn('STK Push Query failed, falling back to passive wait:', queryErr);
           }
 
           if (created > 0 && now - created > 2 * 60 * 1000) {
