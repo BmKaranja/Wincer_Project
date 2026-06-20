@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronRight, UtensilsCrossed, Calendar, CreditCard, PlusCircle, Lock, ShieldCheck, Truck, ArrowRight, CheckCircle2, X, Wand2 } from 'lucide-react';
+import { ChevronRight, UtensilsCrossed, Calendar, Lock, ShieldCheck, Truck, ArrowRight, CheckCircle2, X, Wand2 } from 'lucide-react';
 import { supabase } from '../supabase';
 import { DELIVERY_ZONES } from '../constants';
 
@@ -102,12 +102,12 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
     }]);
   };
 
-// src/views/Checkout.tsx - Replace handleManualCodeSubmit
 const handleManualCodeSubmit = async () => {
   const cleanCode = manualMpesaCode.trim().toUpperCase();
   
-  if (!/^[A-Z][A-Z0-9]{9}$/.test(cleanCode)) {
-    setErrorState('Invalid M-Pesa Code Format. Must be 10 chars starting with letter.');
+  // M-Pesa codes are 10 alphanumeric characters (letters and digits, any combination)
+  if (!/^[A-Z0-9]{10}$/.test(cleanCode)) {
+    setErrorState('Invalid M-Pesa Code. Must be exactly 10 alphanumeric characters (e.g. RG85H91JK2).');
     return;
   }
   
@@ -130,8 +130,8 @@ const handleManualCodeSubmit = async () => {
 
     const data = await response.json();
 
-    if (!data.success) {
-      setErrorState(data.error || 'Code verification failed');
+    if (!response.ok || !data.success) {
+      setErrorState(data.error || (data.errors ? data.errors.map((e: any) => e.msg).join(', ') : 'Code verification failed'));
       return;
     }
 
@@ -187,10 +187,12 @@ if (!requestId) {
       // 2. Poll for status
       let attempts = 0;
       let paymentConfirmed = false;
+      let pollFailed = false;
+      let pollFailReason = '';
       const maxAttempts = 40; // 40 * 3s = 120s total lock
       
-      while (attempts < maxAttempts && !paymentConfirmed && !isManualVerifiedRef.current) {
-        await new Promise(r => setTimeout(r, 3000)); // wait 3 seconds (snappier!)
+      while (attempts < maxAttempts && !paymentConfirmed && !pollFailed && !isManualVerifiedRef.current) {
+        await new Promise(r => setTimeout(r, 3000)); // wait 3 seconds
         attempts++;
         
         if (isManualVerifiedRef.current) {
@@ -206,11 +208,20 @@ if (!requestId) {
             paymentConfirmed = true;
             break;
           } else if (statusData.status === 'failed') {
-            throw new Error(`M-Pesa Payment Failed: ${statusData.data?.resultDesc || 'Unknown Error'}`);
+            pollFailed = true;
+            pollFailReason = statusData.message || statusData.data?.resultDesc || 'Payment was cancelled or declined by M-Pesa.';
+            break;
+          } else if (statusData.status === 'expired') {
+            // Expired but user may have paid — let them enter code manually
+            break;
           }
         } catch (pollErr) {
           console.warn('Poll error, retrying...', pollErr);
         }
+      }
+
+      if (pollFailed) {
+        throw new Error(`M-Pesa Payment Failed: ${pollFailReason}`);
       }
 
       if (isManualVerifiedRef.current) {

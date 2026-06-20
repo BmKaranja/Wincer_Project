@@ -74,7 +74,11 @@ export default function Account({ user, setUser, setView }: { user: any, setUser
       if (error) throw error;
     } catch (err: any) {
       console.error('Login failed:', err);
-      setErrorMsg(err.message || 'Login failed. Please check your credentials.');
+      if (err.message === 'Email not confirmed') {
+        setErrorMsg('Login failed: Email not confirmed. (Note: If you just disabled email confirmations in Supabase, this old account may still be stuck as unconfirmed. Please register a new account or delete this user in your Supabase dashboard.)');
+      } else {
+        setErrorMsg(err.message || 'Login failed. Please check your credentials.');
+      }
     } finally {
       setLoading(false);
     }
@@ -85,7 +89,7 @@ export default function Account({ user, setUser, setView }: { user: any, setUser
     setLoading(true);
     setErrorMsg('');
     try {
-      const { error } = await supabase.auth.signUp({
+      const { error, data } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -95,8 +99,20 @@ export default function Account({ user, setUser, setView }: { user: any, setUser
         }
       });
       if (error) throw error;
-      setErrorMsg('Registration successful! You can now log in.');
-      setMode('signin');
+      
+      // If auto-confirmation is off in supabase, data.session is usually null
+      if (data.user && data.user.identities && data.user.identities.length === 0) {
+        setErrorMsg('Registration failed: Email address already exists.');
+        return;
+      }
+      
+      if (!data.session) {
+         setErrorMsg('Registration successful! Please check your email to confirm your account before logging in.');
+         setMode('signin');
+      } else {
+         // Because email confirmation is off, the user is directly logged in. 
+         // Global auth listener will redirect them automatically.
+      }
     } catch (err: any) {
       console.error('Registration failed:', err);
       setErrorMsg(err.message || 'Registration failed. Please try again.');
