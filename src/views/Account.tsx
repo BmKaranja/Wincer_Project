@@ -9,6 +9,9 @@ export default function Account({ user, setUser, setView }: { user: any, setUser
   const [errorMsg, setErrorMsg] = useState('');
   const [orders, setOrders] = useState<any[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
 
   useEffect(() => {
     if (user && user.role !== 'admin') {
@@ -58,7 +61,47 @@ export default function Account({ user, setUser, setView }: { user: any, setUser
       if (error) throw error;
     } catch (err: any) {
       console.error('Authentication failed:', err);
-      setErrorMsg('Authentication failed. Please try again.');
+      setErrorMsg('Google Login failed. Please ensure the provider is enabled in Supabase.');
+    }
+  };
+
+  const handleEmailSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrorMsg('');
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+    } catch (err: any) {
+      console.error('Login failed:', err);
+      setErrorMsg(err.message || 'Login failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrorMsg('');
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name,
+          }
+        }
+      });
+      if (error) throw error;
+      setErrorMsg('Registration successful! You can now log in.');
+      setMode('signin');
+    } catch (err: any) {
+      console.error('Registration failed:', err);
+      setErrorMsg(err.message || 'Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -256,10 +299,33 @@ export default function Account({ user, setUser, setView }: { user: any, setUser
                     {errorMsg}
                   </div>
                 )}
+                
+                <button 
+                  onClick={() => setMode('signin')}
+                  className="w-full bg-secondary text-white py-4 rounded-2xl font-bold uppercase tracking-[0.2em] text-[10px] hover:scale-[1.02] active:scale-95 transition-all shadow-xl"
+                >
+                  Sign In with Email
+                </button>
+                <button 
+                  onClick={() => setMode('register')}
+                  className="w-full bg-surface border border-secondary text-secondary py-4 rounded-2xl font-bold uppercase tracking-[0.2em] text-[10px] hover:bg-secondary/5 active:scale-95 transition-all shadow-sm"
+                >
+                  Create an Account
+                </button>
+                
+                <div className="relative py-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-secondary/10"></div>
+                  </div>
+                  <div className="relative flex justify-center text-xs">
+                    <span className="px-2 bg-surface text-secondary/50 uppercase tracking-widest font-bold">Or</span>
+                  </div>
+                </div>
+
                 <button 
                   onClick={handleGoogleSignIn}
                   disabled={loading}
-                  className="w-full bg-secondary text-white py-5 rounded-2xl font-bold uppercase tracking-[0.2em] text-[10px] hover:scale-[1.02] active:scale-95 transition-all shadow-xl flex items-center justify-center gap-3 group disabled:opacity-50"
+                  className="w-full bg-white border border-secondary/20 text-secondary py-4 rounded-2xl font-bold uppercase tracking-[0.1em] text-[10px] hover:scale-[1.02] active:scale-95 transition-all shadow-sm flex items-center justify-center gap-3 group disabled:opacity-50"
                 >
                   {loading ? 'Processing...' : 'Continue with Google'} <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
@@ -268,6 +334,136 @@ export default function Account({ user, setUser, setView }: { user: any, setUser
               <p className="mt-12 text-[10px] uppercase font-bold tracking-[0.3em] text-secondary/30 flex items-center justify-center gap-2">
                 <ShieldCheck className="w-3 h-3" /> Secure Access Only
               </p>
+            </motion.div>
+          )}
+
+          {mode === 'signin' && (
+            <motion.div 
+              key="signin"
+              variants={containerVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              className="relative z-10"
+            >
+              <button onClick={() => setMode('welcome')} className="text-secondary/50 hover:text-secondary mb-8 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest transition-colors"><ArrowRight className="w-4 h-4 rotate-180" /> Back</button>
+              <h2 className="text-3xl font-serif text-secondary mb-2 italic">Welcome Back</h2>
+              <p className="text-on-surface-variant mb-8 opacity-70 text-sm">Sign in to access your curated collections.</p>
+              
+              <form onSubmit={handleEmailSignIn} className="space-y-4">
+                {errorMsg && (
+                  <div className="bg-red-50 text-red-500 p-3 rounded-xl text-xs font-medium">
+                    {errorMsg}
+                  </div>
+                )}
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-secondary/50 block mb-2">Email Address</label>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-secondary/40" />
+                    <input 
+                      type="email" 
+                      required
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      className="w-full pl-12 pr-4 py-4 rounded-xl border border-secondary/20 focus:border-secondary focus:ring-1 focus:ring-secondary outline-none transition-all placeholder:text-secondary/30"
+                      placeholder="Enter your email"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-secondary/50 block mb-2">Password</label>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-secondary/40" />
+                    <input 
+                      type="password" 
+                      required
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      className="w-full pl-12 pr-4 py-4 rounded-xl border border-secondary/20 focus:border-secondary focus:ring-1 focus:ring-secondary outline-none transition-all placeholder:text-secondary/30"
+                      placeholder="Enter your password"
+                    />
+                  </div>
+                </div>
+                <button 
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-secondary text-white py-4 rounded-xl font-bold uppercase tracking-[0.2em] text-[10px] hover:scale-[1.02] active:scale-95 transition-all shadow-lg mt-4 disabled:opacity-50"
+                >
+                  {loading ? 'Authenticating...' : 'Sign In'}
+                </button>
+              </form>
+            </motion.div>
+          )}
+
+          {mode === 'register' && (
+            <motion.div 
+              key="register"
+              variants={containerVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              className="relative z-10"
+            >
+              <button onClick={() => setMode('welcome')} className="text-secondary/50 hover:text-secondary mb-8 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest transition-colors"><ArrowRight className="w-4 h-4 rotate-180" /> Back</button>
+              <h2 className="text-3xl font-serif text-secondary mb-2 italic">Join the Club</h2>
+              <p className="text-on-surface-variant mb-8 opacity-70 text-sm">Create an account to track your orders.</p>
+              
+              <form onSubmit={handleRegister} className="space-y-4">
+                {errorMsg && (
+                  <div className="bg-red-50 text-red-500 p-3 rounded-xl text-xs font-medium">
+                    {errorMsg}
+                  </div>
+                )}
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-secondary/50 block mb-2">Full Name</label>
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-secondary/40" />
+                    <input 
+                      type="text" 
+                      required
+                      value={name}
+                      onChange={e => setName(e.target.value)}
+                      className="w-full pl-12 pr-4 py-4 rounded-xl border border-secondary/20 focus:border-secondary focus:ring-1 focus:ring-secondary outline-none transition-all placeholder:text-secondary/30"
+                      placeholder="Enter your name"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-secondary/50 block mb-2">Email Address</label>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-secondary/40" />
+                    <input 
+                      type="email" 
+                      required
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      className="w-full pl-12 pr-4 py-4 rounded-xl border border-secondary/20 focus:border-secondary focus:ring-1 focus:ring-secondary outline-none transition-all placeholder:text-secondary/30"
+                      placeholder="Enter your email"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-secondary/50 block mb-2">Password</label>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-secondary/40" />
+                    <input 
+                      type="password" 
+                      required
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      className="w-full pl-12 pr-4 py-4 rounded-xl border border-secondary/20 focus:border-secondary focus:ring-1 focus:ring-secondary outline-none transition-all placeholder:text-secondary/30"
+                      placeholder="Create a password"
+                    />
+                  </div>
+                </div>
+                <button 
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-secondary text-white py-4 rounded-xl font-bold uppercase tracking-[0.2em] text-[10px] hover:scale-[1.02] active:scale-95 transition-all shadow-lg mt-4 disabled:opacity-50"
+                >
+                  {loading ? 'Creating...' : 'Create Account'}
+                </button>
+              </form>
             </motion.div>
           )}
         </AnimatePresence>

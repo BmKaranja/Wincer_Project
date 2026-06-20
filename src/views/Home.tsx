@@ -46,7 +46,7 @@ export default function Home({ setView, posts = [] }: HomeProps) {
           <img 
             alt="Wincer Cake House Shop Front" 
             className="w-full h-full object-cover object-center" 
-            src='https://karanjamaina.sirv.com/Images/regenerated_image_1780567161635.png'
+            src='https://karanjamaina.sirv.com/Images/595321341_878629624517094_7612576181028860647_n.jpg'
           />
           <div className="absolute inset-0 bg-stone-900/30 transition-opacity"></div>
         </div>
