@@ -41,47 +41,96 @@ export default function Home({ setView, posts = [] }: HomeProps) {
       className="pt-20"
     >
       {/* Hero Section */}
-      <section className="relative h-[80vh] flex items-center overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <img 
-            alt="Wincer Cake House Shop Front" 
-            className="w-full h-full object-cover object-center" 
-            src='https://karanjamaina.sirv.com/Images/595321341_878629624517094_7612576181028860647_n.jpg'
-          />
-          <div className="absolute inset-0 bg-stone-900/30 transition-opacity"></div>
-        </div>
-        
-        <div className="relative z-10 max-w-7xl mx-auto px-8 w-full mt-32 sm:mt-0">
+      <section className="relative min-h-[80vh] flex items-center overflow-hidden bg-surface-container">
+        <div className="relative z-10 max-w-7xl mx-auto px-8 w-full py-24 flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-8">
+          
+          {/* Left Text Col */}
           <motion.div 
-            initial={{ y: 30, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
+            initial={{ x: -30, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="max-w-2xl text-white"
+            className="flex flex-col items-center lg:items-start text-center lg:text-left text-on-surface z-20 w-full lg:w-1/2"
           >
-            <span className="font-label-md tracking-[0.2em] uppercase mb-4 block text-primary-fixed-dim">
-              Nairobi — Wincer Cake House
-            </span>
-            <h1 className="text-4xl md:text-6xl font-serif font-bold mb-6 leading-tight">
-              Bespoke Cakes <br /> You Can Taste.
+            <span className="font-sans font-bold tracking-[0.2em] uppercase mb-4 block text-secondary text-sm">Handcrafted In Our Kitchen</span>
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-serif font-bold mb-6 leading-[1.05] tracking-tight">
+              Baked for Your Most Memorable Moments
             </h1>
-            <p className="text-lg md:text-xl mb-8 text-stone-100 font-sans opacity-90 leading-relaxed">
-              Handcrafted in Nairobi, our custom cakes are designed to elevate your weddings, birthdays, and more.
+            <p className="text-xl md:text-2xl mb-10 font-serif italic text-on-surface/80 max-w-lg">
+              From custom wedding cakes to daily morning pastries, we bring sweetness to your table.
             </p>
-            <div className="flex flex-col sm:flex-row gap-6 sm:gap-4 pb-16 sm:pb-0">
+            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto px-4 lg:px-0">
               <button 
                 onClick={() => setView('catalog')}
-                className="bg-secondary text-white px-8 py-4 rounded-lg font-bold macaron-raised hover:scale-105 transition-transform w-full sm:w-auto mb-2 sm:mb-0"
+                className="bg-secondary text-white px-8 py-4 rounded-2xl font-sans font-bold uppercase tracking-[0.1em] text-sm hover:scale-[1.02] active:scale-95 transition-all shadow-lg w-full sm:w-auto"
               >
-                Explore Collections
+                Shop Cakes
               </button>
               <button 
                 onClick={() => setView('story')}
-                className="border-2 border-white text-white px-8 py-4 rounded-lg font-bold hover:bg-white/10 transition-colors w-full sm:w-auto mb-8 sm:mb-0"
+                className="bg-transparent border border-secondary text-secondary px-8 py-4 rounded-2xl font-sans font-bold uppercase tracking-[0.1em] text-sm hover:bg-secondary/5 active:scale-95 transition-all w-full sm:w-auto"
               >
                 Read Our Story
               </button>
             </div>
           </motion.div>
+
+          {/* Right Images Col */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.4 }}
+            className="w-full lg:w-1/2 relative flex justify-center items-center mt-12 lg:mt-0"
+          >
+            <div className="relative w-full max-w-[450px] lg:max-w-[600px] aspect-square">
+               {/* Small Top Left Circle */}
+               <motion.div 
+                  animate={{ y: [-15, 0, -15], rotate: [-2, 0, -2] }}
+                  transition={{ repeat: Infinity, duration: 8, ease: "easeInOut" }}
+                  className="absolute top-[5%] left-[0%] w-[42%] aspect-square z-20"
+               >
+                  <img 
+                    src="https://karanjamaina.sirv.com/Images/home_birthday.jpg" 
+                    alt="Delicious custom cake"
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full rounded-full object-cover shadow-xl border-4 border-surface-container"
+                  />
+               </motion.div>
+
+               {/* Small Bottom Left Circle */}
+               <motion.div 
+                  animate={{ y: [15, 0, 15], rotate: [2, 0, 2] }}
+                  transition={{ repeat: Infinity, duration: 7, ease: "easeInOut", delay: 0.5 }}
+                  className="absolute bottom-[10%] left-[20%] w-[38%] aspect-square z-30"
+               >
+                  <img 
+                    src="https://karanjamaina.sirv.com/Images/595321341_878629624517094_7612576181028860647_n.jpg" 
+                    alt="Pastries & treats"
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full rounded-full object-cover shadow-xl border-4 border-surface-container"
+                  />
+               </motion.div>
+
+               {/* Large Right Circle */}
+               <div className="absolute top-[18%] right-[0%] w-[55%] flex flex-col items-center">
+                 <motion.div 
+                    animate={{ y: [-5, 5, -5], rotate: [1, -1, 1] }}
+                    transition={{ repeat: Infinity, duration: 10, ease: "easeInOut", delay: 1 }}
+                    className="w-full aspect-square z-20"
+                 >
+                   <img 
+                      src="https://karanjamaina.sirv.com/Images/chocolatecake.jpg" 
+                      alt="Famous Signature Cakes"
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full rounded-full object-cover shadow-xl border-4 border-surface-container"
+                   />
+                 </motion.div>
+                 <span className="mt-4 md:mt-6 font-sans font-semibold text-secondary uppercase tracking-[0.1em] md:tracking-[0.15em] text-xs md:text-sm text-center px-1 leading-relaxed">
+                   Our Famous Signature Cakes
+                 </span>
+               </div>
+            </div>
+          </motion.div>
+
         </div>
       </section>
 
