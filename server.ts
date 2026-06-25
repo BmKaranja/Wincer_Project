@@ -11,10 +11,18 @@ import { createClient } from '@supabase/supabase-js';
 // Initialize Supabase client
 const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseAnonKey;
 
 const supabase = createClient(
   supabaseUrl || 'https://placeholder-url.supabase.co',
   supabaseAnonKey || 'placeholder-key'
+);
+
+// We need an admin client for M-Pesa callbacks since they come from outside
+// and we need to bypass RLS to insert/update the mpesa_requests table.
+const supabaseAdmin = createClient(
+  supabaseUrl || 'https://placeholder-url.supabase.co',
+  supabaseServiceKey || 'placeholder-key'
 );
 
 const poolAgent = new Agent({
@@ -82,7 +90,13 @@ async function startServer() {
     message: { success: false, error: 'Too many authentication attempts, please try again in 15 minutes.' },
   });
 
-  app.use('/api/', generalLimiter);
+  app.use('/api/', (req, res, next) => {
+    // Exclude Safaricom callback from general rate limit to prevent dropping payments
+    if (req.path === '/mpesa/callback') {
+      return next();
+    }
+    generalLimiter(req, res, next);
+  });
   app.use('/api/auth/', authLimiter);
 
   app.use(express.json({ limit: '10kb' }));
@@ -212,14 +226,15 @@ async function startServer() {
 
         const timestamp = getTimestamp();
         const password = generatePassword(shortcode, passkey, timestamp);
-        // Daraja Sandbox often rejects complex preview domains or localhost with "Invalid CallBackURL".
-        // In dev, we use a dummy public URL to bypass validation, and rely on our active polling via queryStkPushStatus.
         const isDev = process.env.NODE_ENV !== "production";
         const dummyUrl = 'https://wincercakehouse.com/api/mpesa/callback';
         const callbackBaseUrl = process.env.MPESA_CALLBACK_BASE_URL || (isDev ? dummyUrl : `https://${req.get('host')}`);
-        
-        // Remove query params because Daraja sometimes rejects them
-        const callbackUrl = isDev ? dummyUrl : `${callbackBaseUrl}/api/mpesa/callback`;
+
+        // Callback URL MUST include the auth token, since /api/mpesa/callback requires it.
+        // Daraja accepts query strings on a valid public HTTPS URL — it does not reject them.
+        const callbackUrl = isDev
+          ? dummyUrl
+          : `${callbackBaseUrl}/api/mpesa/callback?token=${encodeURIComponent(MPESA_CALLBACK_SECRET)}&reference=${encodeURIComponent(reference)}`;
 
         const requestBody = {
           BusinessShortCode: shortcode,
@@ -283,7 +298,7 @@ async function startServer() {
           });
         }
 
-        await supabase.from('mpesa_requests').insert([{
+        const { error: insertErr } = await supabaseAdmin.from('mpesa_requests').insert([{
           id: checkoutRequestID,
           reference,
           phone: phoneNumber,
@@ -293,6 +308,15 @@ async function startServer() {
           createdAt: new Date().toISOString(),
           expiresAt: new Date(Date.now() + 2 * 60 * 1000).toISOString()
         }]);
+
+        if (insertErr) {
+          console.error('Failed to save transaction to database:', insertErr);
+          return res.status(500).json({
+            success: false,
+            error: 'Failed to save transaction to database. Please check your Supabase Service Role Key and permissions.'
+          });
+        }
+
         res.json({ success: true, data });
       } catch (error: any) {
         console.error('STK Push Exception:', error.message);
@@ -313,10 +337,7 @@ async function startServer() {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
       }
 
-      const reference = req.query.reference as string;
       const stkCallback = req.body?.Body?.stkCallback;
-
-      // Strict schema check — required fields + basic type/format validation
       const checkoutRequestID = stkCallback?.CheckoutRequestID;
       const resultCode = stkCallback?.ResultCode;
       const resultDesc = stkCallback?.ResultDesc;
@@ -332,19 +353,18 @@ async function startServer() {
 
       const newStatus = resultCode === 0 ? 'completed' : 'failed';
 
-      // Idempotency guard: only transition out of 'pending'. A request that's
-      // already completed/failed/manually_verified must never be overwritten.
-      const { error: updateError } = await supabase.from('mpesa_requests')
+      // NOTE: removed `reference` from this update — it's immutable after insert
+      // and must never be derived from an untrusted query param.
+      const { error: updateError } = await supabaseAdmin.from('mpesa_requests')
         .update({
           resultCode,
           resultDesc: typeof resultDesc === 'string' ? resultDesc : null,
           metadata: Array.isArray(stkCallback.CallbackMetadata?.Item) ? stkCallback.CallbackMetadata.Item : [],
           callbackReceivedAt: new Date().toISOString(),
-          status: newStatus,
-          reference
+          status: newStatus
         })
         .eq('id', checkoutRequestID)
-        .eq('status', 'pending'); // <-- guard
+        .eq('status', 'pending'); // idempotency guard
 
       if (updateError) {
         console.error('Callback DB update error:', updateError.message);
@@ -371,7 +391,7 @@ async function startServer() {
 
         // Only ever match against a still-pending request for this reference,
         // and take the most recent one — avoids matching a stale/unrelated row.
-        const { data: snapshot, error } = await supabase
+        const { data: snapshot, error } = await supabaseAdmin
           .from('mpesa_requests')
           .select('*')
           .eq('reference', reference)
@@ -392,7 +412,7 @@ async function startServer() {
         const pendingRequest = snapshot[0];
 
         // Guarded update — only succeeds if still pending (no race with callback)
-        const { data: updated, error: updateError } = await supabase
+        const { data: updated, error: updateError } = await supabaseAdmin
           .from('mpesa_requests')
           .update({
             manualCode: code,
@@ -451,7 +471,7 @@ async function startServer() {
     validate,
     async (req: express.Request, res: express.Response) => {
       try {
-        const { data: requestSnap, error } = await supabase
+        const { data: requestSnap, error } = await supabaseAdmin
           .from('mpesa_requests')
           .select('*')
           .eq('id', req.params.requestId)
@@ -485,12 +505,16 @@ async function startServer() {
           try {
             const stkData = await queryStkPushStatus(req.params.requestId);
 
-            if (stkData?.errorCode === '500.001.1001') {
+            const isProcessing = stkData?.errorCode === '500.001.1001' ||
+              (typeof stkData?.errorMessage === 'string' && stkData.errorMessage.toLowerCase().includes('processing')) ||
+              (typeof stkData?.ResultDesc === 'string' && stkData.ResultDesc.toLowerCase().includes('processing'));
+
+            if (isProcessing) {
               // still being processed
             } else {
               const resultCode = stkData?.ResultCode ?? stkData?.Body?.stkCallback?.ResultCode;
               if (resultCode === 0 || resultCode === '0') {
-                const { data: updated } = await supabase.from('mpesa_requests')
+                const { data: updated } = await supabaseAdmin.from('mpesa_requests')
                   .update({
                     status: 'completed',
                     resultCode: 0,
@@ -504,8 +528,8 @@ async function startServer() {
                 }
                 // already resolved by something else — re-check below via recursion-free fallback
                 return res.json({ status: 'success' });
-              } else if (resultCode !== undefined && resultCode !== null && resultCode !== 1032 && resultCode !== '1032') {
-                await supabase.from('mpesa_requests')
+              } else if (resultCode !== undefined && resultCode !== null) {
+                await supabaseAdmin.from('mpesa_requests')
                   .update({
                     status: 'failed',
                     resultCode,
