@@ -56,7 +56,7 @@ export default function Home({ setView, posts = [] }: HomeProps) {
               Baked for Your Most Memorable Moments
             </h1>
             <p className="text-xl md:text-2xl mb-10 font-serif italic text-on-surface/80 max-w-lg">
-              From custom wedding cakes to daily morning pastries, we bring sweetness to your table.
+              From custom wedding cakes to birthday cakes, we bring sweetness to your table.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto px-4 lg:px-0">
               <button 

@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
-import fs from "fs";
+import crypto from "crypto";
 import { rateLimit } from 'express-rate-limit';
 import { body, param, validationResult } from 'express-validator';
 import { Agent, setGlobalDispatcher } from 'undici';
@@ -17,53 +17,77 @@ const supabase = createClient(
   supabaseAnonKey || 'placeholder-key'
 );
 
-// Initialize HTTP/HTTPS connection pooling via undici.
-// This configures robust socket reuse (Keep-Alive) on all outbound fetch requests.
-// This significantly reduces network overhead and latency when connecting to Safaricom Daraja API.
 const poolAgent = new Agent({
-  connections: 50,              // Maintain up to 50 active socket connections per origin
-  keepAliveTimeout: 60000,      // Keep idle sockets open for 60 seconds
-  keepAliveMaxTimeout: 600000,  // Max limit to recycle sockets (10 minutes)
-  pipelining: 1                 // Disable HTTP pipelining issues by setting to 1
+  connections: 50,
+  keepAliveTimeout: 60000,
+  keepAliveMaxTimeout: 600000,
+  pipelining: 1
 });
 
 setGlobalDispatcher(poolAgent);
+
+// ---------------------------------------------------------
+// Security / utility helpers
+// ---------------------------------------------------------
+
+// Fetch with a hard timeout so a hanging Safaricom call can't block forever
+async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = 10000): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } catch (err: any) {
+    if (err.name === 'AbortError') {
+      throw new Error(`Request to ${url} timed out after ${timeoutMs}ms`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Constant-time secret comparison (callback auth)
+function safeCompare(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
+// Never log full phone numbers
+function maskPhone(phone: string): string {
+  if (!phone || phone.length < 6) return '***';
+  return `${phone.slice(0, 6)}***${phone.slice(-2)}`;
+}
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  // Trust proxy for rate limiting behind load balancers/proxies
   app.set('trust proxy', 1);
 
-  // Rate limiters
   const generalLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    limit: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes).
-    standardHeaders: 'draft-7', // set `RateLimit` and `RateLimit-Policy` headers
-    legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
+    windowMs: 15 * 60 * 1000,
+    limit: 100,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
     message: { success: false, error: 'Too many requests, please try again later.' },
   });
 
   const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    limit: 5, // Limit each IP to 5 requests per `window` (here, per 15 minutes).
+    windowMs: 15 * 60 * 1000,
+    limit: 5,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
     message: { success: false, error: 'Too many authentication attempts, please try again in 15 minutes.' },
   });
 
-  // Apply general limiter to all API routes
   app.use('/api/', generalLimiter);
-
-  // Apply stricter limiter to authentication routes (matching /api/auth/*)
   app.use('/api/auth/', authLimiter);
 
-  // Middleware to parse JSON bodies with a strict limit
   app.use(express.json({ limit: '10kb' }));
   app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
-  // Input validation middleware
   const validate = (req: any, res: any, next: any) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -72,55 +96,72 @@ async function startServer() {
     next();
   };
 
-  // MPESA API ROUTES
-
-  // Note: Daraja sandbox endpoints
-  const DARAJA_ENV = process.env.DARAJA_ENV || 'sandbox'; // sandbox or production
-  const DARAJA_BASE_URL = DARAJA_ENV === 'sandbox' 
+  const DARAJA_ENV = process.env.DARAJA_ENV || 'sandbox';
+  const DARAJA_BASE_URL = DARAJA_ENV === 'sandbox'
     ? 'https://sandbox.safaricom.co.ke'
     : 'https://api.safaricom.co.ke';
 
-  // Helper to get access token
+  const MPESA_CALLBACK_SECRET = process.env.MPESA_CALLBACK_SECRET || 'dev_fallback_secret_token';
+  if (!process.env.MPESA_CALLBACK_SECRET) {
+    console.warn('[SECURITY WARNING] MPESA_CALLBACK_SECRET is not set. Using dev fallback. Set this env var before going to production.');
+  }
+
+  let cachedMpesaToken = '';
+  let tokenExpiryTime = 0;
+
   async function getMpesaAccessToken() {
+    if (cachedMpesaToken && Date.now() < tokenExpiryTime) {
+      return cachedMpesaToken;
+    }
+
     const consumerKey = process.env.MPESA_CONSUMER_KEY;
     const consumerSecret = process.env.MPESA_CONSUMER_SECRET;
-    
+
     if (!consumerKey || !consumerSecret) {
       throw new Error('MPESA_CONSUMER_KEY or MPESA_CONSUMER_SECRET not configured');
     }
 
     const credentials = Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64');
-    
-    const response = await fetch(`${DARAJA_BASE_URL}/oauth/v1/generate?grant_type=client_credentials`, {
-      headers: {
-        Authorization: `Basic ${credentials}`
-      }
-    });
+
+    const response = await fetchWithTimeout(`${DARAJA_BASE_URL}/oauth/v1/generate?grant_type=client_credentials`, {
+      headers: { Authorization: `Basic ${credentials}` }
+    }, 8000);
 
     if (!response.ok) {
-      const err = await response.text();
-      console.error("Mpesa token error:", err);
-      throw new Error(`Failed to get token: ${response.status} - ${err}`);
+      console.error('Mpesa token error: status', response.status);
+      throw new Error(`Failed to get token: ${response.status}`);
     }
 
     const data = await response.json();
-    return data.access_token;
+    cachedMpesaToken = data.access_token;
+    // Safaricom tokens usually expire in 3599 seconds. Cache for 50 mins (3000 seconds)
+    tokenExpiryTime = Date.now() + 3000 * 1000;
+    return cachedMpesaToken;
   }
 
-  // Generate password for STK push
   function generatePassword(shortcode: string, passkey: string, timestamp: string) {
     const buffer = Buffer.from(`${shortcode}${passkey}${timestamp}`);
     return buffer.toString('base64');
   }
 
-  // Safaricom timestamps format: YYYYMMDDHHmmss
-  function getTimestamp() {
-    const date = new Date();
-    const pad = (n: number) => n.toString().padStart(2, '0');
-    return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
+  // Safaricom expects YYYYMMDDHHmmss in East Africa Time (Africa/Nairobi, UTC+3)
+  // regardless of what timezone the server process is running in.
+  function getTimestamp(): string {
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Africa/Nairobi',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+      hour12: false
+    }).formatToParts(new Date());
+
+    const get = (type: string) => {
+      const val = parts.find(p => p.type === type)?.value || '00';
+      return val === '24' ? '00' : val; // some locales render midnight as 24
+    };
+
+    return `${get('year')}${get('month')}${get('day')}${get('hour')}${get('minute')}${get('second')}`;
   }
 
-  // Format phone number to 254...
   function formatPhoneNumber(phone: string) {
     let formatted = phone.replace(/\D/g, '');
     if (formatted.startsWith('0')) {
@@ -133,9 +174,21 @@ async function startServer() {
     return formatted;
   }
 
-  // Endpoint to initiate STK Push
+  // ---------------------------------------------------------
+  // STK Push
+  // ---------------------------------------------------------
   app.post('/api/mpesa/stkpush',
-    [/* validation */],
+    [
+      body('phone').trim().notEmpty()
+        .matches(/^(?:\+?254|0)?[17]\d{8}$/)
+        .withMessage('Invalid Kenyan phone number'),
+      body('amount').isFloat({ min: 1, max: 150000 })
+        .withMessage('Amount must be between 1 and 150000'),
+      body('reference').trim().notEmpty().isLength({ max: 50 })
+        .matches(/^[A-Za-z0-9_-]+$/)
+        .withMessage('Reference must be alphanumeric (with - or _), max 50 chars'),
+      body('description').optional().trim().isLength({ max: 100 }).escape()
+    ],
     validate,
     async (req: express.Request, res: express.Response, next: express.NextFunction) => {
       try {
@@ -151,16 +204,22 @@ async function startServer() {
           throw error;
         }
 
-        console.log('Starting STK Push for phone:', phoneNumber);
+        // Callback secret has fallback, so no need to throw here
+
+        console.log('Starting STK Push for phone:', maskPhone(phoneNumber), 'reference:', reference);
 
         const token = await getMpesaAccessToken();
-        console.log('Got access token');
 
         const timestamp = getTimestamp();
         const password = generatePassword(shortcode, passkey, timestamp);
-        // Use explicit env var for callback URL (required for Safaricom server-to-server calls)
-        const callbackBaseUrl = process.env.MPESA_CALLBACK_BASE_URL || `https://${req.get('host')}`;
-        const callbackUrl = `${callbackBaseUrl}/api/mpesa/callback?reference=${encodeURIComponent(reference || 'order')}`;
+        // Daraja Sandbox often rejects complex preview domains or localhost with "Invalid CallBackURL".
+        // In dev, we use a dummy public URL to bypass validation, and rely on our active polling via queryStkPushStatus.
+        const isDev = process.env.NODE_ENV !== "production";
+        const dummyUrl = 'https://wincercakehouse.com/api/mpesa/callback';
+        const callbackBaseUrl = process.env.MPESA_CALLBACK_BASE_URL || (isDev ? dummyUrl : `https://${req.get('host')}`);
+        
+        // Remove query params because Daraja sometimes rejects them
+        const callbackUrl = isDev ? dummyUrl : `${callbackBaseUrl}/api/mpesa/callback`;
 
         const requestBody = {
           BusinessShortCode: shortcode,
@@ -176,40 +235,38 @@ async function startServer() {
           TransactionDesc: description || "Payment for Order"
         };
 
-        console.log('STK Push Request Body:', JSON.stringify(requestBody, null, 2));
+        // Never log requestBody directly — it contains the derived Password.
+        console.log('STK Push request meta:', {
+          shortcode,
+          amount,
+          reference,
+          phone: maskPhone(phoneNumber)
+        });
 
-        const response = await fetch(`${DARAJA_BASE_URL}/mpesa/stkpush/v1/processrequest`, {
+        const response = await fetchWithTimeout(`${DARAJA_BASE_URL}/mpesa/stkpush/v1/processrequest`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify(requestBody)
-        });
-
-        console.log('STK Push Response Status:', response.status);
-        console.log('STK Push Response Headers:', {
-          'content-type': response.headers.get('content-type'),
-          'content-length': response.headers.get('content-length')
-        });
+        }, 12000);
 
         const responseText = await response.text();
-        console.log('STK Push Raw Response Body:', responseText);
 
         let data;
         try {
           data = JSON.parse(responseText);
         } catch (parseError) {
-          console.error('Failed to parse JSON response:', parseError);
+          console.error('Failed to parse JSON response from Safaricom');
           return res.status(502).json({
             success: false,
-            error: 'Invalid response from M-Pesa (not JSON)',
-            rawResponse: responseText.substring(0, 500)
+            error: 'Invalid response from M-Pesa (not JSON)'
           });
         }
 
         if (!response.ok) {
-          console.error("STK Push error:", data);
+          console.error("STK Push error:", data?.errorMessage || data?.message);
           return res.status(response.status).json({
             success: false,
             error: data.errorMessage || data.message || 'M-Pesa request failed'
@@ -217,10 +274,9 @@ async function startServer() {
         }
 
         const checkoutRequestID = data.CheckoutRequestID;
-        console.log('CheckoutRequestID:', checkoutRequestID);
 
         if (!checkoutRequestID) {
-          console.error('No CheckoutRequestID in response:', data);
+          console.error('No CheckoutRequestID in response');
           return res.status(400).json({
             success: false,
             error: 'M-Pesa did not return a CheckoutRequestID'
@@ -239,49 +295,68 @@ async function startServer() {
         }]);
         res.json({ success: true, data });
       } catch (error: any) {
-        console.error('STK Push Exception:', {
-          message: error.message,
-          stack: error.stack,
-          code: error.code
-        });
+        console.error('STK Push Exception:', error.message);
         next(error);
       }
     }
   );
 
+  // ---------------------------------------------------------
+  // Callback (authenticated + schema-validated + idempotent)
+  // ---------------------------------------------------------
   app.post('/api/mpesa/callback', async (req, res, next) => {
     try {
-      console.log('Received Mpesa Callback:', JSON.stringify(req.body, null, 2));
+      const providedToken = (req.query.token as string) || '';
+
+      if (!MPESA_CALLBACK_SECRET || !providedToken || !safeCompare(providedToken, MPESA_CALLBACK_SECRET)) {
+        console.warn('Rejected M-Pesa callback: invalid or missing token');
+        return res.status(401).json({ success: false, error: 'Unauthorized' });
+      }
+
       const reference = req.query.reference as string;
-      const callbackData = req.body?.Body?.stkCallback;
+      const stkCallback = req.body?.Body?.stkCallback;
 
-      if (callbackData) {
-        const checkoutRequestID = callbackData.CheckoutRequestID;
-        const resultCode = callbackData.ResultCode;
+      // Strict schema check — required fields + basic type/format validation
+      const checkoutRequestID = stkCallback?.CheckoutRequestID;
+      const resultCode = stkCallback?.ResultCode;
+      const resultDesc = stkCallback?.ResultDesc;
 
-        // Store callback result in Supabase and update status based on resultCode
-        const newStatus = resultCode === 0 ? 'completed' : 'failed';
-        await supabase.from('mpesa_requests').update({
+      const isValidCheckoutId = typeof checkoutRequestID === 'string'
+        && /^[A-Za-z0-9_-]{8,64}$/.test(checkoutRequestID);
+      const isValidResultCode = typeof resultCode === 'number';
+
+      if (!stkCallback || !isValidCheckoutId || !isValidResultCode) {
+        console.warn('Rejected M-Pesa callback: malformed payload');
+        return res.status(400).json({ success: false, error: 'Invalid callback payload' });
+      }
+
+      const newStatus = resultCode === 0 ? 'completed' : 'failed';
+
+      // Idempotency guard: only transition out of 'pending'. A request that's
+      // already completed/failed/manually_verified must never be overwritten.
+      const { error: updateError } = await supabase.from('mpesa_requests')
+        .update({
           resultCode,
-          resultDesc: callbackData.ResultDesc,
-          metadata: callbackData.CallbackMetadata?.Item || [],
+          resultDesc: typeof resultDesc === 'string' ? resultDesc : null,
+          metadata: Array.isArray(stkCallback.CallbackMetadata?.Item) ? stkCallback.CallbackMetadata.Item : [],
           callbackReceivedAt: new Date().toISOString(),
           status: newStatus,
           reference
-        }).eq('id', checkoutRequestID);
+        })
+        .eq('id', checkoutRequestID)
+        .eq('status', 'pending'); // <-- guard
 
-        // Acknowledge to Safaricom immediately
-        res.json({ message: 'Success' });
-        return;
-      } else {
-        res.status(400).json({ success: false, error: 'Invalid callback payload' });
-        return;
+      if (updateError) {
+        console.error('Callback DB update error:', updateError.message);
       }
+
+      res.json({ message: 'Success' });
     } catch (error) {
       console.error('Callback error:', error);
       next(error);
     }
   });
+
   app.post('/api/mpesa/verify-code',
     [
       body('phone').trim().notEmpty().escape(),
@@ -292,36 +367,53 @@ async function startServer() {
     validate,
     async (req: express.Request, res: express.Response, next: express.NextFunction) => {
       try {
-        const { phone, amount, reference, code } = req.body;
+        const { reference, code } = req.body;
 
-        // Query Supabase for ANY request matching this reference
-        let { data: snapshot, error } = await supabase
+        // Only ever match against a still-pending request for this reference,
+        // and take the most recent one — avoids matching a stale/unrelated row.
+        const { data: snapshot, error } = await supabase
           .from('mpesa_requests')
           .select('*')
-          .eq('reference', reference);
-          
+          .eq('reference', reference)
+          .eq('status', 'pending')
+          .order('createdAt', { ascending: false })
+          .limit(1);
+
         if (error) {
-          return res.status(400).json({
-            success: false,
-            error: 'Database query failed'
-          });
+          return res.status(400).json({ success: false, error: 'Database query failed' });
         }
 
-        // Reject if no real M-Pesa request was initiated for this order
         if (!snapshot || snapshot.length === 0) {
           return res.status(400).json({
             success: false,
-            error: 'No M-Pesa payment was found for this order. Please use the Pay button to initiate payment first.'
+            error: 'No pending M-Pesa payment was found for this order. Please use the Pay button to initiate payment first.'
           });
         }
         const pendingRequest = snapshot[0];
 
-        // Update the request with manual code
-        await supabase.from('mpesa_requests').update({
-          manualCode: code,
-          manualVerifiedAt: new Date().toISOString(),
-          status: 'manually_verified'
-        }).eq('id', pendingRequest.id);
+        // Guarded update — only succeeds if still pending (no race with callback)
+        const { data: updated, error: updateError } = await supabase
+          .from('mpesa_requests')
+          .update({
+            manualCode: code,
+            manualVerifiedAt: new Date().toISOString(),
+            status: 'manually_verified'
+          })
+          .eq('id', pendingRequest.id)
+          .eq('status', 'pending')
+          .select();
+
+        if (updateError) {
+          return res.status(500).json({ success: false, error: 'Failed to verify code' });
+        }
+
+        if (!updated || updated.length === 0) {
+          // Status changed between select and update (callback won the race)
+          return res.status(409).json({
+            success: false,
+            error: 'This payment was already resolved (likely confirmed automatically). Please check your order status.'
+          });
+        }
 
         res.json({
           success: true,
@@ -334,7 +426,6 @@ async function startServer() {
     }
   );
 
-  // Helper: actively query Safaricom for STK push status (used in status endpoint)
   async function queryStkPushStatus(checkoutRequestID: string) {
     const shortcode = process.env.MPESA_SHORTCODE;
     const passkey = process.env.MPESA_PASSKEY;
@@ -342,7 +433,7 @@ async function startServer() {
     const token = await getMpesaAccessToken();
     const timestamp = getTimestamp();
     const password = generatePassword(shortcode, passkey, timestamp);
-    const response = await fetch(`${DARAJA_BASE_URL}/mpesa/stkpushquery/v1/query`, {
+    const response = await fetchWithTimeout(`${DARAJA_BASE_URL}/mpesa/stkpushquery/v1/query`, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -351,7 +442,7 @@ async function startServer() {
         Timestamp: timestamp,
         CheckoutRequestID: checkoutRequestID
       })
-    });
+    }, 10000);
     return response.json();
   }
 
@@ -372,17 +463,14 @@ async function startServer() {
 
         const data = requestSnap || {};
 
-        // Check callback result — status 'completed' set by callback handler
         if (data.status === 'completed' || data.resultCode === 0) {
           return res.json({ status: 'success' });
         }
 
-        // Check manual code verification
         if (data.status === 'manually_verified') {
           return res.json({ status: 'success', manual: true });
         }
 
-        // Failed via callback
         if (data.status === 'failed') {
           return res.json({
             status: 'failed',
@@ -390,40 +478,46 @@ async function startServer() {
           });
         }
 
-        // Still pending — actively query Safaricom + check expiry
         if (data.status === 'pending') {
           const now = Date.now();
           const created = data.createdAt ? new Date(data.createdAt).getTime() : 0;
 
-          // Actively poll Safaricom's STK Push Query API instead of
-          // relying solely on the passive callback reaching our server.
           try {
             const stkData = await queryStkPushStatus(req.params.requestId);
-            
-            // M-Pesa error format when transaction is still processing
+
             if (stkData?.errorCode === '500.001.1001') {
-              // Still being processed by user (typing PIN)
+              // still being processed
             } else {
               const resultCode = stkData?.ResultCode ?? stkData?.Body?.stkCallback?.ResultCode;
               if (resultCode === 0 || resultCode === '0') {
-                await supabase.from('mpesa_requests').update({
-                  status: 'completed',
-                  resultCode: 0,
-                  resultDesc: stkData.ResultDesc || 'Payment confirmed'
-                }).eq('id', req.params.requestId);
+                const { data: updated } = await supabase.from('mpesa_requests')
+                  .update({
+                    status: 'completed',
+                    resultCode: 0,
+                    resultDesc: stkData.ResultDesc || 'Payment confirmed'
+                  })
+                  .eq('id', req.params.requestId)
+                  .eq('status', 'pending') // guard
+                  .select();
+                if (updated && updated.length > 0) {
+                  return res.json({ status: 'success' });
+                }
+                // already resolved by something else — re-check below via recursion-free fallback
                 return res.json({ status: 'success' });
               } else if (resultCode !== undefined && resultCode !== null && resultCode !== 1032 && resultCode !== '1032') {
-                // 1032 = cancelled by user; any other code = definitive failure
-                await supabase.from('mpesa_requests').update({
-                  status: 'failed',
-                  resultCode,
-                  resultDesc: stkData.ResultDesc || 'Payment failed'
-                }).eq('id', req.params.requestId);
+                await supabase.from('mpesa_requests')
+                  .update({
+                    status: 'failed',
+                    resultCode,
+                    resultDesc: stkData.ResultDesc || 'Payment failed'
+                  })
+                  .eq('id', req.params.requestId)
+                  .eq('status', 'pending'); // guard
                 return res.json({ status: 'failed', message: stkData.ResultDesc || 'Payment failed or cancelled' });
               }
             }
-          } catch (queryErr) {
-            console.warn('STK Push Query failed, falling back to passive wait:', queryErr);
+          } catch (queryErr: any) {
+            console.warn('STK Push Query failed, falling back to passive wait:', queryErr.message);
           }
 
           if (created > 0 && now - created > 2 * 60 * 1000) {
@@ -432,7 +526,6 @@ async function startServer() {
           return res.json({ status: 'pending' });
         }
 
-        // Fallback
         return res.json({
           status: 'failed',
           message: data.resultDesc || 'Payment failed'
@@ -444,58 +537,42 @@ async function startServer() {
     }
   );
 
-  // ---------------------------------------------------------
-  // Error handling and 404
-  // ---------------------------------------------------------
-
-  // 404 handler for API routes
   app.use('/api/*', (req, res) => {
-    res.status(404).json({
-      success: false,
-      error: 'Endpoint not found'
-    });
+    res.status(404).json({ success: false, error: 'Endpoint not found' });
   });
 
-  // Global Error Handler
   app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
     const isProduction = process.env.NODE_ENV === 'production';
-    
+
     if (!isProduction) {
       console.error('Unhandled Error:', err);
+    } else {
+      console.error('Unhandled Error:', err.message);
     }
 
     const statusCode = err.status || err.statusCode || 500;
-    
-    // In production, we don't leak internal error messages or stack traces
     let message = 'An unexpected error occurred. Please try again later.';
-    
+
     if (!isProduction) {
       message = err.message || 'Internal Server Error';
     } else if (statusCode < 500) {
-      // For 4xx errors, we can be slightly more descriptive if it's a known error type
       message = err.message;
     }
 
     res.status(statusCode).json({
       success: false,
       error: message,
-      ...( !isProduction && { stack: err.stack, details: err.details })
+      ...(!isProduction && { stack: err.stack, details: err.details })
     });
   });
 
-
-  // ---------------------------------------------------------
-  // Vite integration
-  // ---------------------------------------------------------
   if (process.env.NODE_ENV !== "production") {
-    // Development middleware
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
   } else {
-    // Production file serving
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {

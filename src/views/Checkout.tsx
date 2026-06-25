@@ -83,7 +83,7 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
 
     await supabase.from('orders').insert([{
       id: orderId,
-      userId: user ? user.uid : 'guest',
+      user_id: user ? user.uid : 'guest',
       customer: user ? (user.name || user.email || mpesaPhone) : mpesaPhone,
       amount: `Kshs. ${total}`,
       paidAmount: `Kshs. ${amountToPayNow}`,
@@ -174,11 +174,17 @@ const handleManualCodeSubmit = async () => {
         })
       });
  
-const data = await response.json().catch(() => ({}));
+      const text = await response.text();
+      let data: any = {};
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        throw new Error(`Payment failed: ${response.status}. Not JSON: ${text.substring(0, 100)}`);
+      }
 
-if (!response.ok || !data.success) {
-  throw new Error(data.error || `Payment failed: ${response.status}`);
-} 
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || `Payment failed: ${response.status}. Data: ${JSON.stringify(data)}`);
+      } 
       const requestId = data?.data?.CheckoutRequestID || data?.CheckoutRequestID;
 if (!requestId) {
   throw new Error('No Request ID returned from M-Pesa. Response: ' + JSON.stringify(data));

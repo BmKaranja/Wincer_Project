@@ -55,7 +55,18 @@ export default function App() {
     const fetchCakes = async () => {
       const { data, error } = await supabase.from('cakes').select('*');
       if (error) console.error("Error fetching cakes:", error);
-      else setCakes(data || []);
+      
+      const fetchedCakes = data || [];
+      const testCake = {
+        id: 'mpesa-test-1',
+        title: 'M-Pesa Test Cake (1 Ksh)',
+        desc: 'A 1 Shilling test cake to verify M-Pesa STK Push integration.',
+        price: 1,
+        image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&q=80',
+        tag: 'Bestseller'
+      };
+      
+      setCakes([testCake, ...fetchedCakes]);
     };
     
     const fetchPosts = async () => {
