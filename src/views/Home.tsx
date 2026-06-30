@@ -184,63 +184,6 @@ export default function Home({ setView, posts = [] }: HomeProps) {
         </div>
       </section>
 
-      {/* From the Blog Section */}
-      <section className="py-24 bg-surface">
-        <div className="max-w-7xl mx-auto px-8">
-           <div className="text-center mb-16">
-            <span className="text-secondary font-bold tracking-[0.2em] uppercase mb-4 block text-xs">Stories & Craftsmanship</span>
-            <h2 className="text-4xl font-serif text-secondary mb-4 italic">From Our Food Blog</h2>
-            <div className="w-16 h-1 bg-secondary mx-auto rounded-full opacity-30"></div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-             {posts.length > 0 ? (
-               <>
-                 <div 
-                   className="relative group cursor-pointer overflow-hidden rounded-[2rem] shadow-xl aspect-video"
-                   onClick={() => setView('blog')}
-                 >
-                    <img 
-                      src={posts[0].img}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                      alt={posts[0].title}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                    <div className="absolute bottom-10 left-10 text-white right-10">
-                       <span className="bg-secondary text-white text-[10px] px-3 py-1 rounded-full uppercase font-bold tracking-wider mb-4 inline-block">
-                         {posts[0].category || 'Baking secrets'}
-                       </span>
-                       <h3 className="text-3xl font-serif mb-4 italic leading-tight">
-                         {posts[0].title}
-                       </h3>
-                       <button onClick={(e) => { e.stopPropagation(); setView('blog'); }} className="text-xs font-bold uppercase tracking-widest border-b border-white pb-1 hover:pb-2 transition-all">View Post</button>
-                    </div>
-                 </div>
-                 <div className="flex flex-col justify-center space-y-8">
-                    {posts.slice(1, 4).map((post, i) => (
-                      <div 
-                        key={post.id || i} 
-                        className="group cursor-pointer border-l-2 border-secondary/10 hover:border-secondary pl-6 py-2 transition-all"
-                        onClick={() => setView('blog')}
-                      >
-                        <span className="text-[10px] font-bold text-secondary/50 uppercase tracking-widest block mb-2">{post.date}</span>
-                        <h3 className="text-xl font-serif text-secondary italic group-hover:translate-x-2 transition-transform">{post.title}</h3>
-                      </div>
-                    ))}
-                    <button onClick={() => setView('blog')} className="text-secondary font-bold text-xs uppercase tracking-widest flex items-center gap-2 hover:gap-4 transition-all pt-4">
-                      Explore Full Blog <ArrowRight className="w-4 h-4" />
-                    </button>
-                 </div>
-               </>
-             ) : (
-               <div className="col-span-2 py-12 text-center bg-secondary/5 rounded-3xl border border-secondary/10">
-                 <p className="text-secondary/50 font-serif italic text-lg">Our latest stories are coming soon...</p>
-                 <button onClick={() => setView('blog')} className="mt-4 text-secondary font-bold text-xs uppercase tracking-widest hover:underline decoration-secondary/30">Visit Blog Page</button>
-               </div>
-             )}
-          </div>
-        </div>
-      </section>
 
       {/* Opening Hours & Visit Section */}
       <section className="py-24 bg-primary-container/20 border-y border-secondary/5">
@@ -417,7 +360,7 @@ export default function Home({ setView, posts = [] }: HomeProps) {
       {/* CTA Section */}
       <section className="py-24 bg-stone-900 text-white overflow-hidden relative">
         <div className="absolute top-0 right-0 w-1/3 h-full opacity-20 pointer-events-none">
-          <div className="w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary-fixed to-transparent"></div>
+          <div className="w-full h-full bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] from-primary-fixed to-transparent"></div>
         </div>
         <div className="max-w-7xl mx-auto px-8 text-center relative z-10">
           <span className="font-bold tracking-[0.3em] text-primary-fixed-dim mb-4 block uppercase text-sm">Bespoke Creations</span>

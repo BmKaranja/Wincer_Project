@@ -8,7 +8,6 @@ import Occasions from './views/Occasions';
 import Search from './views/Search';
 import Account from './views/Account';
 import Story from './views/Story';
-import Blog from './views/Blog';
 import Checkout from './views/Checkout';
 import Admin from './views/Admin';
 import Cart from './views/Cart';
@@ -49,7 +48,6 @@ export default function App() {
   const [user, setUser] = useState<any>(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [cakes, setCakes] = useState<any[]>([]);
-  const [blogPosts, setBlogPosts] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchCakes = async () => {
@@ -69,33 +67,17 @@ export default function App() {
       setCakes([testCake, ...fetchedCakes]);
     };
 
-    const fetchPosts = async () => {
-      const { data, error } = await supabase.from('blog_posts').select('*');
-      if (error) console.error("Error fetching posts:", error);
-      else {
-        const sorted = (data || []).sort((a: any, b: any) => {
-          return new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime();
-        });
-        setBlogPosts(sorted);
-      }
-    };
 
     fetchCakes();
-    fetchPosts();
 
     const cakesSub = supabase.channel('cakes_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'cakes' }, () => {
         fetchCakes();
       }).subscribe();
 
-    const postsSub = supabase.channel('posts_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'blog_posts' }, () => {
-        fetchPosts();
-      }).subscribe();
 
     return () => {
       supabase.removeChannel(cakesSub);
-      supabase.removeChannel(postsSub);
     };
   }, []);
 
@@ -232,7 +214,7 @@ export default function App() {
         <AnimatePresence mode="wait">
           {view === 'home' && (
             <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <Home setView={handleNav} posts={blogPosts} />
+              <Home setView={handleNav} posts={[]} />
             </motion.div>
           )}
           {view === 'catalog' && (
@@ -285,11 +267,6 @@ export default function App() {
               <Story setView={handleNav} />
             </motion.div>
           )}
-          {view === 'blog' && (
-            <motion.div key="blog" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <Blog onSelectProduct={handleSelectProduct} cakes={cakes} posts={blogPosts} />
-            </motion.div>
-          )}
           {view === 'checkout' && (
             <motion.div key="checkout" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <Checkout
@@ -314,7 +291,7 @@ export default function App() {
           )}
           {view === 'admin' && (
             <motion.div key="admin" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <Admin user={user} setView={handleNav} blogPosts={blogPosts} />
+              <Admin user={user} setView={handleNav} />
             </motion.div>
           )}
           {view === 'privacy' && (
