@@ -55,7 +55,7 @@ export default function App() {
     const fetchCakes = async () => {
       const { data, error } = await supabase.from('cakes').select('*');
       if (error) console.error("Error fetching cakes:", error);
-      
+
       const fetchedCakes = data || [];
       const testCake = {
         id: 'mpesa-test-1',
@@ -65,10 +65,10 @@ export default function App() {
         image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&q=80',
         tag: 'Bestseller'
       };
-      
+
       setCakes([testCake, ...fetchedCakes]);
     };
-    
+
     const fetchPosts = async () => {
       const { data, error } = await supabase.from('blog_posts').select('*');
       if (error) console.error("Error fetching posts:", error);
@@ -79,7 +79,7 @@ export default function App() {
         setBlogPosts(sorted);
       }
     };
-    
+
     fetchCakes();
     fetchPosts();
 
@@ -87,7 +87,7 @@ export default function App() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'cakes' }, () => {
         fetchCakes();
       }).subscribe();
-      
+
     const postsSub = supabase.channel('posts_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'blog_posts' }, () => {
         fetchPosts();
@@ -147,7 +147,7 @@ export default function App() {
           }
         } catch (err) {
           console.error("Error fetching user data:", err);
-          setUser({ email: currentUser.email, role: 'user', uid: currentUser.id }); 
+          setUser({ email: currentUser.email, role: 'user', uid: currentUser.id });
         }
       } else {
         setUser(null);
@@ -173,7 +173,6 @@ export default function App() {
     }
     setView(newView);
   };
-
 
   const handleSelectProduct = (product: any) => {
     setSelectedProduct(product);
@@ -202,7 +201,7 @@ export default function App() {
 
   const saveItem = (item: any) => {
     setSavedItems(prev => {
-      const exists = prev.some(existing => 
+      const exists = prev.some(existing =>
         existing.name === item.name &&
         JSON.stringify(existing.config) === JSON.stringify(item.config)
       );
@@ -228,39 +227,24 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col selection:bg-secondary/20 selection:text-secondary">
       <Header currentView={view} setView={handleNav} cartCount={cart.length} user={user} />
-      
+
       <div className="flex-grow">
         <AnimatePresence mode="wait">
           {view === 'home' && (
-            <motion.div 
-              key="home"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
+            <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <Home setView={handleNav} posts={blogPosts} />
             </motion.div>
           )}
           {view === 'catalog' && (
-            <motion.div 
-              key="catalog"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
+            <motion.div key="catalog" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <Catalog setView={handleNav} onSelect={handleSelectProduct} cakes={cakes} />
             </motion.div>
           )}
           {view === 'customizer' && (
-            <motion.div 
-              key="customizer"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <Customizer 
-                setView={handleNav} 
-                selectedProduct={selectedProduct} 
+            <motion.div key="customizer" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <Customizer
+                setView={handleNav}
+                selectedProduct={selectedProduct}
                 onAddToCart={(item) => {
                   addToCart(item);
                   setView('cart');
@@ -277,17 +261,12 @@ export default function App() {
             </motion.div>
           )}
           {view === 'cart' && (
-            <motion.div 
-              key="cart"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <Cart 
-                setView={handleNav} 
+            <motion.div key="cart" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <Cart
+                setView={handleNav}
                 cart={cart}
                 onAddToCart={(item) => setCart(prev => [...prev, item])}
-                onRemove={removeFromCart} 
+                onRemove={removeFromCart}
                 onEdit={handleEditItem}
                 savedItems={savedItems}
                 onRemoveSaved={(id) => setSavedItems(prev => prev.filter(i => i.id !== id))}
@@ -297,46 +276,26 @@ export default function App() {
             </motion.div>
           )}
           {view === 'occasions' && (
-            <motion.div 
-              key="occasions"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
+            <motion.div key="occasions" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <Occasions setView={handleNav} />
             </motion.div>
           )}
           {view === 'story' && (
-            <motion.div 
-              key="story"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
+            <motion.div key="story" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <Story setView={handleNav} />
             </motion.div>
           )}
           {view === 'blog' && (
-            <motion.div 
-              key="blog"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
+            <motion.div key="blog" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <Blog onSelectProduct={handleSelectProduct} cakes={cakes} posts={blogPosts} />
             </motion.div>
           )}
           {view === 'checkout' && (
-            <motion.div 
-              key="checkout"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <Checkout 
-                setView={handleNav} 
-                cart={cart} 
-                onOrderPlaced={clearCart} 
+            <motion.div key="checkout" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <Checkout
+                setView={handleNav}
+                cart={cart}
+                onOrderPlaced={clearCart}
                 onEdit={handleEditItem}
                 onRemove={removeFromCart}
                 user={user}
@@ -344,51 +303,30 @@ export default function App() {
             </motion.div>
           )}
           {view === 'search' && (
-            <motion.div 
-              key="search"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
+            <motion.div key="search" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <Search setView={handleNav} onSelect={handleSelectProduct} cakes={cakes} />
             </motion.div>
           )}
           {view === 'account' && (
-            <motion.div 
-              key="account"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
+            <motion.div key="account" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <Account user={user} setUser={setUser} setView={handleNav} />
             </motion.div>
           )}
           {view === 'admin' && (
-            <motion.div 
-              key="admin"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
+            <motion.div key="admin" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <Admin user={user} setView={handleNav} blogPosts={blogPosts} />
             </motion.div>
           )}
           {view === 'privacy' && (
-            <motion.div 
-              key="privacy"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
+            <motion.div key="privacy" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <PrivacyPolicy />
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+
       
-      {/* Floating WhatsApp Button */}
-      <a
-        href="https://wa.me/254722632717?text=Hi%20Wincer%20Cake%20House!%20I'd%20love%20to%20inquire%20about%20your%20delicious%20cakes."
+        <a href="https://wa.me/254722632717?text=Hi%20Wincer%20Cake%20House!%20I'd%20love%20to%20inquire%20about%20your%20delicious%20cakes."
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-6 right-6 z-[99] flex items-center gap-2 group cursor-pointer"
