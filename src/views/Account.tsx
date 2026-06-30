@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { User, Mail, Lock, ArrowRight, ShieldCheck, Gem, Package, RotateCcw, LogOut, Trash2, X } from 'lucide-react';
+import { User, Mail, Lock, ArrowRight, ShieldCheck, Gem, Package, RotateCcw, LogOut, Trash2, X, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../supabase';
 
 export default function Account({ user, setUser, setView }: { user: any, setUser: any, setView: any }) {
@@ -12,6 +12,7 @@ export default function Account({ user, setUser, setView }: { user: any, setUser
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (user && user.role !== 'admin') {
@@ -301,7 +302,7 @@ export default function Account({ user, setUser, setView }: { user: any, setUser
               exit="exit"
               className="text-center relative z-10"
             >
-              <div className="w-24 h-24 bg-gradient-to-br from-secondary/20 to-secondary/5 rounded-full flex items-center justify-center mx-auto mb-10 shadow-inner">
+              <div className="w-24 h-24 bg-linear-to-br from-secondary/20 to-secondary/5 rounded-full flex items-center justify-center mx-auto mb-10 shadow-inner">
                 <User className="w-10 h-10 text-secondary" />
               </div>
               <h1 className="text-4xl font-serif text-secondary mb-4 italic">The Connoisseur Portal</h1>
@@ -341,7 +342,7 @@ export default function Account({ user, setUser, setView }: { user: any, setUser
                 <button 
                   onClick={handleGoogleSignIn}
                   disabled={loading}
-                  className="w-full bg-white border border-secondary/20 text-secondary py-4 rounded-2xl font-bold uppercase tracking-[0.1em] text-[10px] hover:scale-[1.02] active:scale-95 transition-all shadow-sm flex items-center justify-center gap-3 group disabled:opacity-50"
+                  className="w-full bg-white border border-secondary/20 text-secondary py-4 rounded-2xl font-bold uppercase tracking-widest text-[10px] hover:scale-[1.02] active:scale-95 transition-all shadow-sm flex items-center justify-center gap-3 group disabled:opacity-50"
                 >
                   {loading ? 'Processing...' : 'Continue with Google'} <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
@@ -387,18 +388,36 @@ export default function Account({ user, setUser, setView }: { user: any, setUser
                   </div>
                 </div>
                 <div>
+<div>
                   <label className="text-[10px] font-bold uppercase tracking-widest text-secondary/50 block mb-2">Password</label>
                   <div className="relative">
+                    {/* Left Lock Icon */}
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-secondary/40" />
+                    
+                    {/* Input Field */}
                     <input 
-                      type="password" 
+                      type={showPassword ? "text" : "password"} // 🛠️ FIXED: Changed from static "password"
                       required
                       value={password}
                       onChange={e => setPassword(e.target.value)}
-                      className="w-full pl-12 pr-4 py-4 rounded-xl border border-secondary/20 focus:border-secondary focus:ring-1 focus:ring-secondary outline-none transition-all placeholder:text-secondary/30"
+                      className="w-full pl-12 pr-12 py-4 rounded-xl border border-secondary/20 focus:border-secondary focus:ring-1 focus:ring-secondary outline-none transition-all placeholder:text-secondary/30" // 🛠️ OPTIMIZED: Changed pr-4 to pr-12
                       placeholder="Enter your password"
                     />
+
+                    {/* Right Eye Toggle Button */}
+                    <button
+                      type="button" 
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-secondary/40 hover:text-secondary/70 transition-colors focus:outline-none"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
                   </div>
+                </div>               
                 </div>
                 <button 
                   type="submit"
@@ -458,19 +477,33 @@ export default function Account({ user, setUser, setView }: { user: any, setUser
                     />
                   </div>
                 </div>
-                <div>
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-secondary/50 block mb-2">Password</label>
-                  <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-secondary/40" />
-                    <input 
-                      type="password" 
-                      required
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      className="w-full pl-12 pr-4 py-4 rounded-xl border border-secondary/20 focus:border-secondary focus:ring-1 focus:ring-secondary outline-none transition-all placeholder:text-secondary/30"
-                      placeholder="Create a password"
-                    />
-                  </div>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-secondary/50 block mb-2">Password</label>
+                <div className="relative">
+                  {/* Left Icon */}
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-secondary/40" />
+                  
+                  {/* Input Field */}
+                  <input 
+                    type={showPassword ? "text" : "password"} // Dynamic type switching
+                    required
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    className="w-full pl-12 pr-12 py-4 rounded-xl border border-secondary/20 focus:border-secondary focus:ring-1 focus:ring-secondary outline-none transition-all placeholder:text-secondary/30"
+                    placeholder="Create a password"
+                  />
+
+                  {/* Toggle Button */}
+                  <button
+                    type="button" // Prevents form submission if placed inside a <form>
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-secondary/40 hover:text-secondary/70 transition-colors focus:outline-none"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
                 </div>
                 <button 
                   type="submit"
