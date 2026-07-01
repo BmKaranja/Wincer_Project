@@ -20,24 +20,37 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
     if (!user || user.role !== 'admin') return;
 
     const fetchCakes = async () => {
-      const { data } = await supabase.from('cakes').select('*');
+      const { data, error } = await supabase.from('cakes').select('*');
+      if (error) {
+        console.error('Failed to fetch cakes:', error.message);
+        setCakeFormError('Failed to fetch cakes: ' + error.message);
+      }
       setCakes(data || []);
     };
 
     const fetchUsers = async () => {
-      const { data } = await supabase.from('users').select('*');
+      const { data, error } = await supabase.from('users').select('*');
+      if (error) {
+        console.error('Failed to fetch users:', error.message);
+      }
       setSiteUsers(data || []);
     };
 
     const fetchOrders = async () => {
-      const { data } = await supabase.from('orders').select('*');
+      const { data, error } = await supabase.from('orders').select('*');
+      if (error) {
+        console.error('Failed to fetch orders:', error.message);
+      }
       if (data) {
         setOrders(data.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()));
       }
     };
 
     const fetchInquiries = async () => {
-      const { data } = await supabase.from('inquiries').select('*');
+      const { data, error } = await supabase.from('inquiries').select('*');
+      if (error) {
+        console.error('Failed to fetch inquiries:', error.message);
+      }
       if (data) {
         setInquiries(data.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()));
       }
@@ -99,7 +112,11 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
 
   const handleDeleteCake = async (id: string) => {
     try {
-      await supabase.from('cakes').delete().eq('id', id);
+      const { error } = await supabase.from('cakes').delete().eq('id', id);
+      if (error) {
+        console.error('Failed to delete cake:', error.message);
+        alert('Failed to delete cake: ' + error.message);
+      }
     } catch (err) {
       console.error(err);
       alert('Failed to delete cake: ' + (err as Error).message);
@@ -115,7 +132,7 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
     }
     try {
       if (editingCake) {
-        await supabase.from('cakes').update({
+        const { error } = await supabase.from('cakes').update({
           title: cakeForm.title,
           price: cakeForm.price,
           desc: cakeForm.desc,
@@ -124,6 +141,9 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
           gauge: cakeForm.gauge || '',
           gaugeVal: cakeForm.gaugeVal || ''
         }).eq('id', editingCake.id);
+        if (error) {
+          throw error;
+        }
       } else {
         const id = Date.now().toString();
         await supabase.from('cakes').insert([{
@@ -146,7 +166,11 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
 
   const handleDeleteUser = async (id: string) => {
     try {
-      await supabase.from('users').delete().eq('id', id);
+      const { error } = await supabase.from('users').delete().eq('id', id);
+      if (error) {
+        console.error('Failed to delete user:', error.message);
+        alert('Failed to delete user: ' + error.message);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -159,7 +183,7 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
     if (!newUserEmail) return;
     try {
       const id = Date.now().toString(); // placeholder ID
-      await supabase.from('users').insert([{
+      const { error } = await supabase.from('users').insert([{
         id,
         email: newUserEmail,
         name: 'New Member',
@@ -167,6 +191,9 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
         joinedAt: new Date().toISOString(),
         ordersCount: 0
       }]);
+      if (error) {
+        throw error;
+      }
       setNewUserEmail('');
     } catch (err) {
       console.error(err);
