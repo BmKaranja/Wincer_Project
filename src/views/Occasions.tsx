@@ -9,7 +9,7 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [isDragging, setIsDragging] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -74,7 +74,7 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
   const handleInquirySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
       await supabase.from('inquiries').insert([{
         ...formData,
@@ -117,7 +117,7 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
   ];
 
   return (
-    <motion.main 
+    <motion.main
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -126,21 +126,21 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
       {/* Hero Section */}
       <section className="relative h-[65vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img 
-            className="w-full h-full object-cover contrast-125" 
-            src="https://karanjamaina.sirv.com/Images/myimage.png" 
+          <img
+            className="w-full h-full object-cover contrast-125"
+            src="https://karanjamaina.sirv.com/Images/myimage.png"
           />
           <div className="absolute inset-0 bg-stone-900/40"></div>
         </div>
         <div className="relative z-10 text-center text-white px-8">
-          <motion.h1 
+          <motion.h1
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             className="text-6xl font-serif font-bold mb-6"
           >
             Memorable Occasions
           </motion.h1>
-          <motion.p 
+          <motion.p
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
@@ -157,10 +157,10 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
           <span className="text-xs font-bold uppercase tracking-[0.3em] text-secondary mb-4 block">Event Catering</span>
           <h2 className="text-4xl font-serif text-secondary">Collections for Every Milestone</h2>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {collections.map((col, idx) => (
-            <motion.div 
+            <motion.div
               key={col.title}
               initial={{ y: 20, opacity: 0 }}
               whileInView={{ y: 0, opacity: 1 }}
@@ -187,7 +187,7 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
             <p className="text-xl text-on-surface-variant leading-relaxed opacity-80">
               Our wedding cakes are more than just desserts; they are the centerpieces of your commitment. We offer a bespoke design process that begins with a private tasting and ends with a masterpiece that reflects your shared journey.
             </p>
-            
+
             <div className="space-y-6 pt-4">
               {[
                 { icon: Utensils, text: "Private curated tasting experience" },
@@ -202,23 +202,23 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
                 </div>
               ))}
             </div>
-            
-            <button 
+
+            <button
               onClick={() => document.getElementById('inquiry-form')?.scrollIntoView({ behavior: 'smooth' })}
               className="bg-secondary text-white px-10 py-5 rounded-xl font-bold tracking-widest text-sm hover:translate-x-2 transition-all shadow-xl mt-8 uppercase"
             >
               Book a Consultation
             </button>
           </div>
-          
+
           <div className="flex-1 grid grid-cols-2 gap-6 scale-110 lg:scale-100">
-            <motion.div 
+            <motion.div
               whileHover={{ y: -10 }}
               className="pt-16"
             >
               <img className="rounded-2xl shadow-2xl w-full aspect-[3/4] object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqNG1c7nphQtpfUjUoFyRovv3u9fm0fwCn_ofdKkvh5u1LEunFq2a3AhTWmmfaQ9UNqAA_9ZbQNX57bj9Q84ksjwTERmIo55oIvf8ay9tZSqnfsPw7xFEPl4mtLbyu8t5BHkivgRSj-AX5g1ZJe-bLqArwfLsQslrSD8s2fXu1ZCI4cejpkZfvaNW69ZpbPdvzfUpdBKsX7KwG4C_rMdpQP8y5brUSr2zuooBvuwkZUgWmungXpy0hm8TKxiGTY0KCqqebYdqIgp0" alt="Detail 1" />
             </motion.div>
-            <motion.div 
+            <motion.div
               whileHover={{ y: -10 }}
             >
               <img className="rounded-2xl shadow-2xl w-full aspect-[3/4] object-cover" src="https://karanjamaina.sirv.com/Images/regenerated_image_1779024163803.png" alt="Detail 2" />
@@ -235,7 +235,7 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
             Capturing the moments of joy and elegance where Wincer Cake House took center stage.
           </p>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-4 grid-rows-2 gap-4 h-auto md:h-[800px]">
           <div className="md:col-span-2 md:row-span-2 relative overflow-hidden rounded-3xl group shadow-lg">
             <img className="w-full h-full object-cover brightness-110 transition-all duration-700 group-hover:scale-105" src="https://karanjamaina.sirv.com/Images/memory1.jpg" alt="Gala" />
@@ -244,15 +244,15 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
               <p className="text-xs font-bold uppercase tracking-widest">The Grand Wedding</p>
             </div>
           </div>
-          
+
           <div className="col-span-1 row-span-1 relative overflow-hidden rounded-3xl group shadow-lg min-h-[250px]">
             <img className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://karanjamaina.sirv.com/Images/memory4.jpg" alt="Table" />
           </div>
-          
+
           <div className="col-span-1 row-span-1 relative overflow-hidden rounded-3xl group shadow-lg min-h-[250px]">
             <img className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://karanjamaina.sirv.com/Images/memory3.jpg" alt="Plated" />
           </div>
-          
+
           <div className="md:col-span-2 md:row-span-1 relative overflow-hidden rounded-3xl group shadow-lg min-h-[250px]">
             <img className="w-full h-full object-cover contrast-125 transition-all duration-700 group-hover:scale-105" src="https://karanjamaina.sirv.com/Images/memory2.jpg" alt="Fun times" />
           </div>
@@ -264,7 +264,7 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
         <div className="max-w-3xl mx-auto px-8">
           <div className="bg-surface p-12 rounded-3xl shadow-xl paper-texture border border-secondary/5 min-h-[500px] flex flex-col justify-center">
             {isSubmitted ? (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="text-center space-y-6 py-12"
@@ -277,7 +277,7 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
                   Thank you for reaching out. Our team will review your order details and respond via WhatsApp shortly.
                 </p>
                 <div className="mt-8">
-                  <button 
+                  <button
                     onClick={() => setView('home')}
                     className="text-sm font-bold uppercase tracking-widest text-secondary hover:opacity-70 transition-opacity"
                   >
@@ -291,7 +291,7 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
                   <h2 className="text-3xl font-serif text-secondary font-bold mb-3">Event Inquiry</h2>
                   <p className="text-on-surface-variant font-medium opacity-70">Let us help you design the perfect confection for your event.</p>
                 </div>
-                
+
                 <form className="space-y-8" onSubmit={handleInquirySubmit}>
                   {errorMsg && (
                     <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-medium border border-red-100">
@@ -301,25 +301,25 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-2">
                       <label className="text-xs font-bold uppercase tracking-widest text-secondary/60">Name</label>
-                      <input required className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all placeholder:text-stone-300 font-medium" placeholder="Your Full Name" type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                      <input required className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all placeholder:text-stone-300 font-medium" placeholder="Your Full Name" type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-bold uppercase tracking-widest text-secondary/60">Phone Number</label>
-                      <input required className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all placeholder:text-stone-300 font-medium" placeholder="07XX XXX XXX" type="text" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                      <input required className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all placeholder:text-stone-300 font-medium" placeholder="07XX XXX XXX" type="text" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
                         <label className="text-xs font-bold uppercase tracking-widest text-secondary/60">Event Date</label>
                         <span className="text-[10px] text-secondary/60 font-semibold italic">Requires 2 days notice</span>
                       </div>
-                      <input required className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all font-medium" type="date" min={minAllowedDate} value={formData.eventDate} onChange={e => setFormData({...formData, eventDate: e.target.value})} />
+                      <input required className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all font-medium" type="date" min={minAllowedDate} value={formData.eventDate} onChange={e => setFormData({ ...formData, eventDate: e.target.value })} />
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-bold uppercase tracking-widest text-secondary/60">Occasion Type</label>
-                      <select className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all font-medium appearance-none" value={formData.occasionType} onChange={e => setFormData({...formData, occasionType: e.target.value})}>
+                      <select className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all font-medium appearance-none" value={formData.occasionType} onChange={e => setFormData({ ...formData, occasionType: e.target.value })}>
                         <option>Wedding</option>
                         <option>Birthday</option>
                         <option>Corporate Event</option>
@@ -331,36 +331,35 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
 
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-widest text-secondary/60">Cake Details</label>
-                    <textarea required className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all placeholder:text-stone-300 font-medium h-24 resize-none" placeholder="E.g., 2 tiers, chocolate fudge, semi-naked finish..." value={formData.cakeDetails} onChange={e => setFormData({...formData, cakeDetails: e.target.value})}></textarea>
+                    <textarea required className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all placeholder:text-stone-300 font-medium h-24 resize-none" placeholder="E.g., 2 tiers, chocolate fudge, semi-naked finish..." value={formData.cakeDetails} onChange={e => setFormData({ ...formData, cakeDetails: e.target.value })}></textarea>
                   </div>
 
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-widest text-secondary/60">Tell us about your vision</label>
-                    <textarea required className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all placeholder:text-stone-300 font-medium h-40 resize-none" placeholder="Guest count, theme details, inspiration..." value={formData.vision} onChange={e => setFormData({...formData, vision: e.target.value})}></textarea>
+                    <textarea required className="w-full px-6 py-4 bg-background border border-secondary/10 rounded-xl focus:ring-2 focus:ring-secondary/20 outline-none transition-all placeholder:text-stone-300 font-medium h-40 resize-none" placeholder="Guest count, theme details, inspiration..." value={formData.vision} onChange={e => setFormData({ ...formData, vision: e.target.value })}></textarea>
                   </div>
 
                   {/* Drag & Drop Inspiration Section */}
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-widest text-secondary/60 block mb-1">Inspiration / Design Reference (Optional)</label>
-                    
-                    <div 
+
+                    <div
                       onDragOver={handleDragOver}
                       onDragLeave={handleDragLeave}
                       onDrop={handleDrop}
-                      className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition-all ${
-                        isDragging 
-                          ? 'border-secondary bg-secondary/10 scale-[1.01]' 
+                      className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition-all ${isDragging
+                          ? 'border-secondary bg-secondary/10 scale-[1.01]'
                           : 'border-secondary/20 bg-secondary/[0.01] hover:border-secondary/40 hover:bg-secondary/[0.03]'
-                      }`}
+                        }`}
                     >
-                      <input 
-                        type="file" 
-                        accept="image/*" 
+                      <input
+                        type="file"
+                        accept="image/*"
                         onChange={handleFileChange}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                         id="inquiry-upload"
                       />
-                      
+
                       <div className="flex flex-col items-center justify-center space-y-3">
                         <div className="p-3 bg-secondary/5 rounded-full text-secondary">
                           <Upload className="w-6 h-6" />
@@ -387,7 +386,7 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
                             <span className="text-[10px] text-secondary/50 font-medium">Ready to submit</span>
                           </div>
                         </div>
-                        <button 
+                        <button
                           type="button"
                           onClick={() => setFormData(prev => ({ ...prev, sketchUrl: '' }))}
                           className="p-2 hover:bg-red-50 text-red-500 hover:text-red-700 rounded-full transition-colors"

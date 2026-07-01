@@ -17,7 +17,6 @@ export default function Header({ currentView, setView, cartCount, user }: Header
   const navItems = [
     { id: 'catalog', label: 'Collections' },
     { id: 'story', label: 'Our Story' },
-    { id: 'blog', label: 'Blog' },
     { id: 'occasions', label: 'Occasions' },
   ];
 

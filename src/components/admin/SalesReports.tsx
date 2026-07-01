@@ -11,14 +11,14 @@ export default function SalesReports({ orders }: { orders: any[] }) {
     
     orders.forEach(o => {
       // Process date
-      if (o.createdAt) {
+      if (o.created_at) {
         let d = new Date();
-        if (o.createdAt.seconds) {
-          d = new Date(o.createdAt.seconds * 1000);
-        } else if (typeof o.createdAt === 'string') {
-          d = new Date(o.createdAt);
-        } else if (typeof o.createdAt === 'number') {
-          d = new Date(o.createdAt);
+        if (o.created_at.seconds) {
+          d = new Date(o.created_at.seconds * 1000);
+        } else if (typeof o.created_at === 'string') {
+          d = new Date(o.created_at);
+        } else if (typeof o.created_at === 'number') {
+          d = new Date(o.created_at);
         }
 
         const month = d.toLocaleString('default', { month: 'short' });

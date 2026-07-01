@@ -106,7 +106,7 @@ export default function App() {
     const handleUserSession = async (currentUser: any) => {
       if (currentUser) {
         try {
-          const { data: userDoc, error } = await supabase.from('users').select('*').eq('uid', currentUser.id).single();
+          const { data: userDoc, error } = await supabase.from('users').select('*').eq('uid', currentUser.id).maybeSingle();
           if (userDoc && !error) {
             let userData = userDoc;
             if ((currentUser.email?.toLowerCase() === 'bmkaranja001@gmail.com' || currentUser.email?.toLowerCase() === 'medillin254@gmail.com') && userData.role !== 'admin') {
@@ -115,17 +115,16 @@ export default function App() {
             }
             setUser({ ...userData, uid: currentUser.id });
           } else {
+            // User row will be created by the DB trigger (handle_new_user).
+            // Set a temporary local state so the app doesn't appear broken.
             const role = (currentUser.email?.toLowerCase() === 'bmkaranja001@gmail.com' || currentUser.email?.toLowerCase() === 'medillin254@gmail.com') ? 'admin' : 'user';
-            const newUser = {
+            setUser({
               uid: currentUser.id,
+              id: currentUser.id,
               email: currentUser.email || '',
               name: currentUser.user_metadata?.full_name || 'New User',
-              role,
-              joinedAt: new Date().toISOString(),
-              ordersCount: 0
-            };
-            await supabase.from('users').insert([newUser]);
-            setUser(newUser);
+              role
+            });
           }
         } catch (err) {
           console.error("Error fetching user data:", err);
@@ -302,8 +301,8 @@ export default function App() {
         </AnimatePresence>
       </div>
 
-      
-        <a href="https://wa.me/254722632717?text=Hi%20Wincer%20Cake%20House!%20I'd%20love%20to%20inquire%20about%20your%20delicious%20cakes."
+
+      <a href="https://wa.me/254722632717?text=Hi%20Wincer%20Cake%20House!%20I'd%20love%20to%20inquire%20about%20your%20delicious%20cakes."
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-6 right-6 z-[99] flex items-center gap-2 group cursor-pointer"

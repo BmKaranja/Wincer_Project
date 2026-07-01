@@ -31,7 +31,7 @@ export default function CustomerInquiries({ inquiries }: { inquiries: any[] }) {
               Total: {inquiries.length}
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             {stats.map((stat, idx) => (
               <div key={idx} className="p-4 rounded-xl border border-secondary/10 flex flex-col items-center justify-center text-center bg-secondary/5">
@@ -67,38 +67,37 @@ export default function CustomerInquiries({ inquiries }: { inquiries: any[] }) {
                       </span>
                     </td>
                     <td className="py-4 px-4">
-                      <select 
+                      <select
                         value={row.status}
                         onChange={async (e) => {
-                           try {
-                              setErrorMsg(null);
-                              await supabase.from('inquiries').update({ status: e.target.value }).eq('id', row.id);
-                           } catch (err: any) {
-                              setErrorMsg("Failed to update status: " + err.message);
-                              console.error(err);
-                           }
+                          try {
+                            setErrorMsg(null);
+                            await supabase.from('inquiries').update({ status: e.target.value }).eq('id', row.id);
+                          } catch (err: any) {
+                            setErrorMsg("Failed to update status: " + err.message);
+                            console.error(err);
+                          }
                         }}
-                        className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider outline-none appearance-none cursor-pointer border ${
-                          row.status === 'Pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-                          row.status === 'Needs Reply' ? 'bg-blue-100 text-blue-800 border-blue-200' :
-                          'bg-gray-100 text-gray-800 border-gray-200'
-                        }`}
+                        className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider outline-none appearance-none cursor-pointer border ${row.status === 'Pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                            row.status === 'Needs Reply' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                              'bg-gray-100 text-gray-800 border-gray-200'
+                          }`}
                       >
-                         <option value="Pending">New / Pending</option>
-                         <option value="Needs Reply">Needs Reply</option>
-                         <option value="Resolved">Closed / Resolved</option>
+                        <option value="Pending">New / Pending</option>
+                        <option value="Needs Reply">Needs Reply</option>
+                        <option value="Resolved">Closed / Resolved</option>
                       </select>
                     </td>
                     <td className="py-4 px-4 text-sm text-secondary/60">
                       {row.createdAt ? new Date(row.createdAt.seconds ? row.createdAt.seconds * 1000 : row.createdAt).toLocaleDateString() : 'Just now'}
                     </td>
                     <td className="py-4 px-4 text-right flex items-center justify-end gap-2">
-                      <button 
+                      <button
                         onClick={() => setViewingInquiry(row)}
                         className="p-2 bg-secondary/5 text-secondary hover:bg-secondary/10 rounded-lg transition-colors" title="View details">
                         <Eye className="w-4 h-4" />
                       </button>
-                      <button 
+                      <button
                         onClick={() => setDeletingInquiry(row)}
                         className="p-2 bg-red-50 text-red-500 hover:bg-red-100 rounded-lg transition-colors"
                         title="Delete inquiry"
@@ -128,22 +127,22 @@ export default function CustomerInquiries({ inquiries }: { inquiries: any[] }) {
 
       <AnimatePresence>
         {deletingInquiry && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 bg-secondary/20 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           >
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
               className="bg-surface rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6"
             >
               <h3 className="text-xl font-serif text-secondary font-bold">Confirm Deletion</h3>
               <p className="text-secondary/80 text-sm">Are you sure you want to delete the inquiry from <span className="font-bold">{deletingInquiry.name}</span>?</p>
               <div className="flex gap-4 pt-4">
-                <button 
+                <button
                   onClick={() => setDeletingInquiry(null)}
                   className="flex-1 py-2 bg-secondary/5 text-secondary rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-secondary/10 transition-colors"
                 >Cancel</button>
-                <button 
+                <button
                   onClick={async () => {
                     try {
                       setErrorMsg(null);
@@ -161,15 +160,15 @@ export default function CustomerInquiries({ inquiries }: { inquiries: any[] }) {
         )}
 
         {viewingInquiry && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 bg-secondary/20 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           >
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
               className="bg-surface rounded-3xl p-8 max-w-lg w-full shadow-2xl space-y-6 relative max-h-[90vh] overflow-y-auto"
             >
-              <button 
+              <button
                 onClick={() => setViewingInquiry(null)}
                 className="absolute top-4 right-4 p-2 bg-secondary/5 rounded-full hover:bg-secondary/10 transition-colors"
               >
@@ -177,7 +176,7 @@ export default function CustomerInquiries({ inquiries }: { inquiries: any[] }) {
               </button>
 
               <h2 className="text-2xl font-serif font-bold text-secondary">Inquiry Details</h2>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-[10px] font-bold uppercase tracking-widest text-secondary/60">Customer</label>
@@ -215,9 +214,9 @@ export default function CustomerInquiries({ inquiries }: { inquiries: any[] }) {
                 <div>
                   <label className="text-[10px] font-bold uppercase tracking-widest text-secondary/60">Inspiration Reference Photo</label>
                   <div className="mt-2 text-center bg-secondary/[0.02] p-4 rounded-xl border border-secondary/10 flex items-center justify-center">
-                    <img 
-                      src={viewingInquiry.sketchUrl} 
-                      alt="Customer Design Reference" 
+                    <img
+                      src={viewingInquiry.sketchUrl}
+                      alt="Customer Design Reference"
                       className="max-h-80 w-auto rounded-xl object-contain border border-secondary/10 shadow-sm"
                     />
                   </div>

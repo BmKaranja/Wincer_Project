@@ -10,7 +10,7 @@ import SalesReports from '../components/admin/SalesReports';
 
 export default function Admin({ user, setView, blogPosts = [] }: { user: any, setView: any, blogPosts?: any[] }) {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'orders' | 'inquiries' | 'calendar' | 'reports' | 'cakes' | 'users'>('dashboard');
-  
+
   const [cakes, setCakes] = useState<any[]>([]);
   const [siteUsers, setSiteUsers] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
@@ -29,7 +29,7 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
     };
 
     const fetchUsers = async () => {
-      const { data, error } = await supabase.from('users').select('*');
+      const { data, error } = await supabase.from('all_users_admin').select('*');
       if (error) {
         console.error('Failed to fetch users:', error.message);
       }
@@ -42,7 +42,7 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
         console.error('Failed to fetch orders:', error.message);
       }
       if (data) {
-        setOrders(data.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()));
+        setOrders(data.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()));
       }
     };
 
@@ -188,8 +188,8 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
         email: newUserEmail,
         name: 'New Member',
         role: 'user',
-        joinedAt: new Date().toISOString(),
-        ordersCount: 0
+        joined_at: new Date().toISOString(),
+        orders_count: 0
       }]);
       if (error) {
         throw error;
@@ -206,7 +206,7 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
       <motion.main className="pt-32 pb-24 max-w-7xl mx-auto px-8 min-h-[80vh] flex flex-col items-center justify-center">
         <h1 className="text-4xl font-serif text-secondary mb-4">Access Denied</h1>
         <p className="text-on-surface-variant mb-8">You must have administrator privileges to view this page.</p>
-        <button 
+        <button
           onClick={() => setView('home')}
           className="bg-secondary text-white px-8 py-3 rounded-xl font-bold uppercase tracking-widest text-xs"
         >
@@ -217,7 +217,7 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
   }
 
   return (
-    <motion.main 
+    <motion.main
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -229,13 +229,13 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
           <p className="text-on-surface-variant font-medium opacity-70">Control Panel / {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</p>
         </div>
         <div className="flex gap-4">
-          <button 
+          <button
             onClick={() => setView('account')}
             className="bg-secondary/10 text-secondary border border-secondary/20 px-6 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-secondary/20 transition-colors"
           >
             Back to Portal
           </button>
-          <button 
+          <button
             onClick={() => setView('home')}
             className="bg-secondary text-white px-6 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:scale-[1.02] transition-transform shadow-xl"
           >
@@ -249,11 +249,10 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
           <button
             key={tab}
             onClick={() => setActiveTab(tab as any)}
-            className={`px-8 py-3 rounded-xl text-xs font-bold uppercase tracking-widest whitespace-nowrap transition-all ${
-              activeTab === tab 
-                ? 'bg-secondary text-white shadow-xl' 
-                : 'bg-secondary/5 text-secondary hover:bg-secondary/10'
-            }`}
+            className={`px-8 py-3 rounded-xl text-xs font-bold uppercase tracking-widest whitespace-nowrap transition-all ${activeTab === tab
+              ? 'bg-secondary text-white shadow-xl'
+              : 'bg-secondary/5 text-secondary hover:bg-secondary/10'
+              }`}
           >
             {tab}
           </button>
@@ -262,26 +261,28 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
 
       <AnimatePresence mode="wait">
         {activeTab === 'dashboard' && (
-          <motion.div 
+          <motion.div
             key="dashboard"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             className="space-y-8"
           >
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
-                { label: 'Total Revenue', value: 'Kshs. ' + orders.reduce((acc, o) => {
-                  if (!o.amount) return acc;
-                  // Remove 'kshs', 'kes', 'ksh', and commas
-                  const cleanStr = String(o.amount).toLowerCase().replace(/kshs?\.?|kes\.?|,/g, '').trim();
-                  let mult = 1;
-                  if (cleanStr.endsWith('k')) mult = 1000;
-                  if (cleanStr.endsWith('m')) mult = 1000000;
-                  // Now extract the number part
-                  const numStr = cleanStr.replace(/[^0-9.-]/g, '');
-                  return acc + ((parseFloat(numStr) || 0) * mult);
-                }, 0).toLocaleString(), icon: Banknote },
+                {
+                  label: 'Total Revenue', value: 'Kshs. ' + orders.reduce((acc, o) => {
+                    if (!o.amount) return acc;
+                    // Remove 'kshs', 'kes', 'ksh', and commas
+                    const cleanStr = String(o.amount).toLowerCase().replace(/kshs?\.?|kes\.?|,/g, '').trim();
+                    let mult = 1;
+                    if (cleanStr.endsWith('k')) mult = 1000;
+                    if (cleanStr.endsWith('m')) mult = 1000000;
+                    // Now extract the number part
+                    const numStr = cleanStr.replace(/[^0-9.-]/g, '');
+                    return acc + ((parseFloat(numStr) || 0) * mult);
+                  }, 0).toLocaleString(), icon: Banknote
+                },
                 { label: 'Active Orders', value: orders.filter(o => o.status === 'Pending' || o.status === 'Pending Verification' || o.status === 'Confirmed (Pending Balance)' || o.status === 'Preparing').length.toString(), icon: Package },
                 { label: 'Total Users', value: siteUsers.length.toString(), icon: Users },
                 { label: 'Site Traffic', value: '+14%', icon: Activity },
@@ -323,7 +324,7 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
         )}
 
         {activeTab === 'cakes' && (
-          <motion.div 
+          <motion.div
             key="cakes"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -335,9 +336,9 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
                 <h2 className="text-xl font-serif text-secondary font-bold mb-2">Cake Catalog</h2>
                 <p className="text-on-surface-variant text-sm font-medium opacity-70">Manage available base creations in your store.</p>
               </div>
-              
-              <button 
-                onClick={openAddForm} 
+
+              <button
+                onClick={openAddForm}
                 className="bg-secondary text-white px-6 py-3 rounded-xl font-bold uppercase tracking-widest text-xs flex items-center gap-2 hover:scale-[1.02] transition-transform"
               >
                 <Plus className="w-5 h-5" /> Add Cake
@@ -345,7 +346,7 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
             </div>
 
             {(isAddingCake || editingCake) && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 className="bg-surface rounded-3xl p-8 border border-secondary/10 shadow-sm"
@@ -354,13 +355,13 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
                 {cakeFormError && <div className="text-red-500 text-sm mb-4 bg-red-50 p-3 rounded-lg border border-red-100">{cakeFormError}</div>}
                 <form onSubmit={handleCakeSubmit} className="flex flex-col gap-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input type="text" value={cakeForm.title} onChange={e => setCakeForm({...cakeForm, title: e.target.value})} placeholder="Title * (e.g. Red Velvet)" className="px-4 py-3 bg-background border border-secondary/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary/20 text-sm font-medium w-full" required />
-                    <input type="text" value={cakeForm.price} onChange={e => setCakeForm({...cakeForm, price: e.target.value})} placeholder="Price * (e.g. Kshs. 2000)" className="px-4 py-3 bg-background border border-secondary/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary/20 text-sm font-medium w-full" required />
-                    <input type="text" value={cakeForm.img} onChange={e => setCakeForm({...cakeForm, img: e.target.value})} placeholder="Image URL * (e.g. https://...)" className="px-4 py-3 bg-background border border-secondary/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary/20 text-sm font-medium w-full" required />
-                    <input type="text" value={cakeForm.tag} onChange={e => setCakeForm({...cakeForm, tag: e.target.value})} placeholder="Tag (e.g. New, Bestseller)" className="px-4 py-3 bg-background border border-secondary/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary/20 text-sm font-medium w-full" />
-                    <input type="text" value={cakeForm.gauge} onChange={e => setCakeForm({...cakeForm, gauge: e.target.value})} placeholder="Gauge Label (e.g. Classic)" className="px-4 py-3 bg-background border border-secondary/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary/20 text-sm font-medium w-full" />
-                    <input type="text" value={cakeForm.gaugeVal} onChange={e => setCakeForm({...cakeForm, gaugeVal: e.target.value})} placeholder="Gauge Width (e.g. w-[50%])" className="px-4 py-3 bg-background border border-secondary/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary/20 text-sm font-medium w-full" />
-                    <textarea value={cakeForm.desc} onChange={e => setCakeForm({...cakeForm, desc: e.target.value})} placeholder="Description" className="px-4 py-3 bg-background border border-secondary/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary/20 text-sm font-medium w-full md:col-span-2 resize-none h-24"></textarea>
+                    <input type="text" value={cakeForm.title} onChange={e => setCakeForm({ ...cakeForm, title: e.target.value })} placeholder="Title * (e.g. Red Velvet)" className="px-4 py-3 bg-background border border-secondary/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary/20 text-sm font-medium w-full" required />
+                    <input type="text" value={cakeForm.price} onChange={e => setCakeForm({ ...cakeForm, price: e.target.value })} placeholder="Price * (e.g. Kshs. 2000)" className="px-4 py-3 bg-background border border-secondary/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary/20 text-sm font-medium w-full" required />
+                    <input type="text" value={cakeForm.img} onChange={e => setCakeForm({ ...cakeForm, img: e.target.value })} placeholder="Image URL * (e.g. https://...)" className="px-4 py-3 bg-background border border-secondary/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary/20 text-sm font-medium w-full" required />
+                    <input type="text" value={cakeForm.tag} onChange={e => setCakeForm({ ...cakeForm, tag: e.target.value })} placeholder="Tag (e.g. New, Bestseller)" className="px-4 py-3 bg-background border border-secondary/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary/20 text-sm font-medium w-full" />
+                    <input type="text" value={cakeForm.gauge} onChange={e => setCakeForm({ ...cakeForm, gauge: e.target.value })} placeholder="Gauge Label (e.g. Classic)" className="px-4 py-3 bg-background border border-secondary/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary/20 text-sm font-medium w-full" />
+                    <input type="text" value={cakeForm.gaugeVal} onChange={e => setCakeForm({ ...cakeForm, gaugeVal: e.target.value })} placeholder="Gauge Width (e.g. w-[50%])" className="px-4 py-3 bg-background border border-secondary/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary/20 text-sm font-medium w-full" />
+                    <textarea value={cakeForm.desc} onChange={e => setCakeForm({ ...cakeForm, desc: e.target.value })} placeholder="Description" className="px-4 py-3 bg-background border border-secondary/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary/20 text-sm font-medium w-full md:col-span-2 resize-none h-24"></textarea>
                   </div>
                   <div className="flex gap-4 self-end">
                     <button type="button" onClick={clearCakeForm} className="bg-secondary/5 text-secondary px-6 py-3 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-secondary/10 transition-colors">Cancel</button>
@@ -380,13 +381,13 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
                   <div className="h-40 overflow-hidden relative">
                     <img src={cake.img} alt={cake.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     <div className="absolute top-4 right-4 flex gap-2">
-                      <button 
+                      <button
                         onClick={() => openEditForm(cake)}
                         className="p-2 bg-surface/90 backdrop-blur-sm rounded-lg text-secondary hover:bg-secondary hover:text-white transition-colors animate-fade-in"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleDeleteCake(cake.id)}
                         className="p-2 bg-surface/90 backdrop-blur-sm rounded-lg text-red-500 hover:bg-red-500 hover:text-white transition-colors transition-all"
                       >
@@ -408,7 +409,7 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
         )}
 
         {activeTab === 'users' && (
-          <motion.div 
+          <motion.div
             key="users"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -445,16 +446,15 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
                         <td className="py-4 px-6 font-medium text-secondary">{u.name}</td>
                         <td className="py-4 px-6 text-secondary/70">{u.email}</td>
                         <td className="py-4 px-6">
-                          <span className={`inline-block px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider ${
-                            u.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-secondary/10 text-secondary'
-                          }`}>
+                          <span className={`inline-block px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider ${u.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-secondary/10 text-secondary'
+                            }`}>
                             {u.role}
                           </span>
                         </td>
-                        <td className="py-4 px-6 text-secondary/60">{u.joinedAt ? new Date(u.joinedAt.seconds ? u.joinedAt.seconds * 1000 : u.joinedAt).toLocaleDateString() : 'Just now'}</td>
-                        <td className="py-4 px-6 text-secondary/60">{u.ordersCount || 0}</td>
+                        <td className="py-4 px-6 text-secondary/60">{u.joined_at ? new Date(u.joined_at).toLocaleDateString() : 'Just now'}</td>
+                        <td className="py-4 px-6 text-secondary/60">{u.orders_count ?? 0}</td>
                         <td className="py-4 px-6 text-right">
-                          <button 
+                          <button
                             className="p-2 text-secondary/40 hover:text-red-500 transition-colors"
                             onClick={() => handleDeleteUser(u.id)}
                             disabled={u.email === 'bmkaranja001@gmail.com'}

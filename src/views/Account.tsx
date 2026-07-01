@@ -26,8 +26,8 @@ export default function Account({ user, setUser, setView }: { user: any, setUser
       const { data, error } = await supabase
         .from('orders')
         .select('*')
-        .eq('user_id', user.uid)
-        .order('createdAt', { ascending: false });
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       setOrders(data || []);

@@ -98,7 +98,7 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
       cakeDetails: cakeDetails || 'Details TBD',
       designSketch: cart.find(c => c.config?.sketchUrl)?.config?.sketchUrl || null,
       gauge: typeof gauge === 'string' ? gauge : String(gauge),
-      createdAt: new Date().toISOString()
+      created_at: new Date().toISOString()
     }]);
   };
 
