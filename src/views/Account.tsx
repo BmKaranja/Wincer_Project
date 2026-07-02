@@ -199,7 +199,7 @@ export default function Account({ user, setUser, setView }: { user: any, setUser
                           </span>
                         </div>
                         <p className="text-sm text-on-surface-variant font-medium">
-                          {order.amount} • {order.paymentMethod}
+                          {order.amount} • {order.payment_method}
                         </p>
                       </div>
                       <div className="flex items-center gap-2 w-full sm:w-auto">

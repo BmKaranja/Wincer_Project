@@ -14,8 +14,8 @@ export default function AdminCalendar({ orders, inquiries }: { orders: any[], in
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
 
   // Combine orders and inquiries that have a date
-  const ordersWithDate = orders.filter(o => o.deliveryDate).map(o => ({ ...o, _calDate: o.deliveryDate, _type: 'order' }));
-  const inquiriesWithDate = inquiries.filter(i => i.eventDate).map(i => ({ ...i, _calDate: i.eventDate, _type: 'inquiry' }));
+  const ordersWithDate = orders.filter(o => o.delivery_date).map(o => ({ ...o, _calDate: o.delivery_date, _type: 'order' }));
+  const inquiriesWithDate = inquiries.filter(i => i.event_date).map(i => ({ ...i, _calDate: i.event_date, _type: 'inquiry' }));
   const allEvents = [...ordersWithDate, ...inquiriesWithDate];
 
   // Pad the start of the calendar to align days correctly
@@ -74,9 +74,9 @@ export default function AdminCalendar({ orders, inquiries }: { orders: any[], in
                 
                 <div className="flex flex-col gap-1">
                   {dayEvents.slice(0, 3).map((ev, i) => (
-                    <div key={i} className="bg-surface border border-secondary/10 rounded-md p-1 px-2 text-[10px] truncate" title={`${ev.name || ev.customer}'s ${ev.occasionType || 'Order'}`}>
+                    <div key={i} className="bg-surface border border-secondary/10 rounded-md p-1 px-2 text-[10px] truncate" title={`${ev.name || ev.customer}'s ${ev.occasion_type || 'Order'}`}>
                       <span className="font-bold text-secondary mr-1">{ev.name || ev.customer}</span>
-                      <span className="text-secondary/60">({ev.occasionType || 'Order'})</span>
+                      <span className="text-secondary/60">({ev.occasion_type || 'Order'})</span>
                     </div>
                   ))}
                   {dayEvents.length > 3 && (

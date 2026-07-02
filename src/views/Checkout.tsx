@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ChevronRight, UtensilsCrossed, Calendar, Lock, ShieldCheck, Truck, ArrowRight, CheckCircle2, X, Wand2 } from 'lucide-react';
 import { supabase } from '../supabase';
 import { DELIVERY_ZONES } from '../constants';
+import { fetchJson, getFriendlyErrorMessage } from '../lib/api';
 
 export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemove, user }: { 
   setView: (v: string) => void, 
@@ -86,170 +87,164 @@ export default function Checkout({ setView, cart, onOrderPlaced, onEdit, onRemov
       user_id: user ? user.uid : 'guest',
       customer: user ? (user.name || user.email || mpesaPhone) : mpesaPhone,
       amount: `Kshs. ${total}`,
-      paidAmount: `Kshs. ${amountToPayNow}`,
-      paymentMethod: paymentInfo,
+      paid_amount: `Kshs. ${amountToPayNow}`,
+      payment_method: paymentInfo,
       status: finalStatus,
-      deliveryDate: deliveryDate,
-      deliveryWindow: deliveryWindow,
-      deliveryZone: selectedZone.name,
-      shippingAddress: address,
+      delivery_date: deliveryDate,
+      delivery_window: deliveryWindow,
+      delivery_zone: selectedZone.name,
+      shipping_address: address,
       city: city,
-      cakeTitle: cakeTitles || 'Custom Cake',
-      cakeDetails: cakeDetails || 'Details TBD',
-      designSketch: cart.find(c => c.config?.sketchUrl)?.config?.sketchUrl || null,
+      cake_title: cakeTitles || 'Custom Cake',
+      cake_details: cakeDetails || 'Details TBD',
+      design_sketch: cart.find(c => c.config?.sketchUrl)?.config?.sketchUrl || '',
       gauge: typeof gauge === 'string' ? gauge : String(gauge),
       created_at: new Date().toISOString()
     }]);
   };
 
+const logCheckoutError = (context: string, error: unknown) => {
+  console.error(JSON.stringify({
+    level: 'error',
+    source: 'Checkout',
+    context,
+    message: error instanceof Error ? error.message : String(error),
+    stack: error instanceof Error ? error.stack : undefined,
+    timestamp: new Date().toISOString(),
+  }));
+};
+
 const handleManualCodeSubmit = async () => {
   const cleanCode = manualMpesaCode.trim().toUpperCase();
-  
-  // M-Pesa codes are 10 alphanumeric characters (letters and digits, any combination)
+
   if (!/^[A-Z0-9]{10}$/.test(cleanCode)) {
-    setErrorState('Invalid M-Pesa Code. Must be exactly 10 alphanumeric characters (e.g. RG85H91JK2).');
+    setErrorState('Please enter a valid 10-character M-Pesa transaction code.');
     return;
   }
-  
+
   setIsManualConfirming(true);
   setErrorState('');
+
   try {
     const orderId = currentOrderId || Date.now().toString();
-    
-    // Call backend to verify code
-    const response = await fetch('/api/mpesa/verify-code', {
+    const data = await fetchJson('/api/mpesa/verify-code', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         phone: mpesaPhone,
         amount: amountToPayNow,
         reference: orderId,
-        code: cleanCode
-      })
+        code: cleanCode,
+      }),
     });
 
-    const data = await response.json();
-
-    if (!response.ok || !data.success) {
-      setErrorState(data.error || (data.errors ? data.errors.map((e: any) => e.msg).join(', ') : 'Code verification failed'));
+    if (!data.success) {
+      setErrorState(getFriendlyErrorMessage(data.error || 'Verification failed. Please try again.'));
       return;
     }
 
-    // Code verified, create order
     await createDatabaseOrder(orderId, cleanCode);
     isManualVerifiedRef.current = true;
     setIsPromptingMpesa(false);
     setIsSuccess(true);
     onOrderPlaced();
-  } catch (err: any) {
-    console.error(err);
-    setErrorState('Failed to verify code: ' + (err.message || 'Unknown Error'));
+  } catch (error) {
+    logCheckoutError('manual-code-submit', error);
+    setErrorState(getFriendlyErrorMessage(error, 'Unable to verify your code. Please try again or contact support.'));
   } finally {
     setIsManualConfirming(false);
   }
-};  
+};
 
-  const handlePlaceOrder = async () => {
-    setIsPromptingMpesa(true);
-    setIsPlacing(true);
-    setErrorState('');
-    setManualMpesaCode('');
-    isManualVerifiedRef.current = false;
-    
-    try {
-      const orderId = Date.now().toString();
-      setCurrentOrderId(orderId);
- 
-      // 1. Initiate STK Push via backend
-      const response = await fetch('/api/mpesa/stkpush',{
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          phone: mpesaPhone,
-          amount: amountToPayNow,
-          reference: orderId,
-          description: `WincerCakeHouse Order ${orderId}`
-        })
-      });
- 
-      const text = await response.text();
-      let data: any = {};
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        throw new Error(`Payment failed: ${response.status}. Not JSON: ${text.substring(0, 100)}`);
+const handlePlaceOrder = async () => {
+  setIsPromptingMpesa(true);
+  setIsPlacing(true);
+  setErrorState('');
+  setManualMpesaCode('');
+  isManualVerifiedRef.current = false;
+
+  try {
+    const orderId = Date.now().toString();
+    setCurrentOrderId(orderId);
+
+    const paymentResponse = await fetchJson('/api/mpesa/stkpush', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phone: mpesaPhone,
+        amount: amountToPayNow,
+        reference: orderId,
+        description: `WincerCakeHouse Order ${orderId}`,
+      }),
+    });
+
+    const requestId = paymentResponse?.data?.CheckoutRequestID || paymentResponse?.CheckoutRequestID;
+    if (!requestId) {
+      throw new Error('Payment gateway did not return a request ID. Please try again.');
+    }
+
+    let attempts = 0;
+    let paymentConfirmed = false;
+    let pollFailed = false;
+    let pollFailReason = '';
+    const maxAttempts = 40;
+
+    while (attempts < maxAttempts && !paymentConfirmed && !pollFailed && !isManualVerifiedRef.current) {
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      attempts += 1;
+
+      if (isManualVerifiedRef.current) {
+        paymentConfirmed = true;
+        break;
       }
 
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || `Payment failed: ${response.status}. Data: ${JSON.stringify(data)}`);
-      } 
-      const requestId = data?.data?.CheckoutRequestID || data?.CheckoutRequestID;
-if (!requestId) {
-  throw new Error('No Request ID returned from M-Pesa. Response: ' + JSON.stringify(data));
-}
- 
-      // 2. Poll for status
-      let attempts = 0;
-      let paymentConfirmed = false;
-      let pollFailed = false;
-      let pollFailReason = '';
-      const maxAttempts = 40; // 40 * 3s = 120s total lock
-      
-      while (attempts < maxAttempts && !paymentConfirmed && !pollFailed && !isManualVerifiedRef.current) {
-        await new Promise(r => setTimeout(r, 3000)); // wait 3 seconds
-        attempts++;
-        
-        if (isManualVerifiedRef.current) {
+      try {
+        const statusData = await fetchJson(`/api/mpesa/status/${requestId}`);
+
+        if (statusData.status === 'success') {
           paymentConfirmed = true;
           break;
         }
-        
-        try {
-          const statusRes = await fetch(`/api/mpesa/status/${requestId}`);
-          const statusData = await statusRes.json();
-          
-          if (statusData.status === 'success') {
-            paymentConfirmed = true;
-            break;
-          } else if (statusData.status === 'failed') {
-            pollFailed = true;
-            pollFailReason = statusData.message || statusData.data?.resultDesc || 'Payment was cancelled or declined by M-Pesa.';
-            break;
-          } else if (statusData.status === 'expired') {
-            // Expired but user may have paid — let them enter code manually
-            break;
-          }
-        } catch (pollErr) {
-          console.warn('Poll error, retrying...', pollErr);
+
+        if (statusData.status === 'failed') {
+          pollFailed = true;
+          pollFailReason = statusData.message || 'The payment was declined or cancelled.';
+          break;
         }
-      }
 
-      if (pollFailed) {
-        throw new Error(`M-Pesa Payment Failed: ${pollFailReason}`);
+        if (statusData.status === 'expired') {
+          break;
+        }
+      } catch (pollError) {
+        logCheckoutError('payment-status-poll', pollError);
       }
-
-      if (isManualVerifiedRef.current) {
-        return; // successfully handled by manual submit
-      }
-
-      if (!paymentConfirmed) {
-        throw new Error('M-Pesa payment timed out. Did you enter your PIN?');
-      }
-      
-      setIsPromptingMpesa(false);
-      await createDatabaseOrder(orderId);
-      setIsSuccess(true);
-      onOrderPlaced();
-    } catch (err: any) {
-      console.error(err);
-      setIsPromptingMpesa(false);
-      setErrorState(err.message || 'Failed to place order');
-    } finally {
-      setIsPlacing(false);
     }
-  };
+
+    if (pollFailed) {
+      throw new Error(`Payment failed: ${pollFailReason}`);
+    }
+
+    if (isManualVerifiedRef.current) {
+      return;
+    }
+
+    if (!paymentConfirmed) {
+      setErrorState('Payment is taking longer than expected. If you already entered your M-Pesa PIN, please do not submit again immediately.');
+      return;
+    }
+
+    setIsPromptingMpesa(false);
+    await createDatabaseOrder(orderId);
+    setIsSuccess(true);
+    onOrderPlaced();
+  } catch (error) {
+    logCheckoutError('place-order', error);
+    setErrorState(getFriendlyErrorMessage(error, 'Unable to complete your payment. Please try again or contact support.'));
+  } finally {
+    setIsPromptingMpesa(false);
+    setIsPlacing(false);
+  }
+};
 
   return (
     <motion.main 

@@ -32,7 +32,7 @@ export default function SalesReports({ orders }: { orders: any[] }) {
       }
       
       // Process flavors
-      const details = (o.cakeTitle || '') + ' ' + (o.cakeDetails || '');
+      const details = (o.cake_title || '') + ' ' + (o.cake_details || '');
       const t = details.toLowerCase();
       if (t) {
         let flavor = 'Other';

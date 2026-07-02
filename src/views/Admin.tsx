@@ -36,26 +36,32 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
         console.error('Failed to fetch cakes:', error.message);
         setCakeFormError('Failed to fetch cakes: ' + error.message);
       }
-      setCakes(data || []);
+      const normalizedCakes = (data || []).map((cake: any) => ({
+        ...cake,
+        title: cake.tittle || cake.title || '',
+      }));
+      setCakes(normalizedCakes);
     };
 
     const fetchOrders = async () => {
-      const { data, error } = await supabase.from('orders').select('*');
-      if (error) {
-        console.error('Failed to fetch orders:', error.message);
-      }
-      if (data) {
-        setOrders(data.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()));
+      try {
+        const res = await fetch('/api/admin/orders');
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        setOrders((data || []).sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()));
+      } catch (err: any) {
+        console.error('Failed to fetch orders:', err.message || err);
       }
     };
 
     const fetchInquiries = async () => {
-      const { data, error } = await supabase.from('inquiries').select('*');
-      if (error) {
-        console.error('Failed to fetch inquiries:', error.message);
-      }
-      if (data) {
-        setInquiries(data.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()));
+      try {
+        const res = await fetch('/api/admin/inquiries');
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        setInquiries((data || []).sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()));
+      } catch (err: any) {
+        console.error('Failed to fetch inquiries:', err.message || err);
       }
     };
 
@@ -96,7 +102,7 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
     setIsAddingCake(false);
     setEditingCake(cake);
     setCakeForm({
-      title: cake.title || '',
+      title: cake.tittle || cake.title || '',
       price: cake.price || '',
       desc: cake.desc || '',
       img: cake.img || '',
@@ -136,7 +142,7 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
     try {
       if (editingCake) {
         const { error } = await supabase.from('cakes').update({
-          title: cakeForm.title,
+          tittle: cakeForm.title,
           price: cakeForm.price,
           desc: cakeForm.desc,
           img: cakeForm.img,
@@ -151,13 +157,14 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
         const id = Date.now().toString();
         await supabase.from('cakes').insert([{
           id,
-          title: cakeForm.title,
+          tittle: cakeForm.title,
           price: cakeForm.price,
           desc: cakeForm.desc,
           img: cakeForm.img,
           tag: cakeForm.tag || '',
           gauge: cakeForm.gauge || '',
-          gaugeVal: cakeForm.gaugeVal || ''
+          gaugeVal: cakeForm.gaugeVal || '',
+          created_at: new Date().toISOString()
         }]);
       }
       clearCakeForm();

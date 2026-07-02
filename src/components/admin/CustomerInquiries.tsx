@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { supabase } from '../../supabase';
 import { MessageSquare, Trash2, Eye, X } from 'lucide-react';
 
 export default function CustomerInquiries({ inquiries }: { inquiries: any[] }) {
@@ -63,7 +62,7 @@ export default function CustomerInquiries({ inquiries }: { inquiries: any[] }) {
                     </td>
                     <td className="py-4 px-4">
                       <span className="bg-secondary/10 text-secondary px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider block w-fit mb-1">
-                        {row.occasionType} - {row.eventDate}
+                        {row.occasion_type} - {row.event_date}
                       </span>
                     </td>
                     <td className="py-4 px-4">
@@ -72,9 +71,16 @@ export default function CustomerInquiries({ inquiries }: { inquiries: any[] }) {
                         onChange={async (e) => {
                           try {
                             setErrorMsg(null);
-                            await supabase.from('inquiries').update({ status: e.target.value }).eq('id', row.id);
+                            const res = await fetch(`/api/admin/inquiries/${row.id}`, {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ status: e.target.value }),
+                            });
+                            if (!res.ok) {
+                              throw new Error(await res.text());
+                            }
                           } catch (err: any) {
-                            setErrorMsg("Failed to update status: " + err.message);
+                            setErrorMsg("Failed to update status: " + (err.message || err));
                             console.error(err);
                           }
                         }}
@@ -89,7 +95,7 @@ export default function CustomerInquiries({ inquiries }: { inquiries: any[] }) {
                       </select>
                     </td>
                     <td className="py-4 px-4 text-sm text-secondary/60">
-                      {row.createdAt ? new Date(row.createdAt.seconds ? row.createdAt.seconds * 1000 : row.createdAt).toLocaleDateString() : 'Just now'}
+                      {row.created_at ? new Date(row.created_at.seconds ? row.created_at.seconds * 1000 : row.created_at).toLocaleDateString() : 'Just now'}
                     </td>
                     <td className="py-4 px-4 text-right flex items-center justify-end gap-2">
                       <button
@@ -146,10 +152,13 @@ export default function CustomerInquiries({ inquiries }: { inquiries: any[] }) {
                   onClick={async () => {
                     try {
                       setErrorMsg(null);
-                      await supabase.from('inquiries').delete().eq('id', deletingInquiry.id);
+                      const res = await fetch(`/api/admin/inquiries/${deletingInquiry.id}`, { method: 'DELETE' });
+                      if (!res.ok) {
+                        throw new Error(await res.text());
+                      }
                       setDeletingInquiry(null);
                     } catch (err: any) {
-                      setErrorMsg("Failed to delete: " + err.message);
+                      setErrorMsg("Failed to delete: " + (err.message || err));
                     }
                   }}
                   className="flex-1 py-2 bg-red-500 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-red-600 transition-colors"
@@ -188,18 +197,18 @@ export default function CustomerInquiries({ inquiries }: { inquiries: any[] }) {
                 </div>
                 <div>
                   <label className="text-[10px] font-bold uppercase tracking-widest text-secondary/60">Event Date</label>
-                  <p className="font-medium text-secondary">{viewingInquiry.eventDate}</p>
+                  <p className="font-medium text-secondary">{viewingInquiry.event_date}</p>
                 </div>
                 <div>
                   <label className="text-[10px] font-bold uppercase tracking-widest text-secondary/60">Occasion Type</label>
-                  <p className="font-medium text-secondary">{viewingInquiry.occasionType}</p>
+                  <p className="font-medium text-secondary">{viewingInquiry.occasion_type}</p>
                 </div>
               </div>
 
               <div>
                 <label className="text-[10px] font-bold uppercase tracking-widest text-secondary/60">Cake Details</label>
                 <div className="mt-1 p-4 bg-secondary/[0.02] rounded-xl border border-secondary/10 whitespace-pre-wrap text-sm text-secondary/80">
-                  {viewingInquiry.cakeDetails || 'N/A'}
+                  {viewingInquiry.cake_details || 'N/A'}
                 </div>
               </div>
 
@@ -210,12 +219,12 @@ export default function CustomerInquiries({ inquiries }: { inquiries: any[] }) {
                 </div>
               </div>
 
-              {viewingInquiry.sketchUrl && (
+              {viewingInquiry.sketch_url && (
                 <div>
                   <label className="text-[10px] font-bold uppercase tracking-widest text-secondary/60">Inspiration Reference Photo</label>
                   <div className="mt-2 text-center bg-secondary/[0.02] p-4 rounded-xl border border-secondary/10 flex items-center justify-center">
                     <img
-                      src={viewingInquiry.sketchUrl}
+                      src={viewingInquiry.sketch_url}
                       alt="Customer Design Reference"
                       className="max-h-80 w-auto rounded-xl object-contain border border-secondary/10 shadow-sm"
                     />

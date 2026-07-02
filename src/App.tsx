@@ -54,13 +54,16 @@ export default function App() {
       const { data, error } = await supabase.from('cakes').select('*');
       if (error) console.error("Error fetching cakes:", error);
 
-      const fetchedCakes = data || [];
+      const fetchedCakes = (data || []).map((cake: any) => ({
+        ...cake,
+        title: cake.tittle || cake.title || '',
+      }));
       const testCake = {
         id: 'mpesa-test-1',
         title: 'M-Pesa Test Cake (1 Ksh)',
         desc: 'A 1 Shilling test cake to verify M-Pesa STK Push integration.',
         price: 1,
-        image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&q=80',
+        img: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&q=80',
         tag: 'Bestseller'
       };
 

@@ -36,6 +36,52 @@ const poolAgent = new Agent({
 setGlobalDispatcher(poolAgent);
 
 // ---------------------------------------------------------
+// Logging and error utilities
+// ---------------------------------------------------------
+
+function getRequestContext(req?: express.Request) {
+  if (!req) {
+    return {
+      service: 'wincer-backend',
+      method: 'unknown',
+      path: 'unknown',
+      ip: 'unknown',
+      userAgent: undefined,
+      query: undefined,
+      params: undefined,
+    };
+  }
+
+  return {
+    service: 'wincer-backend',
+    method: req.method,
+    path: req.path,
+    ip: req.ip || req.headers['x-forwarded-for'] || 'unknown',
+    userAgent: typeof req.headers['user-agent'] === 'string'
+      ? req.headers['user-agent'].slice(0, 200)
+      : undefined,
+    query: req.query,
+    params: req.params,
+  };
+}
+
+function logServerError(req: express.Request | undefined, error: any, extra: Record<string, any> = {}) {
+  const payload = {
+    level: 'error',
+    timestamp: new Date().toISOString(),
+    message: error?.message || 'Unknown server error',
+    stack: process.env.NODE_ENV !== 'production' ? error?.stack : undefined,
+    ...getRequestContext(req),
+    ...extra,
+  };
+  console.error(JSON.stringify(payload));
+}
+
+function sendServerError(res: express.Response, message = 'An internal error occurred. Please try again later.') {
+  return res.status(500).json({ success: false, error: message });
+}
+
+// ---------------------------------------------------------
 // Security / utility helpers
 // ---------------------------------------------------------
 
@@ -78,7 +124,7 @@ async function startServer() {
 
   const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    limit: 100,
+    max: 100,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
     message: { success: false, error: 'Too many requests, please try again later.' },
@@ -86,20 +132,47 @@ async function startServer() {
 
   const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    limit: 5,
+    max: 5,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
     message: { success: false, error: 'Too many authentication attempts, please try again in 15 minutes.' },
   });
 
+  const adminLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 15,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    message: { success: false, error: 'Too many admin requests, please try again later.' },
+  });
+
+  const sensitiveLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    message: { success: false, error: 'Too many requests to sensitive endpoints. Please wait and try again.' },
+  });
+
+  const heavyQueryLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 30,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    message: { success: false, error: 'Too many data fetch requests. Please slow down.' },
+  });
+
   app.use('/api/', (req, res, next) => {
-    // Exclude Safaricom callback from general rate limit to prevent dropping payments
-    if (req.path === '/mpesa/callback') {
+    if (req.path === '/mpesa/callback' || req.path.startsWith('/auth') || req.path.startsWith('/admin')) {
       return next();
     }
     generalLimiter(req, res, next);
   });
-  app.use('/api/auth/', authLimiter);
+  app.use('/api/auth', authLimiter);
+  app.use('/api/admin', adminLimiter);
+  app.use('/api/mpesa/stkpush', sensitiveLimiter);
+  app.use('/api/mpesa/verify-code', sensitiveLimiter);
+  app.use('/api/mpesa/status', heavyQueryLimiter);
 
   app.use(express.json({ limit: '10kb' }));
   app.use(express.urlencoded({ extended: true, limit: '10kb' }));
@@ -120,6 +193,48 @@ async function startServer() {
   const MPESA_CALLBACK_SECRET = process.env.MPESA_CALLBACK_SECRET || 'dev_fallback_secret_token';
   if (!process.env.MPESA_CALLBACK_SECRET) {
     console.warn('[SECURITY WARNING] MPESA_CALLBACK_SECRET is not set. Using dev fallback. Set this env var before going to production.');
+  }
+
+  const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173')
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(Boolean);
+
+  if (process.env.NODE_ENV === 'production' && !process.env.CORS_ORIGIN) {
+    console.warn('[SECURITY WARNING] CORS_ORIGIN is not configured. Set this to your production frontend domain.');
+  }
+
+  app.use((req, res, next) => {
+    const origin = typeof req.headers.origin === 'string' ? req.headers.origin : '';
+    if (origin) {
+      if (!allowedOrigins.includes(origin)) {
+        return res.status(403).json({ success: false, error: 'Origin not allowed' });
+      }
+      res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+
+    res.setHeader('Vary', 'Origin');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-admin-secret');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
+
+    if (req.method === 'OPTIONS') return res.sendStatus(204);
+    next();
+  });
+
+  // Admin HTTP secret protects internal admin endpoints. Set ADMIN_HTTP_SECRET in production.
+  const ADMIN_HTTP_SECRET = process.env.ADMIN_HTTP_SECRET || '';
+
+  function requireAdmin(req: any, res: any, next: any) {
+    // Prefer a short-lived Supabase JWT in Authorization header in future; for now require server-side secret header.
+    const provided = (req.headers['x-admin-secret'] || req.headers['x-admin-token'] || '').toString();
+    if (!ADMIN_HTTP_SECRET) {
+      console.warn('[SECURITY] ADMIN_HTTP_SECRET is not set — admin endpoints are unprotected on this server instance.');
+      return res.status(503).json({ success: false, error: 'Server not configured for admin access' });
+    }
+    if (!provided || provided !== ADMIN_HTTP_SECRET) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+    return next();
   }
 
   let cachedMpesaToken = '';
@@ -144,7 +259,7 @@ async function startServer() {
     }, 8000);
 
     if (!response.ok) {
-      console.error('Mpesa token error: status', response.status);
+      logServerError(undefined, new Error(`Mpesa token request failed with status ${response.status}`), { operation: 'mpesa-token' });
       throw new Error(`Failed to get token: ${response.status}`);
     }
 
@@ -275,28 +390,28 @@ async function startServer() {
         try {
           data = JSON.parse(responseText);
         } catch (parseError) {
-          console.error('Failed to parse JSON response from Safaricom');
+          logServerError(req, parseError, { operation: 'stkpush-parse-response' });
           return res.status(502).json({
             success: false,
-            error: 'Invalid response from M-Pesa (not JSON)'
+            error: 'Invalid response from M-Pesa. Please try again later.'
           });
         }
 
         if (!response.ok) {
-          console.error("STK Push error:", data?.errorMessage || data?.message);
+          logServerError(req, new Error(data?.errorMessage || data?.message || 'M-Pesa request failed'), { operation: 'stkpush-response', status: response.status });
           return res.status(response.status).json({
             success: false,
-            error: data.errorMessage || data.message || 'M-Pesa request failed'
+            error: data.errorMessage || data.message || 'Payment provider returned an error. Please try again.'
           });
         }
 
         const checkoutRequestID = data.CheckoutRequestID;
 
         if (!checkoutRequestID) {
-          console.error('No CheckoutRequestID in response');
+          logServerError(req, new Error('No CheckoutRequestID returned by M-Pesa'), { operation: 'stkpush-missing-id' });
           return res.status(400).json({
             success: false,
-            error: 'M-Pesa did not return a CheckoutRequestID'
+            error: 'Payment gateway did not return an expected identifier. Please try again.'
           });
         }
 
@@ -312,16 +427,16 @@ async function startServer() {
         }]);
 
         if (insertErr) {
-          console.error('Failed to save transaction to database:', insertErr);
+          logServerError(req, insertErr, { operation: 'stkpush-save-transaction' });
           return res.status(500).json({
             success: false,
-            error: 'Failed to save transaction to database. Please check your Supabase Service Role Key and permissions.'
+            error: 'Failed to record payment request. Please try again later.'
           });
         }
 
         res.json({ success: true, data });
       } catch (error: any) {
-        console.error('STK Push Exception:', error.message);
+        logServerError(req, error, { operation: 'stkpush' });
         next(error);
       }
     }
@@ -369,12 +484,12 @@ async function startServer() {
         .eq('status', 'pending'); // idempotency guard
 
       if (updateError) {
-        console.error('Callback DB update error:', updateError.message);
+        logServerError(req, updateError, { operation: 'mpesa-callback-db-update' });
       }
 
       res.json({ message: 'Success' });
     } catch (error) {
-      console.error('Callback error:', error);
+      logServerError(req, error, { operation: 'mpesa-callback' });
       next(error);
     }
   });
@@ -557,45 +672,200 @@ async function startServer() {
           message: data.resultDesc || 'Payment failed'
         });
       } catch (error) {
-        console.error('Status check error:', error);
-        res.status(500).json({ success: false, error: 'Status check failed' });
+        logServerError(req, error, { operation: 'mpesa-status-check' });
+        res.status(500).json({ success: false, error: 'Unable to verify payment status at this time. Please try again later.' });
       }
     }
   );
 
+  const ALLOWED_USER_ROLES = ['user', 'admin'];
+  const ORDER_STATUSES = ['Pending', 'Pending Verification', 'Confirmed (Pending Balance)', 'Preparing', 'Ready', 'Fully Paid', 'Delivered', 'Cancelled'];
+  const INQUIRY_STATUSES = ['Pending', 'Needs Reply', 'Resolved', 'Closed'];
+
   // Admin Users API routes to bypass RLS type mismatch issues on users table
-  app.get('/api/admin/users', async (req, res) => {
+  app.get('/api/admin/users', requireAdmin, async (req, res) => {
     try {
       const { data, error } = await supabaseAdmin.from('users').select('*');
       if (error) throw error;
       res.json(data || []);
     } catch (err: any) {
-      console.error('Failed to fetch users:', err);
-      res.status(500).json({ success: false, error: err.message });
+      logServerError(req, err, { operation: 'admin-fetch-users' });
+      res.status(500).json({ success: false, error: 'Failed to load users. Please try again later.' });
     }
   });
 
-  app.post('/api/admin/users', async (req, res) => {
+  app.post('/api/admin/users', requireAdmin,
+    [
+      body('id').optional().trim().notEmpty().isLength({ max: 64 }).matches(/^[A-Za-z0-9_-]+$/)
+        .withMessage('User id must be alphanumeric and may include - or _ (max 64 chars)'),
+      body('uid').optional().trim().notEmpty().isLength({ max: 64 }).matches(/^[A-Za-z0-9_-]+$/)
+        .withMessage('User uid must be alphanumeric and may include - or _ (max 64 chars)'),
+      body('email').optional().trim().normalizeEmail().isEmail().withMessage('Valid email is required'),
+      body('name').optional().trim().isLength({ min: 1, max: 100 }).withMessage('Name must be under 100 characters'),
+      body('role').optional().isIn(ALLOWED_USER_ROLES).withMessage(`Role must be one of: ${ALLOWED_USER_ROLES.join(', ')}`),
+      body('joined_at').optional().isISO8601().withMessage('joined_at must be a valid date'),
+      body('orders_count').optional().isInt({ min: 0 }).withMessage('orders_count must be a non-negative integer').toInt()
+    ],
+    validate,
+    async (req: express.Request, res: express.Response) => {
+      try {
+        // Whitelist allowed user fields to prevent unexpected data injection
+        const allowed = ['id', 'uid', 'email', 'name', 'role', 'joined_at', 'orders_count'];
+        const payload: any = {};
+        for (const k of allowed) if (Object.prototype.hasOwnProperty.call(req.body, k)) payload[k] = req.body[k];
+        if (Object.keys(payload).length === 0) return res.status(400).json({ success: false, error: 'No valid fields provided' });
+        const { data, error } = await supabaseAdmin.from('users').insert([payload]).select();
+        if (error) throw error;
+        res.json(data?.[0] || { success: true });
+      } catch (err: any) {
+        logServerError(req, err, { operation: 'admin-add-user' });
+        res.status(500).json({ success: false, error: 'Unable to add user. Please try again later.' });
+      }
+    }
+  );
+
+  app.delete('/api/admin/users/:id', requireAdmin,
+    [
+      param('id').trim().notEmpty().isLength({ max: 64 }).matches(/^[A-Za-z0-9_-]+$/)
+        .withMessage('Invalid user id')
+    ],
+    validate,
+    async (req: express.Request, res: express.Response) => {
+      try {
+        const { error } = await supabaseAdmin.from('users').delete().eq('id', req.params.id);
+        if (error) throw error;
+        res.json({ success: true });
+      } catch (err: any) {
+        logServerError(req, err, { operation: 'admin-delete-user' });
+        res.status(500).json({ success: false, error: 'Unable to delete user. Please try again later.' });
+      }
+    }
+  );
+
+  app.get('/api/admin/orders', requireAdmin, async (req, res) => {
     try {
-      const { data, error } = await supabaseAdmin.from('users').insert([req.body]).select();
+      const { data, error } = await supabaseAdmin.from('orders').select('*').order('created_at', { ascending: false });
       if (error) throw error;
-      res.json(data?.[0] || { success: true });
+      res.json(data || []);
     } catch (err: any) {
-      console.error('Failed to add user:', err);
-      res.status(500).json({ success: false, error: err.message });
+      logServerError(req, err, { operation: 'admin-fetch-orders' });
+      res.status(500).json({ success: false, error: 'Failed to load orders. Please try again later.' });
     }
   });
 
-  app.delete('/api/admin/users/:id', async (req, res) => {
+  app.patch('/api/admin/orders/:id', requireAdmin,
+    [
+      param('id').trim().notEmpty().isLength({ max: 64 }).matches(/^[A-Za-z0-9_-]+$/)
+        .withMessage('Invalid order id'),
+      body('status').optional().trim().isIn(ORDER_STATUSES).withMessage('Invalid order status'),
+      body('delivery_date').optional({ nullable: true, checkFalsy: true }).isISO8601().withMessage('Delivery date must be a valid ISO date'),
+      body('delivery_window').optional({ nullable: true, checkFalsy: true }).trim().isLength({ max: 50 }).withMessage('Delivery window is too long'),
+      body('delivery_zone').optional({ nullable: true, checkFalsy: true }).trim().isLength({ max: 50 }).withMessage('Delivery zone is too long'),
+      body('shipping_address').optional({ nullable: true, checkFalsy: true }).trim().isLength({ max: 200 }).withMessage('Shipping address is too long'),
+      body('city').optional({ nullable: true, checkFalsy: true }).trim().isLength({ max: 100 }).withMessage('City is too long'),
+      body('amount').optional().isFloat({ min: 0 }).withMessage('Amount must be a non-negative number').toFloat(),
+      body('paid_amount').optional().isFloat({ min: 0 }).withMessage('Paid amount must be a non-negative number').toFloat(),
+      body('payment_method').optional({ nullable: true, checkFalsy: true }).trim().isLength({ max: 50 }).withMessage('Payment method is too long'),
+      body('customer').optional({ nullable: true, checkFalsy: true }).trim().isLength({ max: 100 }).withMessage('Customer name is too long'),
+      body('cake_title').optional({ nullable: true, checkFalsy: true }).trim().isLength({ max: 100 }).withMessage('Cake title is too long'),
+      body('cake_details').optional({ nullable: true, checkFalsy: true }).trim().isLength({ max: 500 }).withMessage('Cake details are too long'),
+      body('design_sketch').optional({ nullable: true, checkFalsy: true }).isURL({ require_protocol: true, require_tld: false }).withMessage('Design sketch must be a valid URL'),
+      body('gauge').optional({ nullable: true, checkFalsy: true }).trim().isLength({ max: 50 }).withMessage('Gauge is too long'),
+      body('notes').optional({ nullable: true, checkFalsy: true }).trim().isLength({ max: 500 }).withMessage('Notes are too long')
+    ],
+    validate,
+    async (req: express.Request, res: express.Response) => {
+      try {
+        const allowed = ['status','delivery_date','delivery_window','delivery_zone','shipping_address','city','amount','paid_amount','payment_method','customer','cake_title','cake_details','design_sketch','gauge','notes'];
+        const payload: any = {};
+        for (const k of allowed) if (Object.prototype.hasOwnProperty.call(req.body, k)) payload[k] = req.body[k];
+        if (Object.keys(payload).length === 0) return res.status(400).json({ success: false, error: 'No valid fields provided' });
+        const { data, error } = await supabaseAdmin.from('orders').update(payload).eq('id', req.params.id).select();
+        if (error) throw error;
+        res.json(data?.[0] || { success: true });
+      } catch (err: any) {
+        logServerError(req, err, { operation: 'admin-update-order' });
+        res.status(500).json({ success: false, error: 'Unable to update order at the moment. Please try again later.' });
+      }
+    }
+  );
+
+  app.delete('/api/admin/orders/:id', requireAdmin,
+    [
+      param('id').trim().notEmpty().isLength({ max: 64 }).matches(/^[A-Za-z0-9_-]+$/)
+        .withMessage('Invalid order id')
+    ],
+    validate,
+    async (req: express.Request, res: express.Response) => {
+      try {
+        const { error } = await supabaseAdmin.from('orders').delete().eq('id', req.params.id);
+        if (error) throw error;
+        res.json({ success: true });
+      } catch (err: any) {
+        logServerError(req, err, { operation: 'admin-delete-order' });
+        res.status(500).json({ success: false, error: 'Unable to delete order. Please try again later.' });
+      }
+    }
+  );
+
+  app.get('/api/admin/inquiries', requireAdmin, async (req, res) => {
     try {
-      const { error } = await supabaseAdmin.from('users').delete().eq('id', req.params.id);
+      const { data, error } = await supabaseAdmin.from('inquiries').select('*').order('created_at', { ascending: false });
       if (error) throw error;
-      res.json({ success: true });
+      res.json(data || []);
     } catch (err: any) {
-      console.error('Failed to delete user:', err);
-      res.status(500).json({ success: false, error: err.message });
+      logServerError(req, err, { operation: 'admin-fetch-inquiries' });
+      res.status(500).json({ success: false, error: 'Failed to load inquiries. Please try again later.' });
     }
   });
+
+  app.patch('/api/admin/inquiries/:id', requireAdmin,
+    [
+      param('id').trim().notEmpty().isLength({ max: 64 }).matches(/^[A-Za-z0-9_-]+$/)
+        .withMessage('Invalid inquiry id'),
+      body('status').optional().trim().isIn(INQUIRY_STATUSES).withMessage('Invalid inquiry status'),
+      body('name').optional({ nullable: true, checkFalsy: true }).trim().isLength({ max: 100 }).withMessage('Name must be under 100 characters'),
+      body('phone').optional({ nullable: true, checkFalsy: true }).trim().matches(/^(?:\+?254|0)?[17]\d{8}$/).withMessage('Phone must be a valid Kenyan number'),
+      body('event_date').optional({ nullable: true, checkFalsy: true }).isISO8601().withMessage('Event date must be a valid ISO date'),
+      body('occasion_type').optional({ nullable: true, checkFalsy: true }).trim().isLength({ max: 100 }).withMessage('Occasion type is too long'),
+      body('cake_details').optional({ nullable: true, checkFalsy: true }).trim().isLength({ max: 500 }).withMessage('Cake details are too long'),
+      body('vision').optional({ nullable: true, checkFalsy: true }).trim().isLength({ max: 500 }).withMessage('Vision is too long'),
+      body('sketch_url').optional({ nullable: true, checkFalsy: true }).isURL({ require_protocol: true, require_tld: false }).withMessage('Sketch URL must be a valid URL')
+    ],
+    validate,
+    async (req: express.Request, res: express.Response) => {
+      try {
+        const allowed = ['status','name','phone','event_date','occasion_type','cake_details','vision','sketch_url'];
+        const payload: any = {};
+        for (const k of allowed) if (Object.prototype.hasOwnProperty.call(req.body, k)) payload[k] = req.body[k];
+        if (Object.keys(payload).length === 0) return res.status(400).json({ success: false, error: 'No valid fields provided' });
+        const { data, error } = await supabaseAdmin.from('inquiries').update(payload).eq('id', req.params.id).select();
+        if (error) throw error;
+        res.json(data?.[0] || { success: true });
+      } catch (err: any) {
+        logServerError(req, err, { operation: 'admin-update-inquiry' });
+        res.status(500).json({ success: false, error: 'Unable to update inquiry at the moment. Please try again later.' });
+      }
+    }
+  );
+
+  app.delete('/api/admin/inquiries/:id', requireAdmin,
+    [
+      param('id').trim().notEmpty().isLength({ max: 64 }).matches(/^[A-Za-z0-9_-]+$/)
+        .withMessage('Invalid inquiry id')
+    ],
+    validate,
+    async (req: express.Request, res: express.Response) => {
+      try {
+        const { error } = await supabaseAdmin.from('inquiries').delete().eq('id', req.params.id);
+        if (error) throw error;
+        res.json({ success: true });
+      } catch (err: any) {
+        logServerError(req, err, { operation: 'admin-delete-inquiry' });
+        res.status(500).json({ success: false, error: 'Unable to delete inquiry. Please try again later.' });
+      }
+    }
+  );
 
   app.use('/api/*', (req, res) => {
     res.status(404).json({ success: false, error: 'Endpoint not found' });
@@ -603,26 +873,21 @@ async function startServer() {
 
   app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
     const isProduction = process.env.NODE_ENV === 'production';
-
-    if (!isProduction) {
-      console.error('Unhandled Error:', err);
-    } else {
-      console.error('Unhandled Error:', err.message);
-    }
-
     const statusCode = err.status || err.statusCode || 500;
-    let message = 'An unexpected error occurred. Please try again later.';
 
+    logServerError(req, err, { stage: 'global-error-handler', statusCode });
+
+    let message = 'An unexpected error occurred. Please try again later.';
     if (!isProduction) {
       message = err.message || 'Internal Server Error';
-    } else if (statusCode < 500) {
+    } else if (statusCode < 500 && err.message) {
       message = err.message;
     }
 
     res.status(statusCode).json({
       success: false,
       error: message,
-      ...(!isProduction && { stack: err.stack, details: err.details })
+      ...(!isProduction && { stack: err.stack, details: err.details }),
     });
   });
 

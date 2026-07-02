@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { supabase } from '../../supabase';
 import { Package, Trash2, Edit2, Eye, X, CheckCircle } from 'lucide-react';
 
 export default function OrderManagement({ orders }: { orders: any[] }) {
@@ -58,12 +57,12 @@ export default function OrderManagement({ orders }: { orders: any[] }) {
                   <tr key={row.id} className="border-b border-secondary/5 hover:bg-secondary/[0.02] transition-colors">
                     <td className="py-4 px-4 font-mono text-sm text-secondary/70">#{row.id.slice(-6)}</td>
                     <td className="py-4 px-4 font-medium text-secondary">{row.customer}</td>
-                    <td className="py-4 px-4 text-sm text-secondary/60">{row.deliveryDate || 'N/A'}</td>
-                    <td className="py-4 px-4 text-xs text-secondary/70 truncate max-w-[150px]" title={row.cakeTitle}>
-                      {row.cakeTitle ? (row.gauge ? `${row.cakeTitle} - ${row.gauge}` : row.cakeTitle) : 'N/A'}
+                    <td className="py-4 px-4 text-sm text-secondary/60">{row.delivery_date || 'N/A'}</td>
+                    <td className="py-4 px-4 text-xs text-secondary/70 truncate max-w-[150px]" title={row.cake_title}>
+                      {row.cake_title ? (row.gauge ? `${row.cake_title} - ${row.gauge}` : row.cake_title) : 'N/A'}
                     </td>
-                    <td className="py-4 px-4 text-xs text-secondary/70 truncate max-w-[200px]" title={row.cakeDetails}>
-                      {row.cakeDetails || 'N/A'}
+                    <td className="py-4 px-4 text-xs text-secondary/70 truncate max-w-[200px]" title={row.cake_details}>
+                      {row.cake_details || 'N/A'}
                     </td>
                     <td className="py-4 px-4">
                       <select 
@@ -71,9 +70,16 @@ export default function OrderManagement({ orders }: { orders: any[] }) {
                         onChange={async (e) => {
                            try {
                               setErrorMsg(null);
-                              await supabase.from('orders').update({ status: e.target.value }).eq('id', row.id);
+                              const res = await fetch(`/api/admin/orders/${row.id}`, {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ status: e.target.value }),
+                              });
+                              if (!res.ok) {
+                                throw new Error(await res.text());
+                              }
                            } catch (err: any) {
-                              setErrorMsg("Failed to update status: " + err.message);
+                              setErrorMsg("Failed to update status: " + (err.message || err));
                               console.error(err);
                            }
                         }}
@@ -158,10 +164,13 @@ export default function OrderManagement({ orders }: { orders: any[] }) {
                   onClick={async () => {
                     try {
                       setErrorMsg(null);
-                      await supabase.from('orders').delete().eq('id', deletingOrder.id);
+                      const res = await fetch(`/api/admin/orders/${deletingOrder.id}`, { method: 'DELETE' });
+                      if (!res.ok) {
+                        throw new Error(await res.text());
+                      }
                       setDeletingOrder(null);
                     } catch (err: any) {
-                      setErrorMsg("Failed to delete: " + err.message);
+                      setErrorMsg("Failed to delete: " + (err.message || err));
                     }
                   }}
                   className="flex-1 py-2 bg-red-500 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-red-600 transition-colors"
@@ -195,47 +204,47 @@ export default function OrderManagement({ orders }: { orders: any[] }) {
                 </div>
                 <div className="flex justify-between pb-4 border-b border-secondary/10">
                   <span className="text-secondary/60 text-sm font-bold uppercase tracking-widest">Delivery Date</span>
-                  <span className="font-medium text-secondary">{viewingOrder.deliveryDate || 'N/A'}</span>
+                  <span className="font-medium text-secondary">{viewingOrder.delivery_date || 'N/A'}</span>
                 </div>
-                {viewingOrder.deliveryZone && (
+                {viewingOrder.delivery_zone && (
                   <div className="flex justify-between pb-4 border-b border-secondary/10">
                     <span className="text-secondary/60 text-sm font-bold uppercase tracking-widest">Delivery Zone</span>
-                    <span className="font-medium text-secondary">{viewingOrder.deliveryZone}</span>
+                    <span className="font-medium text-secondary">{viewingOrder.delivery_zone}</span>
                   </div>
                 )}
-                {viewingOrder.deliveryWindow && (
+                {viewingOrder.delivery_window && (
                   <div className="flex justify-between pb-4 border-b border-secondary/10">
                     <span className="text-secondary/60 text-sm font-bold uppercase tracking-widest">Delivery Window</span>
-                    <span className="font-medium text-secondary">{viewingOrder.deliveryWindow}</span>
+                    <span className="font-medium text-secondary">{viewingOrder.delivery_window}</span>
                   </div>
                 )}
-                {viewingOrder.shippingAddress && (
+                {viewingOrder.shipping_address && (
                   <div className="flex justify-between pb-4 border-b border-secondary/10">
                     <span className="text-secondary/60 text-sm font-bold uppercase tracking-widest">Address</span>
-                    <span className="font-medium text-secondary text-right">{viewingOrder.shippingAddress}, {viewingOrder.city || ''}</span>
+                    <span className="font-medium text-secondary text-right">{viewingOrder.shipping_address}, {viewingOrder.city || ''}</span>
                   </div>
                 )}
                 <div className="flex justify-between pb-4 border-b border-secondary/10">
                   <span className="text-secondary/60 text-sm font-bold uppercase tracking-widest">Cake</span>
-                  <span className="font-medium text-secondary">{viewingOrder.cakeTitle}</span>
+                  <span className="font-medium text-secondary">{viewingOrder.cake_title}</span>
                 </div>
                 <div className="flex justify-between pb-4 border-b border-secondary/10">
                   <span className="text-secondary/60 text-sm font-bold uppercase tracking-widest">Amount</span>
                   <span className="font-serif font-bold text-secondary">{viewingOrder.amount}</span>
                 </div>
-                {viewingOrder.cakeDetails && (
+                {viewingOrder.cake_details && (
                   <div className="pb-4 border-b border-secondary/10">
                     <span className="text-secondary/60 text-sm font-bold uppercase tracking-widest block mb-2">Cake Details</span>
-                    <span className="font-medium text-secondary/80 text-sm">{viewingOrder.cakeDetails}</span>
+                    <span className="font-medium text-secondary/80 text-sm">{viewingOrder.cake_details}</span>
                   </div>
                 )}
-                {viewingOrder.designSketch && (
+                {viewingOrder.design_sketch && (
                   <div className="pb-4 border-b border-secondary/10">
                     <span className="text-secondary/60 text-sm font-bold uppercase tracking-widest block mb-2">Inspiration Sketch / Design Photo</span>
                     <div className="mt-2 text-center">
-                      <a href={viewingOrder.designSketch} target="_blank" rel="noreferrer" title="Click to view full size">
+                      <a href={viewingOrder.design_sketch} target="_blank" rel="noreferrer" title="Click to view full size">
                         <img 
-                          src={viewingOrder.designSketch} 
+                          src={viewingOrder.design_sketch} 
                           alt="Customer Design Sketch" 
                           className="max-w-full max-h-[250px] mx-auto rounded-xl border border-secondary/10 shadow-md hover:brightness-95 transition-all cursor-zoom-in"
                         />
@@ -286,8 +295,8 @@ export default function OrderManagement({ orders }: { orders: any[] }) {
                   <input
                     type="date"
                     className="w-full px-4 py-2 bg-background border border-secondary/10 rounded-xl focus:ring-2 outline-none font-medium text-sm"
-                    value={editingOrder.deliveryDate || ''}
-                    onChange={e => setEditingOrder({...editingOrder, deliveryDate: e.target.value})}
+                    value={editingOrder.delivery_date || ''}
+                    onChange={e => setEditingOrder({...editingOrder, delivery_date: e.target.value})}
                   />
                 </div>
                 <div>
@@ -302,8 +311,8 @@ export default function OrderManagement({ orders }: { orders: any[] }) {
                   <label className="text-[10px] font-bold uppercase tracking-widest text-secondary/60 block mb-1">Cake Details</label>
                   <textarea
                     className="w-full px-4 py-2 bg-background border border-secondary/10 rounded-xl focus:ring-2 outline-none font-medium text-sm h-20 resize-none"
-                    value={editingOrder.cakeDetails || ''}
-                    onChange={e => setEditingOrder({...editingOrder, cakeDetails: e.target.value})}
+                    value={editingOrder.cake_details || ''}
+                    onChange={e => setEditingOrder({...editingOrder, cake_details: e.target.value})}
                   />
                 </div>
                 <div className="pt-4 flex justify-end">
@@ -314,10 +323,17 @@ export default function OrderManagement({ orders }: { orders: any[] }) {
                       try {
                         const { id, saving, ...updateData } = editingOrder;
                         setErrorMsg(null);
-                        await supabase.from('orders').update(updateData).eq('id', id);
+                        const res = await fetch(`/api/admin/orders/${id}`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(updateData),
+                        });
+                        if (!res.ok) {
+                          throw new Error(await res.text());
+                        }
                         setEditingOrder(null);
                       } catch (err: any) {
-                        setErrorMsg("Update failed: " + err.message);
+                        setErrorMsg("Update failed: " + (err.message || err));
                         setEditingOrder({...editingOrder, saving: false});
                       }
                     }}

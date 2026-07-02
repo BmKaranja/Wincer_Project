@@ -74,13 +74,28 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
   const handleInquirySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setErrorMsg('');
 
     try {
-      await supabase.from('inquiries').insert([{
-        ...formData,
+      const { name, phone, eventDate, occasionType, cakeDetails, vision, sketchUrl } = formData;
+      const { data, error } = await supabase.from('inquiries').insert([{
+        name,
+        phone,
+        event_date: eventDate,
+        occasion_type: occasionType,
+        cake_details: cakeDetails,
+        vision,
+        sketch_url: sketchUrl || null,
         status: 'Pending',
-        createdAt: new Date().toISOString()
+        created_at: new Date().toISOString()
       }]);
+
+      if (error) {
+        console.error('Inquiry insert failed:', error);
+        setErrorMsg(error.message || 'Failed to send inquiry. Please try again.');
+        return;
+      }
+
       setIsSubmitted(true);
       setTimeout(() => {
         setView('home');
