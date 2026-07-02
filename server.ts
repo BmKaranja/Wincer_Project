@@ -561,6 +561,40 @@ async function startServer() {
     }
   );
 
+  // Admin Users API routes to bypass RLS type mismatch issues on users table
+  app.get('/api/admin/users', async (req, res) => {
+    try {
+      const { data, error } = await supabaseAdmin.from('users').select('*');
+      if (error) throw error;
+      res.json(data || []);
+    } catch (err: any) {
+      console.error('Failed to fetch users:', err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  app.post('/api/admin/users', async (req, res) => {
+    try {
+      const { data, error } = await supabaseAdmin.from('users').insert([req.body]).select();
+      if (error) throw error;
+      res.json(data?.[0] || { success: true });
+    } catch (err: any) {
+      console.error('Failed to add user:', err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  app.delete('/api/admin/users/:id', async (req, res) => {
+    try {
+      const { error } = await supabaseAdmin.from('users').delete().eq('id', req.params.id);
+      if (error) throw error;
+      res.json({ success: true });
+    } catch (err: any) {
+      console.error('Failed to delete user:', err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
   app.use('/api/*', (req, res) => {
     res.status(404).json({ success: false, error: 'Endpoint not found' });
   });

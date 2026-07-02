@@ -16,6 +16,17 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
   const [orders, setOrders] = useState<any[]>([]);
   const [inquiries, setInquiries] = useState<any[]>([]);
 
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch('/api/admin/users');
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      setSiteUsers(data || []);
+    } catch (err: any) {
+      console.error('Failed to fetch users:', err.message);
+    }
+  };
+
   useEffect(() => {
     if (!user || user.role !== 'admin') return;
 
@@ -26,14 +37,6 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
         setCakeFormError('Failed to fetch cakes: ' + error.message);
       }
       setCakes(data || []);
-    };
-
-    const fetchUsers = async () => {
-      const { data, error } = await supabase.from('all_users_admin').select('*');
-      if (error) {
-        console.error('Failed to fetch users:', error.message);
-      }
-      setSiteUsers(data || []);
     };
 
     const fetchOrders = async () => {
@@ -166,10 +169,14 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
 
   const handleDeleteUser = async (id: string) => {
     try {
-      const { error } = await supabase.from('users').delete().eq('id', id);
-      if (error) {
-        console.error('Failed to delete user:', error.message);
-        alert('Failed to delete user: ' + error.message);
+      const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('Failed to delete user:', errorText);
+        alert('Failed to delete user: ' + errorText);
+      } else {
+        // Trigger a fresh fetch since the subscription won't fire for server-side deletes
+        fetchUsers();
       }
     } catch (err) {
       console.error(err);
@@ -183,18 +190,24 @@ export default function Admin({ user, setView, blogPosts = [] }: { user: any, se
     if (!newUserEmail) return;
     try {
       const id = Date.now().toString(); // placeholder ID
-      const { error } = await supabase.from('users').insert([{
-        id,
-        email: newUserEmail,
-        name: 'New Member',
-        role: 'user',
-        joined_at: new Date().toISOString(),
-        orders_count: 0
-      }]);
-      if (error) {
-        throw error;
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id,
+          email: newUserEmail,
+          name: 'New Member',
+          role: 'user',
+          joined_at: new Date().toISOString(),
+          orders_count: 0
+        })
+      });
+      if (!res.ok) {
+        throw new Error(await res.text());
       }
       setNewUserEmail('');
+      // Trigger a fresh fetch since the subscription won't fire for server-side inserts
+      fetchUsers();
     } catch (err) {
       console.error(err);
       alert('Failed to add user.');
