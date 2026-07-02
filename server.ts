@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from "express";
+import { createServer as createHttpServer } from "http";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import crypto from "crypto";
@@ -71,6 +72,7 @@ function maskPhone(phone: string): string {
 async function startServer() {
   const app = express();
   const PORT = 3000;
+  const server = createHttpServer(app);
 
   app.set('trust proxy', 1);
 
@@ -626,7 +628,15 @@ async function startServer() {
 
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        hmr: {
+          server,
+          host: 'localhost',
+          port: PORT,
+          protocol: 'ws',
+        },
+      },
       appType: "spa",
     });
     app.use(vite.middlewares);
@@ -638,7 +648,7 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  server.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
 }
