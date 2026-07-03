@@ -103,7 +103,7 @@ export default function Home({ setView, posts = [] }: HomeProps) {
                   className="absolute bottom-[10%] left-[20%] w-[38%] aspect-square z-30"
                >
                   <img 
-                    src="hhttps://ik.imagekit.io/oaundupgio/EduRent/Images/home_birthday.jpg?updatedAt=1783072323916" 
+                    src="https://ik.imagekit.io/oaundupgio/EduRent/Images/595321341_878629624517094_7612576181028860647_n.jpg?updatedAt=1783072323178" 
                     alt="Pastries & treats"
                     referrerPolicy="no-referrer"
                     className="w-full h-full rounded-full object-cover shadow-xl border-4 border-surface-container"
