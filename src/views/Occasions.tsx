@@ -143,7 +143,7 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
         <div className="absolute inset-0 z-0">
           <img
             className="w-full h-full object-cover contrast-125"
-            src="https://karanjamaina.sirv.com/Images/myimage.png"
+            src="https://ik.imagekit.io/oaundupgio/EduRent/Images/myimage.png?updatedAt=1783072327645"
           />
           <div className="absolute inset-0 bg-stone-900/40"></div>
         </div>
@@ -253,7 +253,7 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
 
         <div className="grid grid-cols-1 md:grid-cols-4 grid-rows-2 gap-4 h-auto md:h-[800px]">
           <div className="md:col-span-2 md:row-span-2 relative overflow-hidden rounded-3xl group shadow-lg">
-            <img className="w-full h-full object-cover brightness-110 transition-all duration-700 group-hover:scale-105" src="https://karanjamaina.sirv.com/Images/memory1.jpg" alt="Gala" />
+            <img className="w-full h-full object-cover brightness-110 transition-all duration-700 group-hover:scale-105" src="https://ik.imagekit.io/oaundupgio/EduRent/Images/memory1.jpg?updatedAt=1783072324825" alt="Gala" />
             <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-all"></div>
             <div className="absolute bottom-8 left-8 text-white opacity-0 group-hover:opacity-100 transition-opacity">
               <p className="text-xs font-bold uppercase tracking-widest">The Grand Wedding</p>
@@ -261,15 +261,15 @@ export default function Occasions({ setView }: { setView: (v: string) => void })
           </div>
 
           <div className="col-span-1 row-span-1 relative overflow-hidden rounded-3xl group shadow-lg min-h-[250px]">
-            <img className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://karanjamaina.sirv.com/Images/memory4.jpg" alt="Table" />
+            <img className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://ik.imagekit.io/oaundupgio/EduRent/Images/memory4.jpg?updatedAt=1783072325625" alt="Table" />
           </div>
 
           <div className="col-span-1 row-span-1 relative overflow-hidden rounded-3xl group shadow-lg min-h-[250px]">
-            <img className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://karanjamaina.sirv.com/Images/memory3.jpg" alt="Plated" />
+            <img className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://ik.imagekit.io/oaundupgio/EduRent/Images/memory3.jpg?updatedAt=1783072325723" alt="Plated" />
           </div>
 
           <div className="md:col-span-2 md:row-span-1 relative overflow-hidden rounded-3xl group shadow-lg min-h-[250px]">
-            <img className="w-full h-full object-cover contrast-125 transition-all duration-700 group-hover:scale-105" src="https://karanjamaina.sirv.com/Images/memory2.jpg" alt="Fun times" />
+            <img className="w-full h-full object-cover contrast-125 transition-all duration-700 group-hover:scale-105" src="https://ik.imagekit.io/oaundupgio/EduRent/Images/memory2.jpg?updatedAt=1783072326231" alt="Fun times" />
           </div>
         </div>
       </section>

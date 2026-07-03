@@ -11,25 +11,25 @@ export default function Home({ setView, posts = [] }: HomeProps) {
       title: "The Classics Collection",
       desc: "Time-tested recipes baked to airy perfection, layered with fluffy cream and rich gourmet fillings.",
       tags: ["Black Forest", "Red Velvet", "White Forest"],
-      img: "https://karanjamaina.sirv.com/Images/home_birthday.jpg"
+      img: "https://ik.imagekit.io/oaundupgio/EduRent/Images/home_birthday.jpg?updatedAt=1783072323916"
     },
     {
       title: "Modern Indulgence",
       desc: "Daring, contemporary cake profiles featuring luscious cascading drips, Biscoff, and premium Ferrero themes.",
       tags: ["Lotus Biscoff", "Chocolate Drip", "Ferrero"],
-      img: "https://karanjamaina.sirv.com/Images/chocolatecake.jpg"
+      img: "https://ik.imagekit.io/oaundupgio/EduRent/Images/chocolatecake.jpg?updatedAt=1783072325370"
     },
     {
       title: "Artisan Floral Cakes",
       desc: "Delicately handcrafted floral arrangements and elegant piping crowning moist, rich sponges.",
       tags: ["Floral Design", "Buttercream", "Elegant"],
-      img: 'https://karanjamaina.sirv.com/Images/regenerated_image_1780566435533.png'
+      img: 'https://ik.imagekit.io/oaundupgio/EduRent/Images/regenerated_image_1780566435533.png?updatedAt=1783072327267'
     },
     {
       title: "Gourmet Masterpieces",
       desc: "Rich, decadent creations loaded with premium toppings, fresh fruits, and artisan finishes.",
       tags: ["Premium", "Fresh Fruit", "Decadent"],
-      img: 'https://karanjamaina.sirv.com/Images/regenerated_image_1780566437370.png'
+      img: 'https://ik.imagekit.io/oaundupgio/EduRent/Images/regenerated_image_1780566437370.png?updatedAt=1783072327964'
     }
   ];
 
@@ -89,7 +89,7 @@ export default function Home({ setView, posts = [] }: HomeProps) {
                   className="absolute top-[5%] left-[0%] w-[42%] aspect-square z-20"
                >
                   <img 
-                    src="https://karanjamaina.sirv.com/Images/home_birthday.jpg" 
+                    src="https://ik.imagekit.io/oaundupgio/EduRent/Images/home_birthday.jpg?updatedAt=1783072323916" 
                     alt="Delicious custom cake"
                     referrerPolicy="no-referrer"
                     className="w-full h-full rounded-full object-cover shadow-xl border-4 border-surface-container"
@@ -103,7 +103,7 @@ export default function Home({ setView, posts = [] }: HomeProps) {
                   className="absolute bottom-[10%] left-[20%] w-[38%] aspect-square z-30"
                >
                   <img 
-                    src="https://karanjamaina.sirv.com/Images/595321341_878629624517094_7612576181028860647_n.jpg" 
+                    src="hhttps://ik.imagekit.io/oaundupgio/EduRent/Images/home_birthday.jpg?updatedAt=1783072323916" 
                     alt="Pastries & treats"
                     referrerPolicy="no-referrer"
                     className="w-full h-full rounded-full object-cover shadow-xl border-4 border-surface-container"
@@ -118,7 +118,7 @@ export default function Home({ setView, posts = [] }: HomeProps) {
                     className="w-full aspect-square z-20"
                  >
                    <img 
-                      src="https://karanjamaina.sirv.com/Images/chocolatecake.jpg" 
+                      src="https://ik.imagekit.io/oaundupgio/EduRent/Images/chocolatecake.jpg?updatedAt=1783072325370" 
                       alt="Famous Signature Cakes"
                       referrerPolicy="no-referrer"
                       className="w-full h-full rounded-full object-cover shadow-xl border-4 border-surface-container"
@@ -285,7 +285,7 @@ export default function Home({ setView, posts = [] }: HomeProps) {
               <img 
                 alt="Birthday Occasion" 
                 className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" 
-                src="https://karanjamaina.sirv.com/Images/home_birthday.jpg" 
+                src="https://ik.imagekit.io/oaundupgio/EduRent/Images/home_birthday.jpg?updatedAt=1783072323916" 
               />
               <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors"></div>
               <div className="absolute bottom-8 left-8 text-white">
@@ -347,7 +347,7 @@ export default function Home({ setView, posts = [] }: HomeProps) {
               <img 
                 alt=" Chef Crafting" 
                 className="rounded-2xl shadow-2xl" 
-                src="https://karanjamaina.sirv.com/Images/regenerated_image_1779013140846.webp" 
+                src="https://ik.imagekit.io/oaundupgio/EduRent/Images/regenerated_image_1779013140846.webp?updatedAt=1783072331619" 
               />
               <div className="absolute -bottom-6 -right-6 bg-secondary p-8 rounded-2xl text-white hidden md:block shadow-xl">
                 <p className="text-2xl font-serif leading-tight">Hand-finished<br/>by master<br/>bakers.</p>
